@@ -17,6 +17,8 @@ dispersion <- read.csv('WithinTrtDivergenceConvergenceRates.csv')
 #read in Meghan's data info
 info <- read.csv('exp_info072015.csv')
 
+#read in full change in mean and dispersion dataset
+full <- read.csv('dispersion_and_means_press_experiments_with_exp_info_03232015.csv')
 
 #create column of number of factors manipulated (rough estimate based on each resource column)
 dispersion$factor_num <- with(dispersion, nut2+pp+car+heat+other)
@@ -45,72 +47,95 @@ dispersionRRcombo <- rbind(dispersionRRconverge, dispersionRRdiverge)
 #merge experiment info with the response ratio dataframe
 dispersionRRinfo <- merge(dispersionRRcombo, info)
 
-#regress RR with gamma diversity
-gammaModelConverge <- lm(RR ~ species_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(gammaModelConverge)
+# #regress RR with gamma diversity
+# gammaModelConverge <- lm(RR ~ species_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(gammaModelConverge)
+# 
+# gammaModelDiverge <- lm(RR ~ species_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(gammaModelDiverge)
+# 
+# ggplot(data=dispersionRRinfo, aes(x=species_num, y=RR, colour=converge_diverge)) +
+#   geom_point(size=5)
+# 
+# 
+# #regress RR with MAP
+# MAPModelConverge <- lm(RR ~ MAP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(MAPModelConverge)
+# 
+# MAPModelDiverge <- lm(RR ~ MAP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(MAPModelDiverge)
+# 
+# ggplot(data=dispersionRRinfo, aes(x=MAP, y=RR, colour=converge_diverge)) +
+#   geom_point(size=5)
+# 
+# 
+# #regress RR with ANPP
+# ANPPModelConverge <- lm(RR ~ ANPP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(ANPPModelConverge)
+# 
+# ANPPModelDiverge <- lm(RR ~ ANPP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(ANPPModelDiverge)
+# 
+# ggplot(data=dispersionRRinfo, aes(x=ANPP, y=RR, colour=converge_diverge)) +
+#   geom_point(size=5)
+# 
+# 
+# #regress RR with number of factors manipulated
+# factorsModelConverge <- lm(RR ~ factor_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(factorsModelConverge)
+# 
+# factorsModelDiverge <- lm(RR ~ factor_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(factorsModelDiverge)
+# 
+# ggplot(data=dispersionRRinfo, aes(x=factor_num, y=RR, colour=converge_diverge)) +
+#   geom_point(size=5)
+# 
+# ###multiple regression with number of factors included
+# #gamma diversity and number of factors
+# gammaFactorModelConverge <- lm(RR ~ factor_num*species_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(gammaFactorModelConverge)
+# 
+# gammaFactorModelDiverge <- lm(RR ~ factor_num*species_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(gammaFactorModelDiverge)
+# 
+# #ANPP and number of factors
+# ANPPFactorModelConverge <- lm(RR ~ factor_num*ANPP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(ANPPFactorModelConverge)
+# 
+# ANPPFactorModelDiverge <- lm(RR ~ factor_num*ANPP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(ANPPFactorModelDiverge)
+# 
+# #MAP and number of factors
+# MAPFactorModelConverge <- lm(RR ~ factor_num*MAP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
+# summary(MAPFactorModelConverge)
+# 
+# ggplot(data=subset(dispersionRRinfo, converge_diverge=='converge'), aes(x=MAP, y=RR, colour=factor_num)) +
+#   geom_point(size=5)
+# 
+# MAPFactorModelDiverge <- lm(RR ~ factor_num*MAP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
+# summary(MAPFactorModelDiverge)
 
-gammaModelDiverge <- lm(RR ~ species_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(gammaModelDiverge)
+#make dataset indicating what control treatments are, plus all other relevant information
+controls <- full[,-c(1:5, 7:8, 10:74)]
+controlsAggregate <- aggregate(plot_mani.x ~ label, mean, data=full)
 
-ggplot(data=dispersionRRinfo, aes(x=species_num, y=RR, colour=converge_diverge)) +
-  geom_point(size=5)
+#using full dataset, get slopes of dispersion through time for each treatment independantly
+slopesDispersion <- ddply(subset(full, mean.disp=='disp'), 'label', function(x) {
+  model <- lm(dist~trt.year, data=x)
+  coef(model)
+names(slopesDispersion)[names(slopesDispersion)=="trt.year"] <- "slope"
 
-
-#regress RR with MAP
-MAPModelConverge <- lm(RR ~ MAP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(MAPModelConverge)
-
-MAPModelDiverge <- lm(RR ~ MAP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(MAPModelDiverge)
-
-ggplot(data=dispersionRRinfo, aes(x=MAP, y=RR, colour=converge_diverge)) +
-  geom_point(size=5)
+#merge slopes data with controls and extra info
+slopesDispersionInfo <- merge(slopesDispersion, controlsAggregate)
 
 
-#regress RR with ANPP
-ANPPModelConverge <- lm(RR ~ ANPP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(ANPPModelConverge)
-
-ANPPModelDiverge <- lm(RR ~ ANPP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(ANPPModelDiverge)
-
-ggplot(data=dispersionRRinfo, aes(x=ANPP, y=RR, colour=converge_diverge)) +
-  geom_point(size=5)
 
 
-#regress RR with number of factors manipulated
-factorsModelConverge <- lm(RR ~ factor_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(factorsModelConverge)
 
-factorsModelDiverge <- lm(RR ~ factor_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(factorsModelDiverge)
 
-ggplot(data=dispersionRRinfo, aes(x=factor_num, y=RR, colour=converge_diverge)) +
-  geom_point(size=5)
 
-###multiple regression with number of factors included
-#gamma diversity and number of factors
-gammaFactorModelConverge <- lm(RR ~ factor_num*species_num, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(gammaFactorModelConverge)
 
-gammaFactorModelDiverge <- lm(RR ~ factor_num*species_num, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(gammaFactorModelDiverge)
 
-#ANPP and number of factors
-ANPPFactorModelConverge <- lm(RR ~ factor_num*ANPP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(ANPPFactorModelConverge)
 
-ANPPFactorModelDiverge <- lm(RR ~ factor_num*ANPP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(ANPPFactorModelDiverge)
-
-#MAP and number of factors
-MAPFactorModelConverge <- lm(RR ~ factor_num*MAP, data=subset(dispersionRRinfo, converge_diverge=='converge'))
-summary(MAPFactorModelConverge)
-
-ggplot(data=subset(dispersionRRinfo, converge_diverge=='converge'), aes(x=MAP, y=RR, colour=factor_num)) +
-  geom_point(size=5)
-
-MAPFactorModelDiverge <- lm(RR ~ factor_num*MAP, data=subset(dispersionRRinfo, converge_diverge=='diverge'))
-summary(MAPFactorModelDiverge)
 
 
