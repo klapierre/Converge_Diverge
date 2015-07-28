@@ -6,7 +6,7 @@ library(ggplot2)
 library(gtools)
 library(plyr)
 library(grid)
-library(lme4)
+library(nlme)
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
@@ -82,132 +82,41 @@ finalMean <- merge(changeInMean, finalYear, by=c("label", "trt.year", "plot_mani
 
 finalDispersion <- merge(changeInDispersion, finalYear, by=c("label", "trt.year", "plot_mani.x", "site"))
 
-# ###are the max years also the final years?
-# yearsMean <- merge(maxMeanYear, finalMean, by=c("label", "site", "plot_mani"))
-# yearsMean <- yearsMean[,-c(5:9, 11:18, 20, 22:23)]
-# yearsDispersion <- merge(maxDispersion, finalDispersion, by=c("label", "site", "plot_mani"))
-# yearsDispersion <- yearsDispersion[,-c(5, 7:12, 14:15, 17:21, 23)]
-# 
-# #remove treatments that are pulses, keeping only the press treatments (for which we want to look at the last year only) #be sure to add back in CDR e002 and SGS ESA
-# yearsMeanPress <- subset(yearsMean, label!="CUL::Culardoch::0::burn" & label!="CUL::Culardoch::0::burnclip" & label!="CUL::Culardoch::0::N10burn" & label!="CUL::Culardoch::0::N10burnclip" & label!="CUL::Culardoch::0::N20burn" & label!="CUL::Culardoch::0::N20burnclip" & label!="CUL::Culardoch::0::N50burn" & label!="CUL::Culardoch::0::N50burnclip" & label!="KBS::T7::0::T1F1" & label!="KBS::T7::0::T1F0" & site!="dcgs" & site!="KAEFS")
-# 
-# yearsMeanPress$Equal <- ifelse(yearsMeanPress$cal.year.x==yearsMeanPress$cal.year.y, "yes", "no")
-# yearsMeanPress$difference <- yearsMeanPress$dist.x - yearsMeanPress$dist.y
-# summary(yearsMeanPress$difference)
-# yearsMeanPress <- yearsMeanPress[order(yearsMeanPress$difference),]
-# hist(yearsMeanPress$difference)
-# 
-# #remove treatments that are pulses, keeping only the press treatments (for which we want to look at the last year only) #be sure to add back in CDR e002 and SGS ESA
-# yearsDispersionPress <- subset(yearsDispersion, label!="CUL::Culardoch::0::burn" & label!="CUL::Culardoch::0::burnclip" & label!="CUL::Culardoch::0::N10burn" & label!="CUL::Culardoch::0::N10burnclip" & label!="CUL::Culardoch::0::N20burn" & label!="CUL::Culardoch::0::N20burnclip" & label!="CUL::Culardoch::0::N50burn" & label!="CUL::Culardoch::0::N50burnclip" & label!="KBS::T7::0::T1F1" & label!="KBS::T7::0::T1F0" & site!="dcgs" & site!="KAEFS")
-# yearsDispersionPress$Equal <- ifelse(yearsDispersionPress$cal.year.x==yearsDispersionPress$cal.year.y, "yes", "no")
-# yearsDispersionPress$difference <- yearsDispersionPress$dispersionDifference.x - yearsDispersionPress$dispersionDifference.y
-# summary(yearsDispersionPress$difference)
-# yearsDispersionPress$absDifference <- abs(yearsDispersionPress$dispersionDifference.x) - abs(yearsDispersionPress$dispersionDifference.y)
-# summary(yearsDispersionPress$absDifference)
-# yearsDispersion <- yearsDispersionPress[order(yearsDispersionPress$absDifference),]
-# hist(yearsDispersionPress$absDifference)
-# hist(yearsDispersionPress$difference)
-# 
-# #plotting the mean and dispersion by plot_mani, with ci
-# finalMeanPlotCI <- ggplot(barGraphStats(data=finalMean, variable="dist", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-(1.96*sd), ymax=mean+(1.96*sd), width=0.2)) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(breaks=seq(0,1,0.2), name="Change in Mean") +
-#   coord_cartesian(ylim=c(0,1))
-# finalDispersionPlotCI <- ggplot(barGraphStats(data=finalDispersion, variable="dispersionDifference", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-(1.96*sd), ymax=mean+(1.96*sd), width=0.2)) +
-#   scale_y_continuous(name="Dispersion") +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations")
-# pushViewport(viewport(layout=grid.layout(1,2)))
-# print(finalMeanPlotCI, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionPlotCI, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# 
-# #plotting the mean and dispersion by plot_mani, with se
-# finalMeanPlotSE <- ggplot(barGraphStats(data=finalMean, variable="dist", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(breaks=seq(0,0.6,0.2), name="Change in Mean") +
-#   coord_cartesian(ylim=c(0,0.6))
-# finalDispersionPlotSE <- ggplot(barGraphStats(data=finalDispersion, variable="dispersionDifference", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(name="Dispersion") +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations")
-# pushViewport(viewport(layout=grid.layout(1,2)))
-# print(finalMeanPlotSE, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionPlotSE, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-
-#same but with abs of dispersion
+#get absolute value of dispersion
 finalDispersion$absDispersion <- abs(finalDispersion$dispersionDifference)
-# 
-# finalDispersionAbsValuePlotCI <- ggplot(barGraphStats(data=finalDispersion, variable="absDispersion", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-(1.96*sd), ymax=mean+(1.96*sd), width=0.2)) +
-#   scale_y_continuous(name="Dispersion") +
-#   scale_x_continuous(breaks=seq(1,7,1), "Number of Manipulations")
-# pushViewport(viewport(layout=grid.layout(1,2)))
-# print(finalMeanPlotCI, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionAbsValuePlotCI, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# 
-# finalDispersionAbsValuePlotSE <- ggplot(barGraphStats(data=finalDispersion, variable="absDispersion", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-#   geom_bar(stat="identity") +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(name="Dispersion") +
-#   scale_x_continuous(breaks=seq(1,7,1), "Number of Manipulations")
-# pushViewport(viewport(layout=grid.layout(1,2)))
-# print(finalMeanPlotSE, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionAbsValuePlotSE, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 
 ###plot regressions with dispersion separated into converge and diverge panels
 finalDispersionPressPositive <- subset(finalDispersion, dispersionDifference>0)
 finalDispersionPressNegative <- subset(finalDispersion, dispersionDifference<=0)
 
-# finalMeanPressScatter <- ggplot(finalMean, aes(x=plot_mani.x, y=dist)) +
-#   geom_point(shape=1) +
-#   geom_smooth(method=lm, se=T) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(name="Change in Mean") +
-#   ggtitle("Change in Mean")
-# finalDispersionPressPositiveScatter <- ggplot(finalDispersionPressPositive, aes(x=plot_mani.x, y=dispersionDifference)) +
-#   geom_point(shape=1) +
-#   geom_smooth(method=lm, se=T) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(name="Difference in Dispersion") +
-#   ggtitle("Divergence")
-# finalDispersionPressNegativeScatter <- ggplot(finalDispersionPressNegative, aes(x=plot_mani.x, y=dispersionDifference)) +
-#   geom_point(shape=1) +
-#   geom_smooth(method=lm, se=T) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(name="Difference in Dispersion") +
-#   ggtitle("Convergence")
-# pushViewport(viewport(layout=grid.layout(1,3)))
-# print(finalMeanPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionPressPositiveScatter, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# print(finalDispersionPressNegativeScatter, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+finalMeanPressScatter <- ggplot(finalMean, aes(x=plot_mani.x, y=dist)) +
+  geom_point(shape=1) +
+  geom_smooth(method=lm, se=T) +
+  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
+  scale_y_continuous(name="Change in Mean") +
+  ggtitle("Change in Mean")
+finalDispersionPressPositiveScatter <- ggplot(finalDispersionPressPositive, aes(x=plot_mani.x, y=dispersionDifference)) +
+  geom_point(shape=1) +
+  geom_smooth(method=lm, se=T) +
+  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
+  scale_y_continuous(name="Difference in Dispersion") +
+  ggtitle("Divergence")
+finalDispersionPressNegativeScatter <- ggplot(finalDispersionPressNegative, aes(x=plot_mani.x, y=dispersionDifference)) +
+  geom_point(shape=1) +
+  geom_smooth(method=lm, se=T) +
+  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
+  scale_y_continuous(name="Difference in Dispersion") +
+  ggtitle("Convergence")
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(finalMeanPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(finalDispersionPressPositiveScatter, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(finalDispersionPressNegativeScatter, vp=viewport(layout.pos.row=1, layout.pos.col=3))
 
 ############################################################################
 #making dispersion graphs with controls as plot_mani=0
 finalYearDispersionMeansPress <- aggregate(dispersionMeans["trt.year"], by=dispersionMeans[c("label", "plot_mani.x", "site")], FUN=max)
 
 finalDispersionMeansPress <- merge(finalYearDispersionMeansPress, dispersionMeans, by=c("label", "trt.year", "plot_mani.x", "site"))
-
-# #plot regression
-# finalMeanPressScatter <- ggplot(finalMeanPress, aes(x=plot_mani, y=dist)) +
-#   geom_point(shape=1) +
-#   geom_smooth(method=lm, se=T) +
-#   scale_y_continuous(name="Change In Mean") +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations")
-# finalDispersionPressScatter <- ggplot(finalDispersionMeansPress, aes(x=plot_mani, y=disp)) +
-#   geom_point(shape=1) +
-#   geom_smooth(method=lm, se=T) +
-#   scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-#   scale_y_continuous(name="Dispersion")
-# pushViewport(viewport(layout=grid.layout(1,2)))
-# print(finalMeanPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(finalDispersionPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 
 #merge with dataframe that has difference between control and treatments to pick out positives vs negatives
 finalDispersionPressPosNeg <- merge(finalDispersionMeansPress, finalDispersion, by=c("label", "trt.year", "cal.year", "expt", "site", "plot_mani.x"), all=TRUE)
@@ -537,6 +446,7 @@ summary(convergeMultipleRegression <- lm(disp ~ plot_mani.x + mani_type + trt.ye
 anova(convergeMultipleRegression)
 
 
+#################################################################################################
 
 
 
