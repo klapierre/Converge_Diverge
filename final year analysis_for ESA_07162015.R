@@ -1,4 +1,4 @@
-setwd('C:\\Users\\Kim\\Dropbox\\converge_diverge\\datasets\\FINAL_SEPT2014\\R files\\07_16_2015')
+setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\R files\\07_16_2015')
 
 library(vegan)
 library(reshape2)
@@ -463,7 +463,9 @@ carbonCon <- subset(finalConvergePressInfo, subset=(carbon==1 & plot_mani.x!=0))
 carbonCon$mani_type <- "carbon"
 meanManiType <- rbind(waterMean, nutsMean, carbonMean)
 divergeManiType <- rbind(waterDiv, nutsDiv, carbonDiv)
+divergeManiType$broad.ecosystem.type <- as.character(divergeManiType$broad.ecosystem.type)
 convergeManiType <- rbind(waterCon, nutsCon, carbonCon)
+convergeManiType$broad.ecosystem.type <- as.character(convergeManiType$broad.ecosystem.type)
 
 #plotting by manipulation type
 meanManiPlot <- ggplot(barGraphStats(data=meanManiType, variable="dist", byFactorNames=c("mani_type")), aes(x=mani_type, y=mean)) +
@@ -523,9 +525,16 @@ print(convergeManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=3))
 
 #################################################################################################
 #mixed effects model
+###need to add in manipulation type
 
+summary(meansMultipleRegression <- lm(dist ~ plot_mani.x + mani_type + trt.year + MAP.x + ANPP.x + species_num.x + broad.ecosystem.type.y, data=meanManiType))
+anova(meansMultipleRegression)
 
+summary(divergeMultipleRegression <- lm(disp ~ plot_mani.x + mani_type + trt.year + MAP + ANPP + species_num + broad.ecosystem.type, data=divergeManiType))
+anova(divergeMultipleRegression)
 
+summary(convergeMultipleRegression <- lm(disp ~ plot_mani.x + mani_type + trt.year + MAP + ANPP + species_num + broad.ecosystem.type, data=convergeManiType))
+anova(convergeMultipleRegression)
 
 
 
