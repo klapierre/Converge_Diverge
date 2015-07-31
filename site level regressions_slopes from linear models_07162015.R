@@ -35,8 +35,10 @@ colorManiDiverge <- c('#313695', '#4575b4', '#74add1', '#abd9e9', '#f46d43', '#d
 means$order <- factor(as.character(means$plot_mani.x), levels=as.character(c(0:7)))
 
 ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist)) +
-  geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
-  geom_smooth(aes(y=dist, colour=order, fill=order, group=order), method=lm, formula=y~poly(x,2), size=3, se=T, alpha=0.5) +
+  #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
+  #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
+  geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
   scale_x_continuous('Treatment Year') +
   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
@@ -71,12 +73,12 @@ dispersionDiff$order <- factor(as.character(dispersionDiff$plot_mani.x), levels=
 
 ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
   #geom_point(aes(y=dist_RR, colour=order)) +
-  geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,1), se=F, size=0.25) +
-  geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~poly(x,2), size=3, se=T, alpha=0.5) +
+  geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
   scale_x_continuous('Treatment Year') +
   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control', breaks=seq(-0.75,1.25,0.25), limits=c(-0.75,1.25)) +
+  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
   theme(legend.position='right', legend.direction='vertical',
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
