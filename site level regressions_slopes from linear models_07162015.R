@@ -22,9 +22,11 @@ all <- read.csv('dispersion_and_means_press_experiments_with_exp_info_03232015.c
 
 #subset out change in means
 means <- subset(all, subset=(mean.disp=='mean'))
+means$dist_log <- log(means$dist)
+means$dist_sqrt <- sqrt(means$dist)
 
 #run mixed effects model with full dataset for change in mean
-summary(meansFullModelExpt <- lme(dist~plot_mani.x*trt.year, random=~1|expt, data=subset(means, trt.year>0)))
+summary(meansFullModelExpt <- lme(dist_sqrt~plot_mani.x*trt.year, random=~1|expt, data=subset(means, trt.year>0)))
 
 #figures for experiment-level data for change in mean
 colorMani <- c('#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58')
@@ -34,15 +36,15 @@ colorManiDiverge <- c('#313695', '#4575b4', '#74add1', '#abd9e9', '#f46d43', '#d
 
 means$order <- factor(as.character(means$plot_mani.x), levels=as.character(c(0:7)))
 
-ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist)) +
+ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
   #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
   #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
-  geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
-  geom_smooth(aes(y=dist, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+  geom_smooth(aes(y=dist_sqrt, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist_sqrt, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
   scale_x_continuous('Treatment Year') +
   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-  scale_y_continuous('Distance Between Centroids', breaks=seq(0,0.7,0.1), limits=c(0,0.7)) +
+  scale_y_continuous('Distance Between Centroids', limits=c(0,1)) +
   theme(legend.position='right', legend.direction='vertical',
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
