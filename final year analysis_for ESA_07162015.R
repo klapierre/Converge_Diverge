@@ -55,7 +55,7 @@ dispersion <- subset(allData, mean.disp=="disp")
 dispersionMeans <- ddply(dispersion, 
                          c("expt.year", "plot_mani.x", "dist.1", "mean.disp", "site",
                            "cal.year", "trt.year", "expt", "dg", "label", "water", "carbon", "nutrients", 
-                           "light"), 
+                           "light", 'precip', 'n', 'p', 'k'), 
                          summarise,
                          disp=mean(dist))
 
@@ -71,8 +71,8 @@ dispersionTreatments <- dispersionTreatments[,-9]
 #merge together the dispersion treatment and controls
 changeInDispersion <- merge(dispersionControls, dispersionTreatments, by=c("expt.year", "site", "cal.year", "trt.year", "expt"))
 
-#get the difference between trt and ctl dispersion
-changeInDispersion$dispersionDifference <- changeInDispersion$dispersionTreatment - changeInDispersion$dispersionControl
+#get the response ratio between trt and ctl dispersion
+changeInDispersion$dist_RR <- with(changeInDispersion, (dispersionTreatment - dispersionControl)/dispersionControl)
 
 ######################################################################################################
 ###just picking one year, the final year
@@ -82,201 +82,246 @@ finalMean <- merge(changeInMean, finalYear, by=c("label", "trt.year", "plot_mani
 
 finalDispersion <- merge(changeInDispersion, finalYear, by=c("label", "trt.year", "plot_mani.x", "site"))
 
-#get absolute value of dispersion
-finalDispersion$absDispersion <- abs(finalDispersion$dispersionDifference)
-
-###plot regressions with dispersion separated into converge and diverge panels
-finalDispersionPressPositive <- subset(finalDispersion, dispersionDifference>0)
-finalDispersionPressNegative <- subset(finalDispersion, dispersionDifference<=0)
-
-finalMeanPressScatter <- ggplot(finalMean, aes(x=plot_mani.x, y=dist)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T) +
-  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-  scale_y_continuous(name="Change in Mean") +
-  ggtitle("Change in Mean")
-finalDispersionPressPositiveScatter <- ggplot(finalDispersionPressPositive, aes(x=plot_mani.x, y=dispersionDifference)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T) +
-  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-  scale_y_continuous(name="Difference in Dispersion") +
-  ggtitle("Divergence")
-finalDispersionPressNegativeScatter <- ggplot(finalDispersionPressNegative, aes(x=plot_mani.x, y=dispersionDifference)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T) +
-  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-  scale_y_continuous(name="Difference in Dispersion") +
-  ggtitle("Convergence")
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(finalMeanPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(finalDispersionPressPositiveScatter, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(finalDispersionPressNegativeScatter, vp=viewport(layout.pos.row=1, layout.pos.col=3))
-
-############################################################################
-#making dispersion graphs with controls as plot_mani=0
-finalYearDispersionMeansPress <- aggregate(dispersionMeans["trt.year"], by=dispersionMeans[c("label", "plot_mani.x", "site")], FUN=max)
-
-finalDispersionMeansPress <- merge(finalYearDispersionMeansPress, dispersionMeans, by=c("label", "trt.year", "plot_mani.x", "site"))
-
-#merge with dataframe that has difference between control and treatments to pick out positives vs negatives
-finalDispersionPressPosNeg <- merge(finalDispersionMeansPress, finalDispersion, by=c("label", "trt.year", "cal.year", "expt", "site", "plot_mani.x"), all=TRUE)
-
 #get positive and negative dispersion responses only
-finalDispersionPressWithControlPositive <- subset(finalDispersionPressPosNeg, dispersionDifference>0 | plot_mani.x==0)
-finalDispersionPressWithControlNegative <- subset(finalDispersionPressPosNeg, dispersionDifference<=0 | plot_mani.x==0)
-
-#################################################################################################
-###number of manipulations
-
-#regessions with just number of manipulations
-meansFit <- lm(plot_mani.x~dist, finalMean)
-summary(meansFit)
-meansRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.236, p < 0.001", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-convergeFit <- lm(plot_mani.x~disp, finalDispersionPressWithControlNegative)
-summary(convergeFit)
-convergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.112, p < 0.001", sep="")), x=0.97, y=0.97, hjust=1, gp=gpar(col="black", fontsize=15)))
-divergeFit <- lm(plot_mani.x~disp, finalDispersionPressWithControlPositive)
-summary(divergeFit)
-divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.128, p < 0.001", sep="")), x=0.97, y=0.97, hjust=1, gp=gpar(col="black", fontsize=15)))
-
-#plots with number of manipulations
-finalMeanPressScatter <- ggplot(finalMean, aes(x=plot_mani.x, y=dist)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Change in Mean") +
-  scale_x_continuous(breaks=seq(1,7,1), name="Number of Manipulations") +
-  scale_y_continuous(breaks=seq(0,1,0.1), name="Change in Mean") +
-  coord_cartesian(ylim=c(0,1)) +
-  annotation_custom(meansRegText)
-finalDispersionPressWithControlPositiveScatter <- ggplot(finalDispersionPressWithControlPositive, aes(x=plot_mani.x, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Divergence") +
-  scale_x_continuous(breaks=seq(0,7,1), name="Number of Manipulations") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(divergeRegText)
-finalDispersionPressWithControlNegativeScatter <- ggplot(finalDispersionPressWithControlNegative, aes(x=plot_mani.x, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Convergence") +
-  scale_x_continuous(breaks=seq(0,7,1), name="Number of Manipulations") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(convergeRegText)
-pushViewport(viewport(layout=grid.layout(1,3))) 
-print(finalMeanPressScatter, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(finalDispersionPressWithControlPositiveScatter, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(finalDispersionPressWithControlNegativeScatter, vp=viewport(layout.pos.row=1, layout.pos.col=3))
-
-#################################################################################################
-###length of experiment
-
-#regessions with just number of manipulations
-meansFit <- lm(trt.year~dist, finalMean)
-summary(meansFit)
-meansRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.183, p < 0.001", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-convergeFit <- lm(trt.year~disp, finalDispersionPressWithControlNegative)
-summary(convergeFit)
-convergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.005, p = 0.253", sep="")), x=0.97, y=0.97, hjust=1, gp=gpar(col="black", fontsize=15)))
-divergeFit <- lm(trt.year~disp, finalDispersionPressWithControlPositive)
-summary(divergeFit)
-divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.076, p < 0.001", sep="")), x=0.97, y=0.97, hjust=1, gp=gpar(col="black", fontsize=15)))
-
-#plots with number of manipulations
-finalMeanPressLength <- ggplot(finalMean, aes(x=trt.year, y=dist)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Change in Mean") +
-  scale_x_continuous(breaks=seq(0,30,5), name="Experiment Length") +
-  scale_y_continuous(breaks=seq(0,1,0.1), name="Change in Mean") +
-  coord_cartesian(ylim=c(0,1)) +
-  annotation_custom(meansRegText)
-finalDispersionPressWithControlPositiveLength <- ggplot(finalDispersionPressWithControlPositive, aes(x=trt.year, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Divergence") +
-  scale_x_continuous(breaks=seq(0,30,5), name="Experiment Length") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(divergeRegText)
-finalDispersionPressWithControlNegativeLength <- ggplot(finalDispersionPressWithControlNegative, aes(x=trt.year, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Convergence") +
-  scale_x_continuous(breaks=seq(0,30,5), name="Experiment Length") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(convergeRegText)
-pushViewport(viewport(layout=grid.layout(1,3))) 
-print(finalMeanPressLength, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(finalDispersionPressWithControlPositiveLength, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(finalDispersionPressWithControlNegativeLength, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+finalDispersionPositive <- subset(finalDispersion, dist_RR>0)
+finalDispersionNegative <- subset(finalDispersion, dist_RR<=0)
 
 #################################################################################################
 #merge basic exp info with mean and variance data
 finalMeanPressInfo <- merge(finalMean, expInfo, by="expt")
-finalDivergePressInfo <- merge(finalDispersionPressWithControlPositive, expInfo, by="expt")
-finalConvergePressInfo <- merge(finalDispersionPressWithControlNegative, expInfo, by="expt")
+# finalDivergePressInfo <- merge(finalDispersionNegative, expInfo, by="expt")
+# finalConvergePressInfo <- merge(finalDispersionPositive, expInfo, by="expt")
+finalDispersionInfo <- merge(finalDispersion, expInfo, by="expt")
+finalDispersionInfo$con_div <- ifelse(finalDispersionInfo$dist_RR<=0, 'div', 'con')
+
+#by manipulation type
+waterMean <- subset(finalMeanPressInfo, subset=(water==1))
+waterMean$mani_type <- "water"
+waterDiv <- subset(finalDispersionInfo, subset=(water.x==1 & plot_mani.x!=0))
+waterDiv$mani_type <- "water"
+nutsMean <- subset(finalMeanPressInfo, subset=(nutrients==1))
+nutsMean$mani_type <- "nutrients"
+nutsDiv <- subset(finalDispersionInfo, subset=(nutrients.x==1 & plot_mani.x!=0))
+nutsDiv$mani_type <- "nutrients"
+carbonMean <- subset(finalMeanPressInfo, subset=(carbon==1))
+carbonMean$mani_type <- "carbon"
+carbonDiv <- subset(finalDispersionInfo, subset=(carbon.x==1 & plot_mani.x!=0))
+carbonDiv$mani_type <- "carbon"
+meanManiType <- rbind(waterMean, nutsMean, carbonMean)
+dispersionManiType <- rbind(waterDiv, nutsDiv, carbonDiv)
+dispersionManiType$broad.ecosystem.type <- as.character(dispersionManiType$broad.ecosystem.type)
+
+
+shapiro.test(meanManiType$dist)
+qqnorm(meanManiType$dist)
+meanManiType$dist_log <- log(meanManiType$dist)
+shapiro.test(meanManiType$dist_log)
+qqnorm(meanManiType$dist_log)
+meanManiType$dist_sqrt <- sqrt(meanManiType$dist)
+shapiro.test(meanManiType$dist_sqrt)
+qqnorm(meanManiType$dist_sqrt)
+
 #################################################################################################
+#linear model
 
-###community richness
+summary(meansMultipleRegression <- lm(dist_sqrt ~ mani_type + MAP.x + ANPP.x + species_num.x + broad.ecosystem.type.y, data=meanManiType))
+anova(meansMultipleRegression)
 
-#regessions with just number of manipulations
-meansFit <- lm(species_num.x~dist, finalMeanPressInfo)
-summary(meansFit)
-AIC(meansFit)
-# meansFitExp <- lm(species_num~(-dist^2), finalMeanPressInfo)
-# summary(meansFitExp)
-# AIC(meansFitExp)
-meansRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.057, p < 0.001", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-divergeFit <- lm(species_num~disp, finalDivergePressInfo)
-summary(divergeFit)
-divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.217, p < 0.001", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-convergeFit <- lm(species_num~disp, finalConvergePressInfo)
-summary(convergeFit)
-convergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.162, p < 0.001", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
+summary(dispersionMultipleRegression <- lm(dist_RR ~ mani_type + MAP + ANPP + species_num + broad.ecosystem.type, data=subset(dispersionManiType, dist_RR<3)))
+anova(dispersionMultipleRegression)
+
+summary(divergeMultipleRegression <- lm(dist_RR ~ mani_type + MAP + ANPP + species_num + broad.ecosystem.type, data=subset(dispersionManiType, con_div=='div' & dist_RR<3)))
+anova(divergeMultipleRegression)
+
+summary(convergeMultipleRegression <- lm(dist_RR ~ mani_type + MAP + ANPP + species_num + broad.ecosystem.type, data=subset(dispersionManiType, con_div=='con' & dist_RR<3)))
+anova(convergeMultipleRegression)
+
+#################################################################################################
+#means figures
+summary(meansMani <- aov(dist_sqrt~mani_type, meanManiType))
+TukeyHSD(meansMani)
+meanManiPlot <- ggplot(barGraphStats(data=meanManiType, variable="dist_sqrt", byFactorNames=c("mani_type")), aes(x=mani_type, y=mean)) +
+  geom_bar(stat="identity", fill='white', colour='black') +
+  geom_errorbar(aes(ymin=mean-(se), ymax=mean+(se), width=0.2)) +
+  scale_y_continuous(name="Change in Mean", breaks=seq(0,0.6,0.2)) +
+  coord_cartesian(ylim=c(0,0.6)) +
+  xlab("Manipulation Type") +
+  annotate('text', x=1 ,y=0.57, label='ab', size=7) +
+  annotate('text', x=2 ,y=0.55, label='a', size=7) +
+  annotate('text', x=3 ,y=0.58, label='b', size=7)
+summary(meansMAP <- lm(MAP.x~dist_RR, subset(dispersionManiType, dist_RR<3)))
+meanMAPplot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=MAP.x, y=dist_RR)) +
+  geom_point(shape=1) +
+  scale_x_continuous(name="Mean Annual Precipitation") +
+  scale_y_continuous(breaks=seq(0,1,0.1), name=element_blank()) +
+  coord_cartesian(ylim=c(0,1))
+summary(meansANPP <- lm(ANPP.x~dist_RR, subset(dispersionManiType, dist_RR<3)))
+meansANPPText <- grobTree(textGrob(expression(paste(R^2, " = 0.092, p < 0.001", sep="")), x=0.03, y=0.95, hjust=0, gp=gpar(col="black", fontsize=15)))
+meanANPPplot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=ANPP.x, y=dist_RR)) +
+  geom_point(shape=1) +
+  geom_smooth(method=lm, se=T, color="black") +
+  scale_x_continuous(breaks=seq(0,1000,200), name="ANPP") +
+  scale_y_continuous(breaks=seq(0,1,0.1), name=element_blank()) +
+  coord_cartesian(ylim=c(0,1)) +
+  annotation_custom(meansANPPText)
+summary(meansEcosystem <- aov(dist_RR~broad.ecosystem.type.y, subset(dispersionManiType, dist_RR<3)))
+TukeyHSD(meansEcosystem)
+meanEcosystemPlot <- ggplot(barGraphStats(data=subset(dispersionManiType, dist_RR<3), variable="dist_RR", byFactorNames=c("broad.ecosystem.type.y")), aes(x=broad.ecosystem.type.y, y=mean)) +
+  geom_bar(stat="identity", fill='white', colour='black') +
+  geom_errorbar(aes(ymin=mean-(se), ymax=mean+(se), width=0.2)) +
+  scale_y_continuous(name="Change in Mean", breaks=seq(0,0.6,0.2)) +
+  coord_cartesian(ylim=c(0,0.6)) +
+  xlab("Ecosystem Type") +
+  annotate('text', x=1 ,y=0.52, label='ab', size=7) +
+  annotate('text', x=2 ,y=0.59, label='a', size=7) +
+  annotate('text', x=3 ,y=0.40, label='b', size=7) +
+  annotate('text', x=4 ,y=0.53, label='a', size=7) +
+  annotate('text', x=5 ,y=0.55, label='ab', size=7)
+summary(meansSpp <- lm(species_num.x~dist_RR, subset(dispersionManiType, dist_RR<3)))
+meanSppPlot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=species_num.x, y=dist_RR)) +
+  geom_point(shape=1) +
+  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+  scale_y_continuous(breaks=seq(0,1,0.1), name=element_blank()) +
+  coord_cartesian(ylim=c(0,1))
+pushViewport(viewport(layout=grid.layout(2,3))) 
+print(meanManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(meanMAPplot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(meanANPPplot, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+print(meanEcosystemPlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(meanSppPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+
+
+#################################################################################################
+#dispersion figures
+color <- c('#339900', '#CC0000')
+
+summary(dispMani <- aov(dist_RR~mani_type, subset(dispersionManiType, dist_RR<3)))
+TukeyHSD(dispMani)
+dispManiPlot <- ggplot(barGraphStats(data=subset(dispersionManiType, dist_RR<3), variable="dist_RR", byFactorNames=c("mani_type", "con_div")), aes(x=mani_type, y=mean, fill=con_div)) +
+  geom_bar(stat="identity", position=position_dodge(0)) +
+  geom_errorbar(aes(ymin=mean-(se), ymax=mean+(se)), width=0.2, position=position_dodge(0)) +
+  scale_y_continuous(name="Relative Difference in Dispersion\nbetween Treatment and Control") +
+  #coord_cartesian(ylim=c(0,0.6)) +
+  xlab("Manipulation Type") +
+  geom_hline(aes(yintercept=0)) +
+  scale_fill_manual(values=color) +
+  annotate('text', x=1 ,y=0.18, label='a', size=7) +
+  annotate('text', x=2 ,y=0.31, label='b', size=7) +
+  annotate('text', x=3 ,y=0.32, label='b', size=7) +
+  theme(legend.position='none')
+summary(conMAP <- lm(MAP~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='con')))
+summary(divMAP <- lm(MAP~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='div')))
+dispMAPplot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=MAP, y=dist_RR, colour=con_div)) +
+  geom_point(shape=1) +
+  scale_x_continuous(name="Mean Annual Precipitation") +
+  scale_y_continuous(name=element_blank()) +
+  #coord_cartesian(ylim=c(0,1)) +
+  scale_colour_manual(values=color) +
+  theme(legend.position='none')
+summary(conANPP <- lm(ANPP~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='con')))
+summary(divANPP <- lm(ANPP~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='div')))
+conANPPText <- grobTree(textGrob(expression(paste(R^2, " = 0.54, p = 0.012", sep="")), x=700, y=0.95, hjust=0, gp=gpar(col="black", fontsize=15)))
+dispANPPplot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=ANPP, y=dist_RR, colour=con_div)) +
+  geom_point(shape=1) +
+  geom_smooth(method=lm, se=T, color="#339900") +
+  scale_x_continuous(breaks=seq(0,1000,200), name="ANPP") +
+  scale_y_continuous(name=element_blank()) +
+  #coord_cartesian(ylim=c(0,1)) +
+  scale_colour_manual(values=color) +
+  theme(legend.position='none') +
+  annotation_custom(meansANPPText)
+summary(conEcosystem <- aov(dist_RR~broad.ecosystem.type, subset(dispersionManiType, dist_RR<3 & con_div=='con')))
+summary(divEcosystem <- aov(dist_RR~broad.ecosystem.type, subset(dispersionManiType, dist_RR<3 & con_div=='div')))
+dispEcosystemPlot <- ggplot(barGraphStats(data=subset(dispersionManiType, dist_RR<3), variable="dist_RR", byFactorNames=c("broad.ecosystem.type", "con_div")), aes(x=broad.ecosystem.type, y=mean, fill=con_div)) +
+  geom_bar(stat="identity", position=position_dodge(0)) +
+  geom_errorbar(aes(ymin=mean-(se), ymax=mean+(se)), width=0.2, position=position_dodge(0)) +
+  scale_y_continuous(name="Relative Difference in Dispersion\nbetween Treatment and Control") +
+  #coord_cartesian(ylim=c(0,0.6)) +
+  xlab("Ecosystem Type") +
+  geom_hline(aes(yintercept=0)) +
+  scale_fill_manual(values=color) +
+  theme(legend.position='none')
+summary(conSpp <- lm(species_num~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='con')))
+summary(divSpp <- lm(species_num~dist_RR, subset(dispersionManiType, dist_RR<3 & con_div=='div')))
+dispSppPlot <- ggplot(subset(dispersionManiType, dist_RR<3), aes(x=species_num, y=dist_RR, colour=con_div)) +
+  geom_point(shape=1) +
+  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+  scale_y_continuous(name=element_blank()) +
+  #coord_cartesian(ylim=c(0,1)) +
+  scale_colour_manual(values=color) +
+  theme(legend.position='none')
+pushViewport(viewport(layout=grid.layout(2,3))) 
+print(dispManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(dispMAPplot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(dispANPPplot, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+print(dispEcosystemPlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(dispSppPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #plots with number of manipulations
-finalMeanPressLength <- ggplot(finalMeanPressInfo, aes(x=species_num.x, y=dist)) +
+
+# finalDispersionPressWithControlNegativeLength <- ggplot(finalDivergePressInfo, aes(x=species_num, y=dist_RR)) +
+#   geom_point(shape=1) +
+#   geom_smooth(method=lm, se=T, color="black") +
+#   ggtitle("Divergence") +
+#   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+#   scale_y_continuous(breaks=seq(-1.0,0.0,0.2), name="Dispersion") +
+#   #coord_cartesian(ylim=c(0,0.6)) +
+#   annotation_custom(divergeRegText)
+finalDispersionPressSpp <- ggplot(finalDispersionInfo, aes(x=species_num, y=dist_RR, colour=con_div)) +
   geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Change in Mean") +
+  geom_smooth(method=lm, se=T, aes(y=dist_RR, colour=con_div)) +
+  ggtitle("Change in Dispersion") +
   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,1,0.1), name="Change in Mean") +
-  coord_cartesian(ylim=c(0,1)) +
-  annotation_custom(meansRegText)
-finalDispersionPressWithControlPositiveLength <- ggplot(finalDivergePressInfo, aes(x=species_num, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Divergence") +
-  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(divergeRegText)
-finalDispersionPressWithControlNegativeLength <- ggplot(finalConvergePressInfo, aes(x=species_num, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Convergence") +
-  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
+  scale_y_continuous(breaks=seq(-1.0,1.5,0.25), name="Relative Difference in Dispersion\nbetween Treatment and Control") +
+  coord_cartesian(ylim=c(-1.0,1.5)) +
+  annotation_custom(divergeRegText) +
   annotation_custom(convergeRegText)
-pushViewport(viewport(layout=grid.layout(1,3))) 
-print(finalMeanPressLength, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(finalDispersionPressWithControlPositiveLength, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(finalDispersionPressWithControlNegativeLength, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+# finalDispersionPressWithControlPositiveLength <- ggplot(finalConvergePressInfo, aes(x=species_num, y=dist_RR)) +
+#   geom_point(shape=1) +
+#   geom_smooth(method=lm, se=T, color="black") +
+#   ggtitle("Convergence") +
+#   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+#   scale_y_continuous(breaks=seq(0,2,0.5), name="Dispersion") +
+#   #coord_cartesian(ylim=c(0,0.6)) +
+#   annotation_custom(convergeRegText)
+pushViewport(viewport(layout=grid.layout(1,2))) 
+print(finalMeanPressSpp, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(finalDispersionPressSpp, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+# print(finalDispersionPressWithControlPositiveLength, vp=viewport(layout.pos.row=1, layout.pos.col=3))
 
 #regessions with ANPP
-meansFit <- lm(ANPP.x~dist, finalMeanPressInfo)
-summary(meansFit)
+summary(meansFit <- lm(ANPP.x~dist, finalMeanPressInfo))
 meansRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.002, p = 0.476", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-divergeFit <- lm(ANPP~disp, finalDivergePressInfo)
-summary(divergeFit)
-divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.012, p = 0.084", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-convergeFit <- lm(ANPP~disp, finalConvergePressInfo)
-summary(convergeFit)
-convergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.013, p = 0.082", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
+summary(divergeFit <- lm(ANPP~dist_RR, finalDivergePressInfo))
+divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.005, p = 0.380", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
+summary(convergeFit <- lm(ANPP~dist_RR, finalConvergePressInfo))
+convergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.002, p = 0.524", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
 
 #plots with ANPP
 finalMeanPressANPP <- ggplot(finalMeanPressInfo, aes(x=ANPP.y, y=dist)) +
@@ -312,78 +357,45 @@ print(finalDispersionPressWithControlNegativeANPP, vp=viewport(layout.pos.row=1,
 meansFit <- lm(MAP.x~dist, finalMeanPressInfo)
 summary(meansFit)
 meansRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.007, p = 0.103", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-divergeFit <- lm(MAP~disp, finalDivergePressInfo)
-summary(divergeFit)
+summary(divergeFit <- lm(MAP~dist_RR, finalDivergePressInfo))
 divergeRegText <- grobTree(textGrob(expression(paste(R^2, " = 0.001, p = 0.600", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
-convergeFit <- lm(MAP~disp, finalConvergePressInfo)
-summary(convergeFit)
+summary(convergeFit <- lm(MAP~dist_RR, finalConvergePressInfo))
 convergeRegText <- grobTree(textGrob(expression(paste(R^2, " < 0.001, p = 0.91", sep="")), x=0.03, y=0.97, hjust=0, gp=gpar(col="black", fontsize=15)))
 
-#plots with number of manipulations
-finalMeanPressMAP <- ggplot(finalMeanPressInfo, aes(x=MAP.x, y=dist)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Change in Mean") +
-  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,1,0.1), name="Change in Mean") +
-  coord_cartesian(ylim=c(0,1)) +
-  annotation_custom(meansRegText)
-finalDispersionPressWithControlPositiveMAP <- ggplot(finalDivergePressInfo, aes(x=MAP, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Divergence") +
-  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(divergeRegText)
-finalDispersionPressWithControlNegativeMAP <- ggplot(finalConvergePressInfo, aes(x=MAP, y=disp)) +
-  geom_point(shape=1) +
-  geom_smooth(method=lm, se=T, color="black") +
-  ggtitle("Convergence") +
-  scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
-  scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
-  coord_cartesian(ylim=c(0,0.6)) +
-  annotation_custom(convergeRegText)
-pushViewport(viewport(layout=grid.layout(1,3))) 
-print(finalMeanPressMAP, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-print(finalDispersionPressWithControlPositiveMAP, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-print(finalDispersionPressWithControlNegativeMAP, vp=viewport(layout.pos.row=1, layout.pos.col=3))
+# #plots with number of manipulations
+# finalMeanPressMAP <- ggplot(finalMeanPressInfo, aes(x=MAP.x, y=dist)) +
+#   geom_point(shape=1) +
+#   geom_smooth(method=lm, se=T, color="black") +
+#   ggtitle("Change in Mean") +
+#   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+#   scale_y_continuous(breaks=seq(0,1,0.1), name="Change in Mean") +
+#   coord_cartesian(ylim=c(0,1)) +
+#   annotation_custom(meansRegText)
+# finalDispersionPressWithControlPositiveMAP <- ggplot(finalDivergePressInfo, aes(x=MAP, y=disp)) +
+#   geom_point(shape=1) +
+#   geom_smooth(method=lm, se=T, color="black") +
+#   ggtitle("Divergence") +
+#   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+#   scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
+#   coord_cartesian(ylim=c(0,0.6)) +
+#   annotation_custom(divergeRegText)
+# finalDispersionPressWithControlNegativeMAP <- ggplot(finalConvergePressInfo, aes(x=MAP, y=disp)) +
+#   geom_point(shape=1) +
+#   geom_smooth(method=lm, se=T, color="black") +
+#   ggtitle("Convergence") +
+#   scale_x_continuous(breaks=seq(0,185,50), name="Gamma Diversity") +
+#   scale_y_continuous(breaks=seq(0,0.6,0.1), name="Dispersion") +
+#   coord_cartesian(ylim=c(0,0.6)) +
+#   annotation_custom(convergeRegText)
+# pushViewport(viewport(layout=grid.layout(1,3))) 
+# print(finalMeanPressMAP, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+# print(finalDispersionPressWithControlPositiveMAP, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+# print(finalDispersionPressWithControlNegativeMAP, vp=viewport(layout.pos.row=1, layout.pos.col=3))
 
 
 #################################################################################################
-#by manipulation type
-waterMean <- subset(finalMeanPressInfo, subset=(water==1))
-waterMean$mani_type <- "water"
-waterDiv <- subset(finalDivergePressInfo, subset=(water==1 & plot_mani.x!=0))
-waterDiv$mani_type <- "water"
-waterCon <- subset(finalConvergePressInfo, subset=(water==1 & plot_mani.x!=0))
-waterCon$mani_type <- "water"
-nutsMean <- subset(finalMeanPressInfo, subset=(nutrients==1))
-nutsMean$mani_type <- "nutrients"
-nutsDiv <- subset(finalDivergePressInfo, subset=(nutrients==1 & plot_mani.x!=0))
-nutsDiv$mani_type <- "nutrients"
-nutsCon <- subset(finalConvergePressInfo, subset=(nutrients==1 & plot_mani.x!=0))
-nutsCon$mani_type <- "nutrients"
-carbonMean <- subset(finalMeanPressInfo, subset=(carbon==1))
-carbonMean$mani_type <- "carbon"
-carbonDiv <- subset(finalDivergePressInfo, subset=(carbon==1 & plot_mani.x!=0))
-carbonDiv$mani_type <- "carbon"
-carbonCon <- subset(finalConvergePressInfo, subset=(carbon==1 & plot_mani.x!=0))
-carbonCon$mani_type <- "carbon"
-meanManiType <- rbind(waterMean, nutsMean, carbonMean)
-divergeManiType <- rbind(waterDiv, nutsDiv, carbonDiv)
-divergeManiType$broad.ecosystem.type <- as.character(divergeManiType$broad.ecosystem.type)
-convergeManiType <- rbind(waterCon, nutsCon, carbonCon)
-convergeManiType$broad.ecosystem.type <- as.character(convergeManiType$broad.ecosystem.type)
-
 #plotting by manipulation type
-meanManiPlot <- ggplot(barGraphStats(data=meanManiType, variable="dist", byFactorNames=c("mani_type")), aes(x=mani_type, y=mean)) +
-  geom_bar(stat="identity") +
-  geom_errorbar(aes(ymin=mean-(1.96*se), ymax=mean+(1.96*se), width=0.2)) +
-  scale_y_continuous(breaks=(seq(0, 0.4, 0.1)), name="Change in Mean") +
-  coord_cartesian(ylim=c(0,0.4)) +
-  xlab("Manipulation Type") +
-  ggtitle("Change in Mean")
+
 divergeManiPlot <- ggplot(barGraphStats(data=divergeManiType, variable="disp", byFactorNames=c("mani_type")), aes(x=mani_type, y=mean)) +
   geom_bar(stat="identity") +
   geom_errorbar(aes(ymin=mean-(1.96*se), ymax=mean+(1.96*se), width=0.2)) +
@@ -431,19 +443,6 @@ pushViewport(viewport(layout=grid.layout(1,3)))
 print(meanManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(divergeManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 print(convergeManiPlot, vp=viewport(layout.pos.row=1, layout.pos.col=3))
-
-#################################################################################################
-#mixed effects model
-###need to add in manipulation type
-
-summary(meansMultipleRegression <- lm(dist ~ plot_mani.x + mani_type + trt.year + MAP.x + ANPP.x + species_num.x + broad.ecosystem.type.y, data=meanManiType))
-anova(meansMultipleRegression)
-
-summary(divergeMultipleRegression <- lm(disp ~ plot_mani.x + mani_type + trt.year + MAP + ANPP + species_num + broad.ecosystem.type, data=divergeManiType))
-anova(divergeMultipleRegression)
-
-summary(convergeMultipleRegression <- lm(disp ~ plot_mani.x + mani_type + trt.year + MAP + ANPP + species_num + broad.ecosystem.type, data=convergeManiType))
-anova(convergeMultipleRegression)
 
 
 #################################################################################################
