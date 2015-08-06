@@ -49,7 +49,17 @@ ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
-
+#look at each site's response
+ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
+  geom_smooth(method=loess, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
+  scale_x_continuous('Treatment Year') +
+  scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('Distance Between Centroids', limits=c(0,1)) +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(override.aes=list(size=1))) +
+  facet_wrap(~site_code, ncol=5)
 
 #subset out dispersion data
 dispersion <- subset(all, subset=(mean.disp=='disp'))
@@ -85,7 +95,17 @@ ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=di
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
-
+#look at each site's response
+ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
+  geom_smooth(method=loess, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
+  scale_x_continuous('Treatment Year') +
+  scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(override.aes=list(size=1))) +
+  facet_wrap(~site_code, ncol=5)
 
 
 
