@@ -95,19 +95,90 @@ ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=di
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
-#look at each site's response
-ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
-  geom_smooth(method=loess, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
-  scale_x_continuous('Treatment Year') +
-  scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-  scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
-  theme(legend.position='right', legend.direction='vertical',
-        legend.title=element_text(size=24)) +
-  guides(col=guide_legend(override.aes=list(size=1))) +
-  facet_wrap(~site_code, ncol=5)
+# #look at each site's response
+# ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
+#   geom_smooth(method=loess, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
+#   scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+#   theme(legend.position='right', legend.direction='vertical',
+#         legend.title=element_text(size=24)) +
+#   guides(col=guide_legend(override.aes=list(size=1))) +
+#   facet_wrap(~site_code, ncol=5)
 
+# #find experiments where diserpsion increased or decreased in last year
+# finalYear <- aggregate(trt.year~expt, max, data=dispersionDiff)
+# dispersionDiffFinal <- merge(finalYear, dispersionDiff, by=c('expt', 'trt.year'))
+# dispersionDiffFinal$con_div <- with(dispersionDiffFinal, ifelse(dist_RR<=0, 'con', 'div'))
+# keep <- c('label', 'con_div')
+# dispersionDiffFinal <- dispersionDiffFinal[,colnames(dispersionDiffFinal) %in% keep]
+# dispersionDiffCategorized <- merge(dispersionDiffFinal, dispersionDiff, by='label')
+# 
+# #only datasets that converged based on final year
+# ggplot(data=subset(dispersionDiffCategorized, trt.year>0 & dist_RR<3 & con_div=='con'), aes(x=trt.year, y=dist_RR)) +
+#   #geom_point(aes(y=dist_RR, colour=order)) +
+#   geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+#   geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+#   scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+#   theme(legend.position='right', legend.direction='vertical',
+#         legend.title=element_text(size=24)) +
+#   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+# 
+# #only datasets that diverged based on final year
+# ggplot(data=subset(dispersionDiffCategorized, trt.year>0 & dist_RR<3 & con_div=='div'), aes(x=trt.year, y=dist_RR)) +
+#   #geom_point(aes(y=dist_RR, colour=order)) +
+#   geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+#   geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+#   scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+#   theme(legend.position='right', legend.direction='vertical',
+#         legend.title=element_text(size=24)) +
+#   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+# 
+# #get datasets that converge or diverge based on slope
+# slopesDisp <- ddply(dispersionDiff, c('expt', 'label'), function(x) {
+#   model <- lm(dist_RR~log(trt.year+1), data=x)
+#   coef(model)
+# })
+# names(slopesDisp)[names(slopesDisp)=="log(trt.year + 1)"] <- "slope"
+# slopesDisp$con_div <- with(slopesDisp, ifelse(slope<=0, 'con', 'div'))
+# keep <- c('label', 'con_div')
+# slopesDisp <- slopesDisp[,colnames(slopesDisp) %in% keep]
+# dispersionDiffSlopeCategorized <- merge(slopesDisp, dispersionDiff, by='label')
 
+# #only datasets that converged based on slope
+# ggplot(data=subset(dispersionDiffSlopeCategorized, trt.year>0 & dist_RR<3 & con_div=='con'), aes(x=trt.year, y=dist_RR)) +
+#   #geom_point(aes(y=dist_RR, colour=order)) +
+#   geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+#   geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+#   scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+#   theme(legend.position='right', legend.direction='vertical',
+#         legend.title=element_text(size=24)) +
+#   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+# 
+# #only datasets that diverged based on slope
+# ggplot(data=subset(dispersionDiffSlopeCategorized, trt.year>0 & dist_RR<3 & con_div=='div'), aes(x=trt.year, y=dist_RR)) +
+#   #geom_point(aes(y=dist_RR, colour=order)) +
+#   geom_smooth(aes(y=dist_RR, colour=order, group=interaction(expt, order)), method=lm, formula=y~log(x), se=F, size=0.25) +
+#   geom_smooth(aes(y=dist_RR, colour=order, fill=order, group=order), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+#   scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+#   theme(legend.position='right', legend.direction='vertical',
+#         legend.title=element_text(size=24)) +
+#   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+
+#subset out nutrient experiments and see if the amount of nutrients matters
 
 
 # meanTrue <- ddply(maniType, c('mean.disp', 'plot_mani.x', 'trt.year', 'expt'), summarise,
