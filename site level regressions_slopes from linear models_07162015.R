@@ -1,8 +1,10 @@
 library(ggplot2)
 library(plyr)
+library(lme4)
 library(nlme)
 library(colorspace)
 library(colorRamps)
+library(visreg)
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=32, vjust=-0.35), axis.text.x=element_text(size=24),
@@ -18,15 +20,30 @@ setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 info <- read.csv('exp_info072015.csv')
 
 #read in full change in mean and dispersion dataset
-all <- read.csv('dispersion_and_means_press_experiments_with_exp_info_03232015.csv')
+all <- read.csv('dispersion_and_means_press_experiments_with_exp_info_08062015.csv')
 
 #subset out change in means
 means <- subset(all, subset=(mean.disp=='mean'))
 means$dist_log <- log(means$dist)
 means$dist_sqrt <- sqrt(means$dist)
+means$trt.year_log <- log(means$trt.year)
 
 #run mixed effects model with full dataset for change in mean
-summary(meansFullModelExpt <- lme(dist_sqrt~plot_mani.x*trt.year, random=~1|expt, data=subset(means, trt.year>0)))
+summary(meansFullModelExpt <- lmer(dist_sqrt ~ trt.year*plot_mani.x + (1|label), data=subset(means, trt.year>0), family=binomial(logit)))
+# summary(meansFullModelExpt <- lmer(dist ~ trt.year_log*plot_mani.x + (1|expt/(trt.year_log*plot_mani.x)+label), data=subset(means, trt.year>0)))
+# summary(meansFullModelExpt <- lmer(dist ~ trt.year_log*plot_mani.x + (1|expt/(trt.year_log*plot_mani.x)+label), data=subset(means, trt.year>0)))
+# summary(meansFullModelExpt <- lme(dist ~ trt.year_log*plot_mani.x, random=~1|expt/label, data=subset(means, trt.year>0)))
+# summary(meansFullModelExpt <- lmer(dist_sqrt~plot_mani.x*trt.year, random=~1|expt, data=subset(means, trt.year>0)))
+
+plot(ranef(meansFullModelExpt)$label[,2], ranef(meansFullModelExpt)$label[,3])
+
+#get slopes and intercepts of fit model
+meansIntercepts <- fixef(meansFullModelExpt)[1] + unlist(ranef(meansFullModelExpt)$label)
+meansSlopes <- fixef(meansFullModelExpt)[2] + unlist(ranef(meansFullModelExpt)$label)
+meansModelData <- data.frame(intercepts=meansIntercepts, slopes=meansSlopes, label=unique(means$label))
+labelPlotMani <- unique(means[c('label', 'plot_mani.x')])
+meansModelDataLabel <- merge(meansModelData, labelPlotMani, by='label')
+
 
 #figures for experiment-level data for change in mean
 colorMani <- c('#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58')
@@ -36,6 +53,20 @@ colorManiDiverge <- c('#313695', '#4575b4', '#74add1', '#abd9e9', '#f46d43', '#d
 
 means$order <- factor(as.character(means$plot_mani.x), levels=as.character(c(0:7)))
 
+#means mixed effect model visualization
+ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
+  geom_point(pch=1) +
+  facet_wrap(~expt) +
+  geom_abline(aes(intercept=intercepts, slope=slopes), alpha=0.5, data=meansModelDataLabel) +
+  scale_x_continuous('Treatment Year') +
+  scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('Distance Between Centroids', limits=c(0,1)) +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+
+#raw data figure
 ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
   #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
   #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
@@ -61,16 +92,56 @@ ggplot(data=subset(means, trt.year>0), aes(x=trt.year, y=dist_sqrt)) +
   guides(col=guide_legend(override.aes=list(size=1))) +
   facet_wrap(~site_code, ncol=5)
 
+#means with trt intensity
+means$n_intensity <- with(means, n+p+k-soil_carbon)
+
+#run mixed effects model with nutrient addition dataset for change in mean
+summary(meansIntensityExpt <- lmer(dist_sqrt ~ trt.year*n_intensity + (1|label), data=subset(means, trt.year>0 & nutrients!=0), family=binomial(logit)))
+
+ggplot(data=subset(means, trt.year>0 & nutrients!=0), aes(x=trt.year, y=dist_sqrt)) +
+  #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
+  #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
+  geom_smooth(aes(y=dist_sqrt, colour=n_intensity, group=interaction(expt, n_intensity)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist_sqrt, colour=n_intensity, fill=n_intensity, group=n_intensity), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+  scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('Distance Between Centroids', limits=c(0,1)) +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24))
+
+#run mixed effects model with precip trt dataset for change in mean
+summary(meansIntensityExpt <- lmer(dist_sqrt ~ trt.year*precip + (1|label), data=subset(means, trt.year>0 & nutrients!=0), family=binomial(logit)))
+
+ggplot(data=subset(means, trt.year>0 & water!=0), aes(x=trt.year, y=dist_sqrt)) +
+  #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
+  #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
+  geom_smooth(aes(y=dist_sqrt, colour=precip, group=interaction(expt, precip)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist_sqrt, colour=precip, fill=precip, group=precip), method=lm, formula=y~log(x), size=3, se=T, alpha=0.5) +
+  scale_x_continuous('Treatment Year') +
+#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+#   scale_colour_gradientn(colour=rainbow(3), name='Nutrient\nIntensity') +
+  scale_y_continuous('Distance Between Centroids', limits=c(0,1)) +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
+
+###########################################
+###########################################
+###########################################
+
+
 #subset out dispersion data
 dispersion <- subset(all, subset=(mean.disp=='disp'))
 
 #average dispersion across plots
-dispersionAverage <- aggregate(data=dispersion, dist ~ site_code + project_name + community_type + label + expt.year + plot_mani.x + dist.1 + dist.2 + mean.disp + site + cal.year + trt.year + expt + dg + treatment, mean)
+dispersionAverage <- aggregate(data=dispersion, dist ~ site_code + project_name + community_type + label + expt.year + plot_mani.x + dist.1 + dist.2 + mean.disp + site + cal.year + trt.year + expt + dg + treatment + nutrients + n + p + k + soil_carbon + precip + water, mean)
 
 #subset out controls and treatments and merge back with treatment data
 dispersionTrt <- subset(dispersionAverage, subset=(plot_mani.x>0))
 dispersionCtl <- subset(dispersionAverage, subset=(plot_mani.x==0))
-dispersionCtlCondensed <- dispersionCtl[,c(1:3, 11, 16)]
+keep <- c('site_code', 'project_name', 'community_type', 'cal.year', 'dist')
+dispersionCtlCondensed <- dispersionCtl[,colnames(dispersionCtl) %in% keep]
 names(dispersionCtlCondensed)[names(dispersionCtlCondensed)=='dist'] <- 'ctl_dist'
 dispersionDiff <- merge(dispersionCtlCondensed, dispersionTrt, by=c("site_code", "project_name", "community_type", "cal.year"))
 
@@ -95,17 +166,58 @@ ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=di
         legend.title=element_text(size=24)) +
   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
-# #look at each site's response
-# ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
-#   geom_smooth(method=loess, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
-#   scale_x_continuous('Treatment Year') +
-#   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-#   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
-#   scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
-#   theme(legend.position='right', legend.direction='vertical',
-#         legend.title=element_text(size=24)) +
-#   guides(col=guide_legend(override.aes=list(size=1))) +
-#   facet_wrap(~site_code, ncol=5)
+#no effect of number of factors
+ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=dist_RR)) +
+  #geom_point(aes(y=dist_RR, colour=order)) +
+  geom_smooth(aes(y=dist_RR, group=interaction(expt, order)), colour='gray40', method=lm, formula=y~log(x), se=F, size=0.25) +
+  geom_smooth(aes(y=dist_RR), colour='black', method=lm, formula=y~log(x), size=3, se=T, alpha=0.9) +
+  scale_x_continuous('Treatment Year') +
+  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control')
+
+#look at each site's response
+ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3 & site_code=='CDR'), aes(x=trt.year, y=dist_RR)) +
+  geom_smooth(method=lm, aes(y=dist, colour=order, group=interaction(expt, order)), se=F) +
+  scale_x_continuous('Treatment Year') +
+  scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('Relative Difference in Dispersion\nbetween Treatment and Control') +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(override.aes=list(size=1))) +
+  facet_wrap(~site_code, ncol=5) +
+  facet_wrap(~expt)
+
+#dispersion with trt intensity
+dispersionDiff$n_intensity <- with(dispersionDiff, n+p+k-soil_carbon)
+
+#run mixed effects model with nutrient addition dataset for change in mean
+summary(dispersionIntensityExpt <- lmer(dist_RR ~ trt.year*n_intensity + (1|label), data=subset(dispersionDiff, trt.year>0 & nutrients!=0)))
+
+ggplot(data=subset(dispersionDiff, trt.year>0 & nutrients!=0), aes(x=trt.year, y=dist_RR)) +
+  #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
+  #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
+  geom_smooth(aes(y=dist_RR, colour=n_intensity, group=interaction(n_intensity)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  scale_x_continuous('Treatment Year') +
+  #   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  #   scale_colour_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  scale_y_continuous('dist_RR') +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24))
+
+#run mixed effects model with precip trt dataset for change in mean
+summary(dispersionIntensityExpt <- lmer(dist_RR ~ trt.year*precip + (1|label), data=subset(dispersionDiff, trt.year>0 & water!=0)))
+
+ggplot(data=subset(dispersionDiff, trt.year>0 & water!=0), aes(x=trt.year, y=dist_RR)) +
+  #geom_smooth(aes(y=dist, colour=order, group=interaction(expt, order)), method=lm, formula=y~poly(x,2), se=F, size=0.25) +
+  #geom_line(aes(y=dist, colour=order, group=interaction(expt, order))) +
+  geom_smooth(aes(y=dist_RR, colour=precip, group=interaction(precip)), method=lm, formula=y~log(x), se=F, size=0.25) +
+  scale_x_continuous('Treatment Year') +
+  #   scale_fill_manual(values=colorManiDiverge, name='Factors\nManipulated') +
+  #   scale_colour_gradientn(colour=rainbow(3), name='Nutrient\nIntensity') +
+  scale_y_continuous('dist_RR') +
+  theme(legend.position='right', legend.direction='vertical',
+        legend.title=element_text(size=24)) +
+  guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
 # #find experiments where diserpsion increased or decreased in last year
 # finalYear <- aggregate(trt.year~expt, max, data=dispersionDiff)
@@ -178,7 +290,39 @@ ggplot(data=subset(dispersionDiff, trt.year>0 & dist_RR<3), aes(x=trt.year, y=di
 #         legend.title=element_text(size=24)) +
 #   guides(col=guide_legend(nrow=1, override.aes=list(size=1)))
 
-#subset out nutrient experiments and see if the amount of nutrients matters
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # meanTrue <- ddply(maniType, c('mean.disp', 'plot_mani.x', 'trt.year', 'expt'), summarise,

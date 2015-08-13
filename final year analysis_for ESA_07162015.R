@@ -39,7 +39,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ###################################################################################################
 
 #read in the dispersion/mean dataset
-allData<-read.csv('dispersion_and_means_press_experiments_with_exp_info_03232015.csv')
+allData<-read.csv('dispersion_and_means_press_experiments_with_exp_info_08062015.csv')
 
 #read in experiment information dataset
 expInfo <- read.csv('exp_info072015.csv')
