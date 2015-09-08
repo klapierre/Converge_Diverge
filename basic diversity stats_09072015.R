@@ -68,7 +68,8 @@ rrDiversity <- merge(trtMeanDiversity, ctlMeanDiversity, by=c('expt', 'treatment
 rrDiversity$S_lnRR <- with(rrDiversity, log(S/S_ctl))
 rrDiversity$J_lnRR <- with(rrDiversity, log(J/J_ctl))
 
-#mixed effects model for richness and evenness
+#mixed effects model for richness and evenness 
+#these models are not correct, need more work to properly account for random effects of site and experiment
 summary(richnessModel <- lmer(S_lnRR ~ treatment_year*plot_mani + (1|expt), data=subset(rrDiversity, treatment_year>0)))
 summary(evennessModel <- lmer(J_lnRR ~ treatment_year*plot_mani + (1|expt), data=subset(rrDiversity, treatment_year>0)))
 
