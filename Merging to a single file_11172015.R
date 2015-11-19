@@ -126,11 +126,13 @@ biocon2<-merge(biocon, biocon_names, by="species_code", all=T)%>%
 
 e001<-read.delim("CDR_e001_revised.txt")%>%
   mutate(block=0)%>%
-  select(-N)
+  select(-N)%>%
+  filter(abundance!=0)
 
 mwatfer<-read.csv("MNR_watfer.csv")%>%
   mutate(genus_species=species_name)%>%
-  select(-X, -species_name, -species)
+  select(-X, -species_name, -species)%>%
+  filter(abundance!=0)
 
 e002<-read.delim("CDR_e002.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -p, -k, -lime, -n, -other_nut, -burn, -herb_removal, -true_plot_mani, -plot_mani, -cessation, -dist, -data_type, -species_num)%>%
@@ -161,8 +163,8 @@ yu2<-merge(yu, yu_names,by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
-interaction<-read.csv("RIO_interaction.csv")%>%
-  select(-N, -precip, -precip_vari, -X, -X.1, -X.2, -X.3, -X.4)%>%
+interaction<-read.delim("RIO_interaction.txt")%>%
+  select(-N, -precip, -precip_vari)%>%
   gather(genus_species, abundance, Mulinum.spinosum:Forb.spp)%>%
   mutate(block=0)%>%
   filter(abundance!=0)
@@ -504,7 +506,7 @@ gane2<-merge(gane, gane_names, by="species_code", all=T)%>%
   select(-species_code)
 
 #merge all datasets
-combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, e0022, 
+combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, e0022,
                e62, esa2, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2,herbdiv2,
                herbwood2, imagine2, irg2, kgfert2, lind2, mat22, megarich2, mnt2, nfert2, nme2, nsfc2, oface2, 
                pennings2, pplots2,pq2, yu2, ramps2, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72,
@@ -514,6 +516,12 @@ combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2,
 
 write.csv(combine, "AllSpDataRaw_11192015.csv")
 
+###get species list
+species_list<-combine%>%
+  select(site_code, project_name, genus_species)%>%
+  unique()
+
+write.csv(species_list, "All_SpeciesList.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -521,103 +529,11 @@ totcov<-combine%>%
   group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id)%>%
   summarize(totcov=sum(abundance))
 
-relcov<-
+relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id"))%>%
+  mutate(relcov=abundance/totcov)%>%
+  select(-abundance, -totcov)
 
-#make a unique ID for each plot in the final dataset by combining id, project name, site name
-combine$unid<-paste(combine$id, combine$project_name, combine$site_code, sep="_")
+write.csv(relcov, "RelativeCover_11192015.csv")
 
-#make a dataframe with only the informational data
-information<-combine[,c(1:22,255:279)]
 
-#make a dataframe with only the species data
-species<-combine[,c(23:254,279)]
 
-# head(information)
-# head(species)
-
-#transpose to get species in rows
-melt<-melt(species,id="unid")
-head(melt)
-
-#get sum of cover for each plot
-sumcover<-aggregate(value~unid, FUN="sum", data=melt)
-
-#merge species data and sum of cover by plot
-relcov<-merge(sumcover, melt, by="unid")
-# head(relcov)
-
-#get only plots with some cover > 0 (for some reason lots of plots have cover=0)
-relcov_a<-subset(relcov, subset=(value.x!=0))
-relcov_b<-subset(relcov, subset=(value.x==0))
-
-#calculate relative cover for each species in each plot
-relcov_a$relcov<-relcov_a$value.y/relcov_a$value.x
-
-#delete the old cover data and sum of cover data
-relcov2<-relcov_a[,-c(2,4)]
-
-# write.csv(relcov2, "all_relcov.csv")
-
-#re-transpose to get species as columns
-relcov3<-dcast(relcov2, unid ~ variable)
-
-#merge the species data back together with the informational data
-relcov4<-merge(information, relcov3, by="unid")
-
-#write the file! yay!
-write.csv(relcov4, "all_relcov2_08062015.csv")
-
-# combine$sumcover<-rowSums(combine[,c(23:254)])
-
-# ####checking each dataset for issues
-# 
-# str(bffert)
-# str(bgp)
-# str(biocon)
-# str(bowman)
-# str(ccd)
-# str(clip)
-# str(clonal)
-# str(culardoch)
-# str(e001)
-# str(e002)
-# str(e6)
-# str(esa)
-# str(events)
-# str(exp1)
-# str(face)
-# str(fireplots)
-# str(gane)
-# str(gap2)
-# str(gb)
-# str(gce)
-# str(herbdiv)
-# str(herbwood)
-# str(imagine)
-# str(irg)
-# str(kgfert)
-# str(lind)
-# str(mat2)
-# str(megarich)
-# str(mnt)
-# str(nfert)
-# str(nsfc)
-# str(oface)
-# str(pennings)
-# str(pplots)
-# str(pq)
-# str(qiang)
-# str(ramps)
-# str(rhps)
-# str(snfert)
-# str(snow)
-# str(study119)
-# str(study278)
-# str(t7)
-# str(tide)
-# str(uk)
-# str(wapaclip)
-# str(warmnut)
-# str(watering)
-# str(wenndex)
-# str(wet)
