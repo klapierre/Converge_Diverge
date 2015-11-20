@@ -5,6 +5,9 @@ library(gtools)
 library(plyr)
 library(grid)
 library(lme4)
+library(codyn)
+library(tidyr)
+library(dplyr)
 #kim
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 #meghan
@@ -41,131 +44,90 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ###################################################################################################
 
 #read in the merged dataset
-alldata<-read.csv("RelativeCover_11192015.csv")
+alldata<-read.csv("SpeciesRelativeAbundance_11202015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))
 
-#remove these five datasets because they have issues getting Bray-Curtis values; need to get them working at some point
-alldata_a<-subset(alldata, subset=(cessation!=1))
-alldata2<-subset(alldata_a, subset=(project_name!="ESA"))
+expinfo<-read.csv("ExperimentInformation_11202015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))%>%
+  select(exp_year, plot_mani, treatment)
 
-#project_name!="e002" & project_name!="ESA" & site_code!="ORNL" & project_name!="HerbWood" & project_name!="UK")
+alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=T)%>%
+  filter(project_name!="e001"&project_name!="e002")#there are known problems with cdr_e001
 
-# makes a label for each unique year in each community, experiment, site
-alldata2$label=as.factor(paste(alldata2$site_code, alldata2$project_name, alldata2$community_type, alldata2$calendar_year, alldata2$treatment_year, sep="::"))
 
-#makes a dataframe with just the experiment descriptor variables (e.g., plot_mani, factors manipulated, etc)
-expInfo <- ddply(alldata2, c("site_code", "project_name", "community_type", "treatment", "data_type", "precip_vari_season", "precip_season"), summarise,
-                 nutrients=mean(nutrients),
-                 light=mean(light),
-                 carbon=mean(carbon),
-                 water=mean(water),
-                 other_manipulation=mean(other_manipulation),
-                 num_manipulations=mean(num_manipulations),
-                 clip=mean(clip),
-                 temp=mean(temp),
-                 precip=mean(precip),
-                 plot_mani=mean(plot_mani),
-                 species_num=mean(species_num),
-                 n=mean(n),
-                 p=mean(p),
-                 k=mean(k),
-                 herb_removal=mean(herb_removal),
-                 burn=mean(burn),
-                 true_num_manipulations=mean(true_num_manipulations),
-                 c=mean(c),
-                 plant_mani=mean(plant_mani),
-                 true_plot_mani=mean(true_plot_mani),
-                 lime=mean(lime),
-                 other_nut=mean(other_nut),
-                 cessation=mean(cessation),
-                 dist=mean(dist),
-                 precip_vari=mean(precip_vari),
-                 patchiness=mean(patchiness),
-                 other_manipulations=mean(other_manipulations),
-                 l=mean(l),
-                 fungicide=mean(fungicide),
-                 soil_carbon=mean(soil_carbon),
-                 grazed=mean(grazed),
-                 soil_depth=mean(soil_depth))
-names(expInfo) <- sub("^dist$", "disturbance", names(expInfo))
-expInfo$label=as.factor(paste(expInfo$site_code, expInfo$project_name, expInfo$community_type, expInfo$treatment, sep="::"))
+##################################################### LOOPING THROUGH
+#makes a new dataframe with just the label;
+exp_year=alldata2%>%
+  select(exp_year)%>%
+  unique()
 
-#import experiment ANPP and MAP data
-expSiteInfoWithAllExp<-read.csv("Experiment_Info.csv")
-
-#drop SGS ESA from exp info until we figure out how to include cessation studies (SGS ESA) and pulse studies (dcgs gap) in the main analysis
-expSiteInfo <- subset(expSiteInfoWithAllExp, project_name!='ESA' & project_name!='gap')
-
-#makes a new dataframe with just the label; here, expt.year includes all site, project, community, exp yr, trt yr designations
-expt.year.list=data.frame(expt.year=levels(droplevels(alldata2$label))) 
-
+###first, gets bray curtis dissimilarity values for each year, trt, between plots
+###second, gets distance of each plot within a trt to the trt centroid 
+###third: mean_change is the distance between trt to control centriods
+####fourth: dispersion is the average dispersion of plots within a treatment to treatment centriod
 #makes an empty dataframe
 for.analysis=data.frame(row.names=1) 
 
-#be sure to change which columns are species columns!!
-colnames(alldata2) 
-
-###STOP STOP STOP: do not run the next step unless you have checked that the columns are right for the species data
-
-#####################################################
-
-###first, gets mean bray curtis dissimilarity values for each year, trt, and exp between treatments (i.e., average distance between centroids)
-###second, gets distance of each plot within a trt to the trt centroid (i.e., mean for each plot gives dispersion, but we'll need to take mean later)
-for(i in 1:length(expt.year.list$expt.year)) {
+for(i in 1:length(exp_year$exp_year)) {
   
   #creates a dataset for each unique year, trt, exp combo
-  dataset=alldata2[alldata2$label==as.character(expt.year.list$expt.year[i]),]
+  subset=alldata2[alldata2$exp_year==as.character(exp_year$exp_year[i]),]%>%
+    select(exp_year, treatment, plot_mani, genus_species, relcov, plot_id)
   
   #need this to keep track of plot mani
-  labels=droplevels(unique(dataset[,c("plot_mani", "treatment")])) 
+  labels=subset%>%
+    select(plot_mani, treatment)%>%
+    unique()
   
-  #subset only the columns that have species data in them
-  species=dataset[, 49:280] 
-  
+  #transpose data
+  species=subset%>%
+    spread(genus_species, relcov, fill=0)
+
   #calculate bray-curtis dissimilarities
-  bc=vegdist(species, method="bray") 
+  bc=vegdist(species[,5:ncol(species)], method="bray")
   
-  #calculate distances to centroid (i.e., dispersion)
-  disp=betadisper(bc, dataset$treatment, type="centroid")
+  #calculate distances of each plot to treatment centroid (i.e., dispersion)
+  disp=betadisper(bc, species$treatment, type="centroid")
   
   #getting distances among treatment centroids; these centroids are in BC space so that's why this uses euclidean distances
-  dist.among.centroids=as.data.frame(as.matrix(vegdist(disp$centroids, method="euclidean"))) 
+  cent_dist=as.data.frame(as.matrix(vegdist(disp$centroids, method="euclidean"))) 
   
-  #extracting only the distances we need and adding labels for the comparisons; dist.1 is the name of the control and dist.2 is the treatment of interest
-  trt.dist.to.control.centroid=data.frame(expt.year=expt.year.list$expt.year[i], 
-                                          dist.1=labels$treatment[labels$plot_mani==0], 
-                                          dist.2=row.names(dist.among.centroids), 
-                                          dist=t(dist.among.centroids[names(dist.among.centroids)==labels$treatment[labels$plot_mani==0],])) 
-  
+  #extracting only the distances we need and adding labels for the comparisons;
+  cent_C_T=data.frame(exp_year=exp_year$exp_year[i],
+                      treatment=row.names(cent_dist), 
+                      dist=t(cent_dist[names(cent_dist)==labels$treatment[labels$plot_mani==0],]))
   #not sure why the name didn't work in the previous line of code, so fixing it here
-  names(trt.dist.to.control.centroid)[4]="dist" 
+  names(cent_C_T)[3]="mean_change" 
   
-  #dropping control vs control (=0)
-  trt.dist.to.control.centroid=trt.dist.to.control.centroid[!trt.dist.to.control.centroid$dist.1==trt.dist.to.control.centroid$dist.2,] 
-  
-  #adding a plot_id column so dataframe has the correct number and names of columns so the rbind will work
-  dist.to.centroid=merge(trt.dist.to.control.centroid, labels, by.x="dist.2", by.y="treatment") 
-  dist.to.centroid$plot_id="NA" #note, for means in the final dataset, plot_id="NA"
-  
-  #pasting into dataframe created in previous step
-  for.analysis=rbind(for.analysis, dist.to.centroid) 
-  
-  #getting dispersions within treatments:
-  bc.d=as.data.frame(as.matrix(bc)) #dataframe of bray curtis dissimilarities among plots in each year, trt, exp
-  bc.d$trt=dataset$treatment
-  bc.d$plot.mani=dataset$plot_mani
-  bc.d$plot_id=dataset$plot_id
-  bc.control=bc.d[bc.d$plot.mani==0,] #subset only the control plots
+  #merging back with labels to get back plot_mani
+  centroid=merge(cent_C_T, labels, by="treatment")
   
   #collecting and labeling distances to centroid from betadisper
-  trt.dist.to.centroids=data.frame(data.frame(expt.year=expt.year.list$expt.year[i], 
-                                              plot_id=dataset$plot_id, 
-                                              plot_mani=dataset$plot_mani, 
-                                              dist.1=dataset$treatment, 
-                                              dist.2=dataset$treatment, 
-                                              dist=disp$distances)) 
+  trt_disp=data.frame(data.frame(exp_year=exp_year$exp_year[i], 
+                                              plot_id=species$plot_id, 
+                                              treatment=species$treatment,
+                                              dist=disp$distances))%>%
+    tbl_df%>%
+    group_by(exp_year, treatment)%>%
+    summarize(dispersion=mean(dist))
   
-  #pasting dispersions into the dataframe made for this analysis
-  for.analysis=rbind(trt.dist.to.centroids, for.analysis)  
+  distances<-merge(centroid, trt_disp, by=c("exp_year","treatment"))
+  
+  #getting diversity indixes
+    H<-diversity(species[,5:ncol(species)])
+    S<-specnumber(species[,5:ncol(species)])
+    InvD<-diversity(species[,5:ncol(species)],"inv")
+    SimpEven<-InvD/S
+    out1<-cbind(H, S)
+    output<-cbind(out1, SimpEven)
+    divmeasure<-cbind(species, output)%>%
+      select(exp_year, treatment, H, S, SimpEven)
+    
+    ##merging all measures of diversity
+    alldiv<-merge(distances, divmeasure, by=c("exp_year","treatment"))
+
+      #pasting dispersions into the dataframe made for this analysis
+    for.analysis=rbind(alldiv, for.analysis)  
 }
 
 #####################################################
