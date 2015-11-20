@@ -537,4 +537,3 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
 write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_11202015.csv")
 
 
-
