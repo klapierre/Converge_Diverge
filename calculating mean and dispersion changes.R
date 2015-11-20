@@ -5,8 +5,10 @@ library(gtools)
 library(plyr)
 library(grid)
 library(lme4)
-
+#kim
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
+#meghan
+setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
@@ -39,7 +41,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ###################################################################################################
 
 #read in the merged dataset
-alldata<-read.csv("all_relcov2_08062015.csv")
+alldata<-read.csv("RelativeCover_11192015.csv")
 
 #remove these five datasets because they have issues getting Bray-Curtis values; need to get them working at some point
 alldata_a<-subset(alldata, subset=(cessation!=1))

@@ -5,9 +5,9 @@ library(dplyr)
 library(vegan)
 
 data<-read.csv("all_relcov2_08062015.csv")#old species data but has all the columns
-siteinfo<-read.csv("exp_info112015.csv")%>%
+siteinfo<-read.csv("SiteInfo_11202015.csv")%>%
   select(-X, -species_num)
-species<-read.csv("AllSpDataRaw_11192015.csv")
+species<-read.csv("SpeciesRawAbundance_11202015.csv")
 
 exp_info<-data%>%
  select(site_code, project_name, community_type, calendar_year, treatment_year, nutrients, light, carbon, water, other_manipulation, num_manipulations, clip, temp, precip, plot_mani, treatment, data_type, n, p, k, herb_removal, burn, true_num_manipulations, c, plant_mani, true_plot_mani, lime, other_nut, cessation, dist, precip_vari, precip_vari_season, patchiness, other_manipulations, l, fungicide, soil_carbon, grazed, soil_depth, precip_season, -X)%>%

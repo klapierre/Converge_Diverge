@@ -515,14 +515,14 @@ combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2,
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/AllSpDataRaw_11192015.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_11202015.csv")
 
 ###get species list
 species_list<-combine%>%
   select(site_code, project_name, genus_species)%>%
   unique()
 
-write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/All_SpeciesList.csv")
+write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_11202015.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -534,7 +534,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/RelativeCover_11192015.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_11202015.csv")
 
 
 
