@@ -24,6 +24,7 @@ rio<-read.delim("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datase
   unique()
 
 exp_info2<-rbind(exp_info, rio, mnr)
+write.csv(exp_info2, "ExperimentInformation_11202015.csv")
   
 experiment_length<-exp_info2%>%
   tbl_df()%>%
