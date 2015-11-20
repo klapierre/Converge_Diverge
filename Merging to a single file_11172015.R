@@ -166,7 +166,7 @@ yu2<-merge(yu, yu_names,by="species_code", all=T)%>%
   select(-species_code)
 
 interaction<-read.delim("RIO_interaction.txt")%>%
-  select(-N, -precip, -precip_vari)%>%
+  select(-n, -precip, -precip_vari, -plot_mani, -data_type)%>%
   gather(genus_species, abundance, Mulinum.spinosum:Forb.spp)%>%
   mutate(block=0)%>%
   filter(abundance!=0)
