@@ -10,6 +10,8 @@ library(reshape2)
 library(tidyr)
 library(dplyr)
 
+# nov 20, 2015 -checked all plots have recorded species, so the fitler abundance !=0 step will not remove any plots.
+
 nme<-read.delim("Alps_NME.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -soil_carbon, -grazed, -plot_mani, -data_type, -species_num)%>%
   gather(species_code, abundance, sp1:sp212)%>%
@@ -196,7 +198,6 @@ gap2_names<-read.delim("DCGS_gap2_specieslist.txt")
 gap22<-merge(gap2, gap2_names,by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
-
 
 nsfc<-read.delim("DL_NSFC.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -precip, -data_type,-plot_mani, -species_num)%>%
@@ -514,14 +515,14 @@ combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2,
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "AllSpDataRaw_11192015.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/AllSpDataRaw_11192015.csv")
 
 ###get species list
 species_list<-combine%>%
   select(site_code, project_name, genus_species)%>%
   unique()
 
-write.csv(species_list, "All_SpeciesList.csv")
+write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/All_SpeciesList.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -533,7 +534,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "RelativeCover_11192015.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/RelativeCover_11192015.csv")
 
 
 
