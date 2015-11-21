@@ -6,7 +6,8 @@ library(tidyr)
 library(dplyr)
 
 nme<-read.delim("Alps_NME_anpp.txt")%>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, plot_id, anpp)
+  select(site_code, project_name, treatment_year, calendar_year, plot_id, anpp)%>%
+  mutate(community_type=0)
 watering<-read.delim("ANG_watering_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, plot_id, anpp)%>%
   mutate(community_type=0)
