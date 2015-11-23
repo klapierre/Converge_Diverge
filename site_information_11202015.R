@@ -1,21 +1,23 @@
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
-#setwd("~/Dropbox/converge_diverge/datasets/LongForm")
+setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 library(tidyr)
 library(dplyr)
 library(vegan)
 
 #import the site information
-siteInfo <- read.csv("SiteInfo_11202015.csv")%>%
-  select(-X, -species_num)
+ExpInfo <- read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
+  select(-X)
 
-siteList<-siteInfo%>%
-  select(site_code)%>%
-  unique()
-write.csv(siteList, "SiteList_LatLong.csv")
+ANPP<-read.csv("")
 
-experiment_length<-exp_info2%>%
+# siteList<-ExpInfo%>%
+#   select(site_code)%>%
+#   unique()
+#write.csv(siteList, "SiteList_LatLong.csv")
+
+experiment_length<-ExpInfo%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(experiment_length=max(treatment_year))
