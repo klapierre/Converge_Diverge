@@ -10,12 +10,31 @@ library(vegan)
 ExpInfo <- read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
   select(-X)
 
-ANPP<-read.csv("")
+#Getting control ANPP
+ANPP<-read.csv("ANPP_11202015.csv")
+
+Experiment_Info<-read.csv
+
+controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
+  select(plot_mani==0)%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type, treatment_year)%>%
+  summarize(anpp=mean(anpp))%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(anpp=mean(anpp))
+
+ExpANPP<-merge(controlANPP, Experiment_Info, by=c("site_code","project_name","community_type", all=T))
 
 # siteList<-ExpInfo%>%
 #   select(site_code)%>%
 #   unique()
 #write.csv(siteList, "SiteList_LatLong.csv")
+
+ExpList<-ExpInfo%>%
+   select(site_code, project_name)%>%
+   unique()
+write.csv(ExpList, "Experiment_List.csv")
 
 experiment_length<-ExpInfo%>%
   tbl_df()%>%
