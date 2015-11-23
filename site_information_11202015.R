@@ -15,6 +15,26 @@ siteList<-siteInfo%>%
   unique()
 write.csv(siteList, "SiteList_LatLong.csv")
 
+experiment_length<-exp_info2%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(experiment_length=max(treatment_year))
+
+siteinfo2<-merge(siteinfo, experiment_length, by=c("site_code","project_name","community_type"), all=T)
+
+species_num<-species%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type, genus_species)%>%
+  summarize(rich=length(abundance))%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(rich=length(rich))
+
+site_info3<-merge(siteinfo2, species_num, by=c("site_code","project_name","community_type"), all=T)
+
+##need to rarefy species. not sure how to do this with cover data.
+
+
 ##calculate chao richness and rarefied richness for each site
 #import species data
 species <- read.csv("SpeciesRawAbundance_11202015.csv")%>%
