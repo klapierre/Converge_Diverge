@@ -9,15 +9,15 @@ setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - pleas
 library(tidyr)
 library(dplyr)
 
-nme<-read.delim("Alps_NME.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
-  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=0, p=0, k=0, other_nut=0, lime=0, 
-         soil_carbon=ifelse(treatment=='CG', 15, ifelse(treatment=='CU', 15, 0)), 
-         CO2=0, precip=0, temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0,
-         grazed=ifelse(treatment=='CoG', 1, ifelse(treatment=='CG', 1, 0)),
-         fungicide=0, herb_removal=0, ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-  unique()
+# nme<-read.delim("Alps_NME.txt")%>%
+#   select(site_code, project_name, calendar_year, treatment)%>%
+#   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
+#          n=0, p=0, k=0, other_nut=0, lime=0, 
+#          soil_carbon=ifelse(treatment=='CG', 15, ifelse(treatment=='CU', 15, 0)), 
+#          CO2=0, precip=0, temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0,
+#          grazed=ifelse(treatment=='CoG', 1, ifelse(treatment=='CG', 1, 0)),
+#          fungicide=0, herb_removal=0, ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+#   unique()
 
 watering<-read.delim("ANG_watering.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
@@ -303,7 +303,7 @@ gce<-read.delim("JSP_GCE2.txt")%>%
   unique()
 
 #if we consider clipping a light treatment, this would be one
-#I don't understand why we dropped part of this before, it seems he clipping is just a treatment
+#I don't understand why we dropped part of this before, it seems the clipping is just a treatment
 wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
@@ -328,7 +328,7 @@ t7<-read.delim("KBS_T7.txt")%>%
          initial_disturbance=1, plant_mani=0, cessation=0)%>%
   unique()
 
-bffert<-read.delim("KLUB_BFFert.txt")%>%
+bffert<-read.delim("KLU_BFFert.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N1F0', 17.5, ifelse(treatment=='N1F1', 17.5, 0)),
@@ -340,7 +340,7 @@ bffert<-read.delim("KLUB_BFFert.txt")%>%
          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
   unique()
 
-kgfert<-read.delim("KLUG_KGFert.txt")%>%
+kgfert<-read.delim("KLU_KGFert.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N1B0', 17.5, ifelse(treatment=='N1B1', 17.5, 0)),
@@ -483,128 +483,135 @@ gb<-read.delim("NGBER_gb.txt")%>%
 #          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
 #   unique()
 
-# ccd<-read.delim("NTG_CCD.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# nfert<-read.delim("NWT_246NFert.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# bowman<-read.delim("NWT_bowman.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# snow<-read.delim("NWT_snow.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# oface<-read.delim("ORNL_FACE.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# tide<-read.delim("PIE_Tide.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# snfert<-read.delim("SEV_NFert.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# wenndex<-read.delim("SEV_WENNDEx.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# esa<-read.delim("SGS_ESA.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# uk<-read.delim("SKY_UK.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# gane<-read.delim("SVA_GANE.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
-#          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-#          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
-#          ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
-#   unique()
-# 
-# 
-# 
-# ###merge all datasets
-# combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, e0022,
-#                e62, esa2, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2,herbdiv2,
-#                herbwood2, imagine2, irg2, kgfert2, lind2, mat22, megarich2, mnt2, nfert2, nme2, nsfc2, oface2, 
-#                pennings2, pplots2,pq2, yu2, ramps2, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72,
-#                tide2, uk2, warmnut2, watering2, wenndex2, wet2, mwatfer, interaction, e001)
-# 
-# write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInfo_11202015.csv")
-
-
-
-
-
-
-
-
-
-
-exp_info<-data%>%
-  select(site_code, project_name, community_type, calendar_year, treatment_year, nutrients, light, carbon, water, other_manipulation, num_manipulations, clip, temp, precip, plot_mani, treatment, data_type, n, p, k, herb_removal, burn, true_num_manipulations, c, plant_mani, true_plot_mani, lime, other_nut, cessation, dist, precip_vari, precip_season, patchiness, other_manipulations, l, fungicide, soil_carbon, grazed, soil_depth, precip_season, -X)%>%
+# this should really be split into three sites, because they are provinces across canada
+ccd<-read.delim("NTG_CCD.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
+         n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
   unique()
 
-mnr<-read.csv("~/Dropbox/converge_diverge/datasets/ORIGINAL_DATASETS/MNR_watfer/Exp_Info.csv")%>%
-  mutate(clip=0, community_type=0, temp=0, herb_removal=0, burn=0, true_num_manipulations=0, c=0, plant_mani=0, true_plot_mani=0, lime=0, cessation=0, dist=0, precip_vari=0, precip_season=0, patchiness=0, other_manipulations=0, l=0, fungicide=0, soil_carbon=0, grazed=0, soil_depth=0, precip_season=0)%>%
-  select(site_code, project_name, community_type, calendar_year, treatment_year, nutrients, light, carbon, water, other_manipulation, num_manipulations, clip, temp, precip, plot_mani, treatment, data_type, n, p, k, herb_removal, burn, true_num_manipulations, c, plant_mani, true_plot_mani, lime, other_nut, cessation, dist, precip_vari, precip_season, patchiness, other_manipulations, l, fungicide, soil_carbon, grazed, soil_depth, precip_season, -X)%>%
+nfert<-read.delim("NWT_246NFert.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+         n=ifelse(treatment=='x', 0, ifelse(treatment=='low', 2, ifelse(treatment=='med', 4, 6))),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
   unique()
 
-rio<-read.delim("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files/RIO_interaction.txt")%>%
-  mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0, num_manipulations=2, clip=0, temp=0, herb_removal=0, burn=0, true_num_manipulations=0, c=0, plant_mani=0, true_plot_mani=0, lime=0, cessation=0, dist=0, precip_season=0, p=0, k=0, other_nut=0, patchiness=0, other_manipulations=0, l=0, fungicide=0, soil_carbon=0, grazed=0, soil_depth=0, precip_season=0)%>%
-  select(site_code, project_name, community_type, calendar_year, nutrients, treatment_year, light, carbon, water, other_manipulation, num_manipulations, clip, temp, precip, plot_mani, treatment, data_type, n, p, k, herb_removal, burn, true_num_manipulations, c, plant_mani, true_plot_mani, lime, other_nut, cessation, dist, precip_vari, precip_season, patchiness, other_manipulations, l, fungicide, soil_carbon, grazed, soil_depth, precip_season)%>%
+bowman<-read.delim("NWT_bowman.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+         n=ifelse(treatment=='N'&calendar_year==1990, 25, ifelse(treatment=='NP'&calendar_year==1990, 25, ifelse(treatment=='N'&calendar_year==1991, 0, ifelse(treatment=='NP'&calendar_year==1991, 0, ifelse(treatment=='Control', 0, ifelse(treatment=='P', 0, 10)))))),
+         p=ifelse(treatment=='P'&calendar_year==1990, 25, ifelse(treatment=='NP'&calendar_year==1990, 25, ifelse(treatment=='P'&calendar_year==1991, 0, ifelse(treatment=='NP'&calendar_year==1991, 0, ifelse(treatment=='Control', 0, ifelse(treatment=='N', 0, 10)))))),
+         k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
   unique()
 
-exp_info2<-rbind(exp_info, rio, mnr)
-write.csv(exp_info2, "ExperimentInformation_11202015.csv")
+snow<-read.delim("NWT_snow.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=1,
+         n=ifelse(treatment=='XNX'&calendar_year<2011, 28, ifelse(treatment=='XNW'&calendar_year<2011, 28, ifelse(treatment=='PNX'&calendar_year<2011, 28, ifelse(treatment=='PNW'&calendar_year<2011, 28, ifelse(treatment=='XNX'&calendar_year>2010, 10, ifelse(treatment=='XNW'&calendar_year>=2011, 10, ifelse(treatment=='PNX'&calendar_year>=2011, 10, ifelse(treatment=='PNW'&calendar_year>=2011, 10, 0)))))))),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
+         precip=ifelse(treatment=='XXX', 0, ifelse(treatment=='XXW', 0, ifelse(treatment=='XNX', 0, ifelse(treatment=='XNW', 0, 116)))),
+         temp=ifelse(treatment=='XXW', 1, ifelse(treatment=='XNW', 1, ifelse(treatment=='PXW', 1, ifelse(treatment=='PNW', 1, 0)))),
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+#this includes woody and herbaceous species covers
+#biomass includes woody and herbaceous species from 2001-2003, but only herbaceous in 2008
+oface<-read.delim("ORNL_FACE.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=0, light=0, carbon=1, water=0, other_manipulation=0,
+         n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
+         CO2=ifelse(treatment=='elevated', 170, 0),
+         precip=0, temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0,
+         herb_removal=0, ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+#this has two community types, one of which got higher nutrients... we average them before
+tide<-read.delim("PIE_Tide.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+         n=ifelse(treatment=='Enriched', 37.5, 0),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+snfert<-read.delim("SEV_NFert.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+         n=ifelse(treatment=='F', 10, 0),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+#wildfire burnt all plots in 2009
+wenndex<-read.delim("SEV_WENNDEx.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=1,
+         n=ifelse(treatment=='C', 0, ifelse(treatment=='P', 0, ifelse(treatment=='T', 0, ifelse(treatment=='TP', 0, 2)))),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
+         precip=ifelse(treatment=='C', 0, ifelse(treatment=='N', 0, ifelse(treatment=='T', 0, ifelse(treatment=='TN', 0, 50)))),
+         temp=ifelse(treatment=='C', 0, ifelse(treatment=='N', 0, ifelse(treatment=='P', 0, ifelse(treatment=='PN', 0, 1)))),
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+#should N and water treatments continue all years, with the code for cessation as well so we know what they had been doing?
+#cattle excluded starting in 1969 (2 years before experiment started)
+esa<-read.delim("SGS_ESA.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
+         n=ifelse(treatment=='control', 0, ifelse(treatment=='water', 0, 10)),
+         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
+         precip=ifelse(treatment=='control', 0, ifelse(treatment=='N', 0, 184)),
+         temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=ifelse(calendar_year>=1976, 1, 0))%>%
+  unique()
+
+#planted in 2008 (seeds and plugs) and everything was hayed 3x per year
+uk<-read.delim("SKY_UK.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
+         n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
+         precip=ifelse(treatment=='C', 0, ifelse(treatment=='H', 0, 30)),
+         temp=ifelse(treatment=='C', 0, ifelse(treatment=='P', 0, 3)),
+         precip_vari=0, precip_season=0, mow_clip=1, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=1, cessation=0)%>%
+  unique()
+
+gane<-read.delim("SVA_GANE.txt")%>%
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+         n=ifelse(treatment=='C', 0, ifelse(treatment=='P', 0, ifelse(treatment=='LN', 0.5, ifelse(treatment=='LNP', 0.5, 5)))),
+         p=ifelse(treatment=='P', 1, ifelse(treatment=='LNP', 1, ifelse(treatment=='HNP', 1, 0))),
+         k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
+         ground_light=0, other_trt=0, initial_disturbance=0, plant_mani=0, cessation=0)%>%
+  unique()
+
+
+
+###merge all datasets
+combine<-rbind(bffert, bgp, biocon, bowman, clip, clonal, culardoch, e001, e002, e6, esa, events, exp1, face, fireplots,
+               gane, gap2, gb, gce, herbwood, imagine, interaction, irg, kgfert, lind, mat2, megarich, mnt, mwatfer, nfert, nin, nme,
+               nsfc, oface, pennings, pplots, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, tide, uk, wapaclip,
+               warmnut, watering, wenndex, wet, yu)
+
+write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\sp text filesExperimentInfo_11202015.csv")
+
+
+
+
+
+
+
+
 
