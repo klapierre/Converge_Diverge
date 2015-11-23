@@ -646,4 +646,17 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, 
                nsfc, oface, pennings, pplots, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, tide, uk, wapaclip,
                warmnut, watering, wenndex, wet, yu)
 
+<<<<<<< HEAD
 write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\sp text filesExperimentInfo_11202015.csv")
+=======
+write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\sp text filesExperimentInfo_11202015.csv")
+
+
+
+
+
+
+
+
+
+>>>>>>> ebba9e2bb8f5aee6dedaa35b2b0eb23c8a42a40b
