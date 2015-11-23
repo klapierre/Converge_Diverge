@@ -10,6 +10,11 @@ library(vegan)
 siteInfo <- read.csv("SiteInfo_11202015.csv")%>%
   select(-X, -species_num)
 
+siteList<-siteInfo%>%
+  select(site_code)%>%
+  unique()
+write.csv(siteList, "SiteList_LatLong.csv")
+
 ##calculate chao richness and rarefied richness for each site
 #import species data
 species <- read.csv("SpeciesRawAbundance_11202015.csv")%>%
