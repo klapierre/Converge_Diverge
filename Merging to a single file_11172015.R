@@ -13,15 +13,11 @@ library(dplyr)
 # nov 20, 2015 -checked all plots have recorded species, so the fitler abundance !=0 step will not remove any plots.
 
 watering<-read.delim("ANG_watering.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -precip, -precip_season, -plot_mani, -data_type, -species_num)%>%
-  gather(species_code, abundance, sp1:sp43)%>%
+  gather(genus_species, abundance, Danthonia.californica:Cirsium.occidentale)%>%
   mutate(community_type=0,
-         block=0)
-watering_names<-read.delim("ANG_watering_specieslist.txt")
-watering2<-merge(watering, watering_names, by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
-  
+         block=0)%>%
+  select(-data_type)%>%
+  filter(abundance!=0)#this drops 3 plotsin 2011 and 2013 (plots 3, 4, and 7) which had no pin hits but did have species
 
 mat2<-read.delim("ARC_mat2.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -p, -plot_mani, -data_type, -species_num)%>%
@@ -52,7 +48,8 @@ clonal2<-merge(clonal, clonal_names, by="species_code", all=T)%>%
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -burn, -clip, -precip, -p, -dist, -patchiness, -plant_mani, -plot_id1, -plot_mani, -data_type, -species_num)%>%
-  gather(species_code, abundance, sp1:sp220)
+  gather(species_code, abundance, sp1:sp220)%>%
+  mutate(community_type=0)
 exp1_names<-read.delim("ASGA_Exp1_specieslist.txt")
 exp12<-merge(exp1, exp1_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
@@ -469,15 +466,6 @@ wenndex2<-merge(wenndex, wenndex_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
-esa<-read.delim("SGS_ESA.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_plot_mani, -experiment_year, -n, -precip, -herb_removal, -cessation, -plot_id1, -data_type, -plot_mani, -species_num)%>%
-  gather(species_code, abundance, sp1:sp115)%>%
-  mutate(community_type=0)
-esa_names<-read.delim("SGS_ESA_specieslist.txt")
-esa2<-merge(esa, esa_names, by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
-
 uk<-read.delim("SKY_UK.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -temp, -precip, -plot_id1, -data_type, -plot_mani, -species_num)%>%
   gather(species_code, abundance, sp1:sp26)%>%
@@ -499,21 +487,21 @@ gane2<-merge(gane, gane_names, by="species_code", all=T)%>%
 
 #merge all datasets
 combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, e0022,
-               e62, esa2, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2,herbdiv2,
+               e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2,herbdiv2,
                herbwood2, imagine2, irg2, kgfert2, lind2, mat22, megarich2, mnt2, nfert2, nsfc2, oface2, 
                pennings2, pplots2,pq2, yu2, ramps2, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72,
-               tide2, uk2, warmnut2, watering2, wenndex2, wet2, mwatfer, interaction, e001)
+               tide2, uk2, warmnut2, watering, wenndex2, wet2, mwatfer, interaction, e001)
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_11232015.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_Nov2015.csv")
 
 ###get species list
 species_list<-combine%>%
   select(site_code, project_name, genus_species)%>%
   unique()
 
-write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_11232015.csv")
+write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_Nov2015.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -525,6 +513,6 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_11232015.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2015.csv")
 
 
