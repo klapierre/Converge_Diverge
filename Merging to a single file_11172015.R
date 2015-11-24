@@ -1,5 +1,5 @@
 #Kim
-# setwd("~\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
+setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 
 #Meghan
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
@@ -519,7 +519,7 @@ write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesLis
 totcov<-combine%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id)%>%
-  summarize(totcov=sum(abundance))
+  summarise(totcov=sum(abundance))
 
 relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id"))%>%
   mutate(relcov=abundance/totcov)%>%
