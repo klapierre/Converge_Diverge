@@ -6,16 +6,6 @@ setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - pleas
 library(tidyr)
 library(dplyr)
 
-# nme<-read.delim("Alps_NME.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
-#   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-#          n=0, p=0, k=0, other_nut=0, lime=0, 
-#          soil_carbon=ifelse(treatment=='CG', 15, ifelse(treatment=='CU', 15, 0)), 
-#          CO2=0, precip=0, temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0,
-#          grazed=ifelse(treatment=='CoG', 1, ifelse(treatment=='CG', 1, 0)),
-#          fungicide=0, herb_removal=0, pulse=0, other_trt=0, successional=0, plant_mani=0, cessation=0)%>%
-#   unique()
-
 watering<-read.delim("ANG_watering.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
@@ -60,8 +50,8 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
   unique()
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
-  select(site_code, project_name, calendar_year, treatment, community_type)%>%
-  mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
+  select(site_code, project_name, calendar_year, treatment)%>%
+  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='2_0_CO', 0, ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='2_1_CO', 0, ifelse(treatment=='1_0_CO', 0, 20.1)))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0, pulse=0, 
@@ -641,7 +631,8 @@ gane<-read.delim("SVA_GANE.txt")%>%
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, e002, e6, esa, events, exp1, face, fireplots,
                gane, gap2, gb, gce, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, mat2, megarich, mnt, mwatfer, nfert,
                nsfc, oface, pennings, pplots, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, tide, uk, wapaclip,
-               warmnut, watering, wenndex, wet, yu)
+               warmnut, watering, wenndex, wet, yu)%>%
+  filter(site_code!="")
 
 write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_11202015.csv')
 
