@@ -16,11 +16,20 @@ setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 alldata<-read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
+<<<<<<< HEAD
 expinfo<-read.csv("ExperimentInformation_11202015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
 alldata2a<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=F)
+=======
+expinfo<-read.csv("ExperimentInformation_Nov2015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
+  select(exp_year, plot_mani, treatment)
+
+alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"),all=T)%>%
+  filter(project_name!="e001"&project_name!="e002")#there are known problems with cdr_e001
+>>>>>>> bed5ea4202e6bcd396c0a4be89ca8ca456c71d9d
 
 #ESA has dozens of duplicate species
 alldata2<-subset(alldata2a, project_name!='ESA')
