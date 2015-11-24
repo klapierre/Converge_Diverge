@@ -1,73 +1,44 @@
 library(vegan)
 library(reshape2)
-library(ggplot2)
 library(gtools)
 library(plyr)
 library(grid)
-library(lme4)
-library(codyn)
 library(tidyr)
 library(dplyr)
+
 #kim
-setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
-#meghan
-setwd("~/Dropbox/converge_diverge/datasets/LongForm")
+setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
-theme_set(theme_bw())
-theme_update(axis.title.x=element_text(size=20, vjust=-0.35), axis.text.x=element_text(size=16),
-             axis.title.y=element_text(size=20, angle=90, vjust=0.5), axis.text.y=element_text(size=16),
-             plot.title = element_text(size=24, vjust=2),
-             axis.ticks.length=unit(-0.25, "cm"), axis.ticks.margin=unit(0.5, "cm"),
-             panel.grid.major=element_blank(), panel.grid.minor=element_blank())
-
-###bar graph summary statistics function
-#barGraphStats(data=, variable="", byFactorNames=c(""))
-
-barGraphStats <- function(data, variable, byFactorNames) {
-  count <- length(byFactorNames)
-  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
-  names(N)[1:count] <- byFactorNames
-  names(N) <- sub("^x$", "N", names(N))
-  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
-  names(mean)[1:count] <- byFactorNames
-  names(mean) <- sub("^x$", "mean", names(mean))
-  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
-  names(sd)[1:count] <- byFactorNames
-  names(sd) <- sub("^x$", "sd", names(sd))
-  preSummaryStats <- merge(N, mean, by=byFactorNames)
-  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
-  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
-  return(finalSummaryStats)
-}  
-###################################################################################################
-###################################################################################################
-###################################################################################################
+# #meghan
+# setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_11202015.csv")%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))
+alldata<-read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
 expinfo<-read.csv("ExperimentInformation_11202015.csv")%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
-alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=T)%>%
-  filter(project_name!="e001"&project_name!="e002")#there are known problems with cdr_e001
+alldata2a<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=F)
+
+#ESA has dozens of duplicate species
+alldata2<-subset(alldata2a, project_name!='ESA')
 
 
-##################################################### LOOPING THROUGH
-#makes a new dataframe with just the label;
+#make a new dataframe with just the label;
 exp_year=alldata2%>%
   select(exp_year)%>%
   unique()
 
-###first, gets bray curtis dissimilarity values for each year, trt, between plots
-###second, gets distance of each plot within a trt to the trt centroid 
-###third: mean_change is the distance between trt to control centriods
-####fourth: dispersion is the average dispersion of plots within a treatment to treatment centriod
 #makes an empty dataframe
 for.analysis=data.frame(row.names=1) 
 
+
+###first, get bray curtis dissimilarity values for each year within each experiment between all combinations of plots
+###second, get distance of each plot within a trt to the trt centroid 
+###third: mean_change is the distance between trt and control centriods
+####fourth: dispersion is the average dispersion of plots within a treatment to treatment centriod
 for(i in 1:length(exp_year$exp_year)) {
   
   #creates a dataset for each unique year, trt, exp combo
@@ -89,13 +60,15 @@ for(i in 1:length(exp_year$exp_year)) {
   #calculate distances of each plot to treatment centroid (i.e., dispersion)
   disp=betadisper(bc, species$treatment, type="centroid")
   
-  #getting distances among treatment centroids; these centroids are in BC space so that's why this uses euclidean distances
+  #getting distances among treatment centroids; these centroids are in BC space, so that's why this uses euclidean distances
   cent_dist=as.data.frame(as.matrix(vegdist(disp$centroids, method="euclidean"))) 
   
+  #####there is an error here that it isn't giving us the distances, just the treatment names
   #extracting only the distances we need and adding labels for the comparisons;
   cent_C_T=data.frame(exp_year=exp_year$exp_year[i],
-                      treatment=row.names(cent_dist), 
-                      dist=t(cent_dist[names(cent_dist)==labels$treatment[labels$plot_mani==0],]))
+                      treatment=row.names(cent_dist),
+                      mean_change=t(cent_dist[names(cent_dist)==labels$treatment[labels$plot_mani==0],]))
+  
   #not sure why the name didn't work in the previous line of code, so fixing it here
   names(cent_C_T)[3]="mean_change" 
   
@@ -106,28 +79,28 @@ for(i in 1:length(exp_year$exp_year)) {
   trt_disp=data.frame(data.frame(exp_year=exp_year$exp_year[i], 
                                               plot_id=species$plot_id, 
                                               treatment=species$treatment,
-                                              dist=disp$distances))%>%
-    tbl_df%>%
-    group_by(exp_year, treatment)%>%
-    summarize(dispersion=mean(dist))
+                                              dist=disp$distances))#%>%
+#     tbl_df%>%
+#     group_by(exp_year, treatment)%>%
+#     summarize(dispersion=mean(dist))
   
   distances<-merge(centroid, trt_disp, by=c("exp_year","treatment"))
   
-  #getting diversity indixes
-    H<-diversity(species[,5:ncol(species)])
-    S<-specnumber(species[,5:ncol(species)])
-    InvD<-diversity(species[,5:ncol(species)],"inv")
-    SimpEven<-InvD/S
-    out1<-cbind(H, S)
-    output<-cbind(out1, SimpEven)
-    divmeasure<-cbind(species, output)%>%
-      select(exp_year, treatment, H, S, SimpEven)
-    
-    ##merging all measures of diversity
-    alldiv<-merge(distances, divmeasure, by=c("exp_year","treatment"))
+#   #getting diversity indixes
+#     H<-diversity(species[,5:ncol(species)])
+#     S<-specnumber(species[,5:ncol(species)])
+#     InvD<-diversity(species[,5:ncol(species)],"inv")
+#     SimpEven<-InvD/S
+#     out1<-cbind(H, S)
+#     output<-cbind(out1, SimpEven)
+#     divmeasure<-cbind(species, output)%>%
+#       select(exp_year, treatment, H, S, SimpEven)
+#     
+#     ##merging all measures of diversity
+#     alldiv<-merge(distances, divmeasure, by=c("exp_year","treatment"))
 
       #pasting dispersions into the dataframe made for this analysis
-    for.analysis=rbind(alldiv, for.analysis)  
+#     for.analysis=rbind(alldiv, for.analysis)  
 }
 
 #####################################################
