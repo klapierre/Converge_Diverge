@@ -343,7 +343,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0,
          fungicide=ifelse(treatment=='N0B1', 1, ifelse(treatment=='N1B1', 1, 0)),
          herb_removal=0, pulse=0, other_trt=0, successional=0, plant_mani=0, cessation=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 2, 0)))%>%
+  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 2, 1)))%>%
   unique()
 
 bgp<-read.delim("KNZ_BGP.txt")%>%
@@ -591,16 +591,17 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='N', 1, ifelse(treatment=='P', 1, ifelse(treatment=='T', 1, ifelse(treatment=='TPN', 3, 2))))))%>%
   unique()
 
-esa<-read.delim("SGS_ESA.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
-  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
-         n=ifelse(treatment=='control', 0, ifelse(treatment=='water', 0, 10)),
-         p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
-         precip=ifelse(treatment=='control', 0, ifelse(treatment=='N', 0, 184)),
-         temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=1,
-         pulse=0, other_trt=0, successional=0, plant_mani=0, cessation=ifelse(calendar_year>=1976, 1, 0))%>%
-  mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='water_N', 2, 1)))%>%
-  unique()
+#dropped because only cessation
+# esa<-read.delim("SGS_ESA.txt")%>%
+#   select(site_code, project_name, calendar_year, treatment)%>%
+#   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
+#          n=ifelse(treatment=='control', 0, ifelse(treatment=='water', 0, 10)),
+#          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
+#          precip=ifelse(treatment=='control', 0, ifelse(treatment=='N', 0, 184)),
+#          temp=0, precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=1,
+#          pulse=0, other_trt=0, successional=0, plant_mani=0, cessation=ifelse(calendar_year>=1976, 1, 0))%>%
+#   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='water_N', 2, 1)))%>%
+#   unique()
 
 uk<-read.delim("SKY_UK.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
@@ -627,7 +628,7 @@ gane<-read.delim("SVA_GANE.txt")%>%
 
 
 ###merge all datasets
-combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, e002, e6, esa, events, exp1, face, fireplots,
+combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, e002, e6, events, exp1, face, fireplots,
                gane, gap2, gb, gce, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, mat2, megarich, mnt, mwatfer, nfert,
                nsfc, oface, pennings, pplots, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, tide, uk, wapaclip,
                warmnut, watering, wenndex, wet, yu)%>%
