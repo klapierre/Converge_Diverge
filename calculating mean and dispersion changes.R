@@ -47,7 +47,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 alldata<-read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
-expinfo<-read.csv("ExperimentInformationNov2015.csv")%>%
+expinfo<-read.csv("ExperimentInformation_Nov2015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
