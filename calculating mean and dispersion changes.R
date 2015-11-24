@@ -13,27 +13,21 @@ setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 # setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
-
-<<<<<<< HEAD
-expinfo<-read.csv("ExperimentInformation_11202015.csv")%>%
+alldata<-read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
-  select(exp_year, plot_mani, treatment)
+  #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
+  tbl_df()%>%
+  group_by(exp_year, site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species)%>%
+  summarise(relcov=mean(relcov))
+#get rid of NA's in ANG watering data; this step will no longer be needed once we get the cover file fixed
+alldata <- alldata[complete.cases(alldata[,11]),]
 
-alldata2a<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=F)
-=======
 expinfo<-read.csv("ExperimentInformation_Nov2015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
-alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"),all=T)%>%
-  filter(project_name!="e001"&project_name!="e002")#there are known problems with cdr_e001
->>>>>>> bed5ea4202e6bcd396c0a4be89ca8ca456c71d9d
-
-#ESA has dozens of duplicate species
-alldata2<-subset(alldata2a, project_name!='ESA')
-
+alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=F)
 
 #make a new dataframe with just the label;
 exp_year=alldata2%>%
@@ -72,7 +66,6 @@ for(i in 1:length(exp_year$exp_year)) {
   #getting distances among treatment centroids; these centroids are in BC space, so that's why this uses euclidean distances
   cent_dist=as.data.frame(as.matrix(vegdist(disp$centroids, method="euclidean"))) 
   
-  #####there is an error here that it isn't giving us the distances, just the treatment names
   #extracting only the distances we need and adding labels for the comparisons;
   cent_C_T=data.frame(exp_year=exp_year$exp_year[i],
                       treatment=row.names(cent_dist),
@@ -88,28 +81,32 @@ for(i in 1:length(exp_year$exp_year)) {
   trt_disp=data.frame(data.frame(exp_year=exp_year$exp_year[i], 
                                               plot_id=species$plot_id, 
                                               treatment=species$treatment,
-                                              dist=disp$distances))#%>%
-#     tbl_df%>%
-#     group_by(exp_year, treatment)%>%
-#     summarize(dispersion=mean(dist))
+                                              dist=disp$distances))%>%
+    tbl_df%>%
+    group_by(exp_year, treatment)%>%
+    summarize(dispersion=mean(dist))
   
+  #merge together change in mean and dispersion data
   distances<-merge(centroid, trt_disp, by=c("exp_year","treatment"))
   
-#   #getting diversity indixes
-#     H<-diversity(species[,5:ncol(species)])
-#     S<-specnumber(species[,5:ncol(species)])
-#     InvD<-diversity(species[,5:ncol(species)],"inv")
-#     SimpEven<-InvD/S
-#     out1<-cbind(H, S)
-#     output<-cbind(out1, SimpEven)
-#     divmeasure<-cbind(species, output)%>%
-#       select(exp_year, treatment, H, S, SimpEven)
-#     
-#     ##merging all measures of diversity
-#     alldiv<-merge(distances, divmeasure, by=c("exp_year","treatment"))
+  #getting diversity indixes
+    H<-diversity(species[,5:ncol(species)])
+    S<-specnumber(species[,5:ncol(species)])
+    InvD<-diversity(species[,5:ncol(species)],"inv")
+    SimpEven<-InvD/S
+    out1<-cbind(H, S)
+    output<-cbind(out1, SimpEven)
+    divmeasure<-cbind(species, output)%>%
+      select(exp_year, treatment, H, S, SimpEven)%>%
+      tbl_df()%>%
+      group_by(exp_year, treatment)%>%
+      summarise(H=mean(H), S=mean(S), SimpEven=mean(SimpEven))
+    
+    ##merging all measures of diversity
+    alldiv<-merge(distances, divmeasure, by=c("exp_year","treatment"))
 
-      #pasting dispersions into the dataframe made for this analysis
-#     for.analysis=rbind(alldiv, for.analysis)  
+    #pasting dispersions into the dataframe made for this analysis
+    for.analysis=rbind(alldiv, for.analysis)  
 }
 
 #####################################################
