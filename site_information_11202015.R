@@ -122,7 +122,7 @@ chao$average<-rowMeans(chao)
 chao$n<-row.names(chao)
 chao2<-chao%>%
   select(n, average)
-
+specpool<-as.data.frame(as.matrix(specpool$chao))
 
 
 
