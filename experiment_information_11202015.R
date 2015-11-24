@@ -298,7 +298,7 @@ gce<-read.delim("JSP_GCE2.txt")%>%
 
 wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
   select(site_code, project_name, calendar_year, treatment)%>%
-  mutate(community_type=0, nutrients=0, light=1, carbon=0, water=1, other_manipulation=1,
+  mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='U CH', -50, ifelse(treatment=='U CD', 50, ifelse(treatment=='U WH', -50, ifelse(treatment=='U WD', 50, ifelse(treatment=='C CH', -50, ifelse(treatment=='C CD', 50, ifelse(treatment=='C WH', -50, ifelse(treatment=='C WD', 50, 0)))))))),
          temp=ifelse(treatment=='U WC', 3, ifelse(treatment=='U WH', 3, ifelse(treatment=='U WD', 3, ifelse(treatment=='C WC', 3, ifelse(treatment=='C WH', 3, ifelse(treatment=='C WD', 3, 0)))))),
