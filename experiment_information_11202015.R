@@ -129,7 +129,6 @@ biocon<-read.delim("CDR_biocon.txt")%>%
   mutate(plot_mani=ifelse(treatment=='X_X', 0, ifelse(treatment=='N_C', 2, 1)))%>%
   unique()
 
-#all plots were burned in some years, but not others. how do we want to code this?
 e001<-read.delim("CDR_e001_revised.txt")%>%
   select(site_code, project_name, community_type, calendar_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
@@ -154,7 +153,7 @@ e002<-read.delim("CDR_e002.txt")%>%
          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
          pulse=0, other_trt=0, successional=1, plant_mani=0,
          cessation=ifelse(treatment=='1_f_u_c', 1, ifelse(treatment=='2_f_u_c', 1, ifelse(treatment=='3_f_u_c', 1, ifelse(treatment=='4_f_u_c', 1, ifelse(treatment=='5_f_u_c', 1, ifelse(treatment=='6_f_u_c', 1, ifelse(treatment=='7_f_u_c', 1, ifelse(treatment=='8_f_u_c', 1, ifelse(treatment=='9_f_u_c', 1, 0))))))))))%>%
-  mutate(plot_mani=ifelse(treatment=='1_f_u_n', 4, ifelse(treatment=='1_f_u_c', 4, ifelse(treatment=='9_f_u_n', 0, ifelse(treatment=='9_f_u_c', 0, 5)))))%>%
+  mutate(plot_mani=ifelse(treatment=='1_f_u_n', 4, ifelse(treatment=='1_f_u_c', 5, ifelse(treatment=='9_f_u_n', 0, ifelse(treatment=='9_f_u_c', 1, ifelse(treatment=='2_f_u_c', 6, ifelse(treatment=='3_f_u_c', 6, ifelse(treatment=='4_f_u_c', 6, ifelse(treatment=='5_f_u_c', 6, ifelse(treatment=='6_f_u_c', 6, ifelse(treatment=='7_f_u_c', 6, ifelse(treatment=='8_f_u_c', 6, 5))))))))))))%>%
   unique()
 
 megarich<-read.delim("CEH_Megarich.txt")%>%
@@ -634,7 +633,7 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, 
                warmnut, watering, wenndex, wet, yu)%>%
   filter(site_code!="")
 
-write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_11202015.csv')
+write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Nov2015.csv')
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
+# write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
 
