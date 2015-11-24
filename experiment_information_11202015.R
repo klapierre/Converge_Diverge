@@ -60,8 +60,8 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
   unique()
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
-  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
+  select(site_code, project_name, calendar_year, treatment, community_type)%>%
+  mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='2_0_CO', 0, ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='2_1_CO', 0, ifelse(treatment=='1_0_CO', 0, 20.1)))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
          precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0, pulse=0, 
@@ -507,9 +507,9 @@ herbdiv<-read.delim("NIN_herbdiv.txt")%>%
          p=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF', 0, ifelse(treatment=='3NF', 0, ifelse(treatment=='4NF', 0, ifelse(treatment=='5NF', 0, 3.3))))),
          k=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF', 0, ifelse(treatment=='3NF', 0, ifelse(treatment=='4NF', 0, ifelse(treatment=='5NF', 0, 8))))),
          other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
-         precip_vari=0, precip_season=0, mow_clip=0, burn=0, grazed=0, fungicide=0,
+         precip_vari=0, precip_season=0, mow_clip=0, burn=1, grazed=0, fungicide=0,
          herb_removal=ifelse(treatment=='1NF', 0, ifelse(treatment=='1F', 0, 1)),
-         pulse=0, other_trt=ifelse(treatment=='2NF', 'aboveground exclosure', ifelse(treatment=='2F', 'aboveground exclosure', ifelse(treatment=='3NF', 'insecticide', ifelse(treatment=='3F', 'insecticide', ifelse(treatment=='4NF', 'aboveground exclosure/insecticide', ifelse(treatment=='4F', 'aboveground exclosure/insecticide', ifelse(treatment=='5NF', 'above/below exclosure/insecticide', ifelse(treatment=='5F', 'above/below exclosure/insecticide', 0)))))))), successional=0, plant_mani=0, cessation=0)%>%
+         pulse=0, other_trt=ifelse(treatment=='2NF', 'aboveground exclosure', ifelse(treatment=='2F', 'aboveground exclosure', ifelse(treatment=='3NF', 'insecticide', ifelse(treatment=='3F', 'insecticide', ifelse(treatment=='4NF', 'aboveground exclosure/insecticide', ifelse(treatment=='4F', 'aboveground exclosure/insecticide', ifelse(treatment=='5NF', 'above/below exclosure/insecticide', ifelse(treatment=='5F', 'above/below exclosure/insecticide', 0)))))))), successional=0, plant_mani=1, cessation=0)%>%
   mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='1F', 3, ifelse(treatment=='2NF', 1, ifelse(treatment=='2F', 4, ifelse(treatment=='3NF', 1, ifelse(treatment=='3F', 4, ifelse(treatment=='4NF', 2, ifelse(treatment=='4F', 5, ifelse(treatment=='5NF', 3, 6))))))))))%>%
   unique()
 
@@ -538,8 +538,8 @@ nfert<-read.delim("NWT_246NFert.txt")%>%
   unique()
 
 bowman<-read.delim("NWT_bowman.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
-  mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
+  select(site_code, project_name, calendar_year, treatment, community_type)%>%
+  mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control', 0, ifelse(treatment=='P', 0, 10)))),
          p=ifelse(treatment=='P'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control', 0, ifelse(treatment=='N', 0, 10)))),
          k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -644,3 +644,6 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, 
                warmnut, watering, wenndex, wet, yu)
 
 write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_11202015.csv')
+
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
+
