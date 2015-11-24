@@ -6,51 +6,50 @@ library(tidyr)
 library(dplyr)
 library(vegan)
 
-#import the site information
-ExpInfo <- read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
+#import the list of all experiments site information
+ExpInfo <- read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
   select(-X)
 
-##Checking MAP/MAT with old data
-climate<- read.csv("siteList_climate.csv")
-old<-read.csv("SiteInfo_11202015.csv")%>%
-  tbl_df()%>%
-  group_by(site_code)%>%
-  summarize(precip=mean(MAP))
-
-merged<-merge(climate, old, by="site_code")
-with(merged, plot(MAP, precip))
-#ANG_watering huge mismatch between their reported value and what was given. Also big different for Finse_Warmnit. For Finse they have very vague coordinates, this could explain the difference. I am not sure what is happening with ANG.
-
+ExpList<-ExpInfo%>%
+  select(site_code, project_name)%>%
+  unique()
+write.csv(ExpList, "Experiment_List.csv")
 
 #Getting control ANPP
-ANPP<-read.csv("ANPP_Nov2015.csv")
-
-Experiment_Info<-read.csv("ExperimentInformation_Nov2015.csv")%>%
-  select(site_code, project_name, community_type, treatment, plot_mani)%>%
-  unique()
-
-controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"), all=T)%>%
-  select(plot_mani==0)%>%
-  tbl_df()%>%
-  group_by(site_code, project_name, community_type, treatment_year)%>%
-  summarize(anpp=mean(anpp))%>%
-  tbl_df()%>%
-  group_by(site_code, project_name, community_type)%>%
-  summarize(anpp=mean(anpp))
-
-ExpANPP<-merge(controlANPP, Experiment_Info, by=c("site_code","project_name","community_type", all=T))
+# ANPP<-read.csv("ANPP_Nov2015.csv")
+# 
+# Experiment_Info<-read.csv("ExperimentInformation_Nov2015.csv")%>%
+#   select(site_code, project_name, community_type, treatment, plot_mani)%>%
+#   unique()
+# 
+# ExpList<-Experiment_Info%>%
+#   select(site_code, project_name, community_type)%>%
+#   unique()
+# 
+# controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"))%>%
+#   filter(plot_mani==0)%>%
+#   na.omit%>%
+#   tbl_df()%>%
+#   group_by(site_code, project_name, community_type, treatment_year)%>%
+#   summarize(anpp=mean(anpp))%>%
+#   tbl_df()%>%
+#   group_by(site_code, project_name, community_type)%>%
+#   summarize(anpp=mean(anpp))
+# 
+# ExpANPP<-merge(controlANPP, ExpList, by=c("site_code","project_name","community_type"), all=T)
+# 
+# write.csv(ExpANPP, "ExperimentANPP_toadd.csv")
 
 # siteList<-ExpInfo%>%
 #   select(site_code)%>%
 #   unique()
 #write.csv(siteList, "SiteList_LatLong.csv")
 
-ExpList<-ExpInfo%>%
-   select(site_code, project_name)%>%
-   unique()
-write.csv(ExpList, "Experiment_List.csv")
+SiteClimate<-read.csv("siteList_climate.csv")
 
-experiment_length<-ExpInfo%>%
+ExpANPP<-read.csv("ExperimentANPP.csv")
+
+ExpLength<-ExpInfo%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(experiment_length=max(treatment_year))

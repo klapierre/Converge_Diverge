@@ -10,7 +10,7 @@ library(dplyr)
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
 # #meghan
-# setwd("~/Dropbox/converge_diverge/datasets/LongForm")
+setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
 alldata<-read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
@@ -20,8 +20,6 @@ alldata<-read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
   tbl_df()%>%
   group_by(exp_year, site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id, genus_species)%>%
   summarise(relcov=mean(relcov))
-#get rid of NA's in ANG watering data; this step will no longer be needed once we get the cover file fixed
-alldata <- alldata[complete.cases(alldata[,11]),]
 
 expinfo<-read.csv("ExperimentInformation_Nov2015.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
