@@ -497,7 +497,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
          precip_season=ifelse(treatment=='AMBIENT', 0, ifelse(treatment=='CURRENT', 'current pattern', ifelse(treatment=='SPRING', 'spring addition', 'winter addition'))),
          mow_clip=0, burn=0, grazed=0, fungicide=0, herb_removal=0,
          pulse=0, other_trt=0, successional=0, plant_mani=0, cessation=0)%>%
-  mutate(plot_mani=ifelse(treatment=='X', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='AMBIENT', 0, 1))%>%
   unique()
 
 herbdiv<-read.delim("NIN_herbdiv.txt")%>%
@@ -642,3 +642,5 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, 
                gane, gap2, gb, gce, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, mat2, megarich, mnt, mwatfer, nfert,
                nsfc, oface, pennings, pplots, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, tide, uk, wapaclip,
                warmnut, watering, wenndex, wet, yu)
+
+write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_11202015.csv')
