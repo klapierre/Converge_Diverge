@@ -44,14 +44,14 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ###################################################################################################
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_11202015.csv")%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))
+alldata<-read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
-expinfo<-read.csv("ExperimentInformation_11202015.csv")%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, treatment_year, sep="::"))%>%
+expinfo<-read.csv("ExperimentInformationNov2015.csv")%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
-alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"), all=T)%>%
+alldata2<-merge(alldata, expinfo, by=c("exp_year","treatment"),all=T)%>%
   filter(project_name!="e001"&project_name!="e002")#there are known problems with cdr_e001
 
 
