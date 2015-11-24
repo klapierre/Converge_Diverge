@@ -35,10 +35,16 @@ divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
 
 
 
+###merging with experiment (treatment) information
+divCompareExp <- merge(divCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
+  filter(pulse==0, resource_mani==1, cessation==0, treatment_year>0)%>%
+  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change, S_change, SimpEven_change, site_code, project_name, community_type, calendar_year)
 
 
 
-
+#here is where we need to add in the site level info (ANPP, rarefied richness, MAP, MAT)
+#go meghan go!
 
 
 
