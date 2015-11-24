@@ -10,12 +10,26 @@ library(vegan)
 ExpInfo <- read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
   select(-X)
 
+##Checking MAP/MAT with old data
+climate<- read.csv("siteList_climate.csv")
+old<-read.csv("SiteInfo_11202015.csv")%>%
+  tbl_df()%>%
+  group_by(site_code)%>%
+  summarize(precip=mean(MAP))
+
+merged<-merge(climate, old, by="site_code")
+with(merged, plot(MAP, precip))
+#ANG_watering huge mismatch between their reported value and what was given. Also big different for Finse_Warmnit. For Finse they have very vague coordinates, this could explain the difference. I am not sure what is happening with ANG.
+
+
 #Getting control ANPP
-ANPP<-read.csv("ANPP_11202015.csv")
+ANPP<-read.csv("ANPP_Nov2015.csv")
 
-Experiment_Info<-read.csv
+Experiment_Info<-read.csv("ExperimentInformation_Nov2015.csv")%>%
+  select(site_code, project_name, community_type, treatment, plot_mani)%>%
+  unique()
 
-controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
+controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"), all=T)%>%
   select(plot_mani==0)%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type, treatment_year)%>%
