@@ -14,8 +14,7 @@ clonal<-read.delim("ASGA_Clonal_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
 exp1<-read.delim("ASGA_Exp1_anpp.txt")%>%
-  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
-  mutate(community_type=0)
+  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp, community_type)
 lind<-read.delim("BAY_LIND_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
@@ -104,4 +103,4 @@ anpp <- rbind(bgp, biocon, bowman, clonal, e001, e002, events, exp1, fireplots, 
 
 write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
 
-write.csv(anpp, "ANPP_Nov2015.csv")
+write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Nov2015.csv")
