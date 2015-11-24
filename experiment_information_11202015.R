@@ -645,4 +645,5 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, e001, 
 
 write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_11202015.csv')
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformationNov2015.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
+
