@@ -10,7 +10,6 @@ library(vegan)
 ExpInfo <- read.csv("SpeciesRelativeAbundance_11232015.csv")%>%
   select(-X)
 
-
 ##Checking MAP/MAT with old data
 climate<- read.csv("siteList_climate.csv")
 old<-read.csv("SiteInfo_11202015.csv")%>%
@@ -26,11 +25,11 @@ with(merged, plot(MAP, precip))
 #Getting control ANPP
 ANPP<-read.csv("ANPP_Nov2015.csv")
 
-Experiment_Info<-read.csv("ExperimentInformationNov2015.csv")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment, plot_mani)%>%
+Experiment_Info<-read.csv("ExperimentInformation_Nov2015.csv")%>%
+  select(site_code, project_name, community_type, treatment, plot_mani)%>%
   unique()
 
-controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","calendar_year","treatment"))%>%
+controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"), all=T)%>%
   select(plot_mani==0)%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type, treatment_year)%>%
