@@ -14,7 +14,8 @@ clonal<-read.delim("ASGA_Clonal_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
 exp1<-read.delim("ASGA_Exp1_anpp.txt")%>%
-  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp, community_type)
+  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
+  mutate(community_type=0)
 lind<-read.delim("BAY_LIND_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
@@ -26,8 +27,10 @@ rmapc<-read.delim("CAU_RMAPC_anpp.txt")%>%
 biocon<-read.delim("CDR_biocon_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
-e001<-read.delim("CDR_e001_anpp.txt")%>%
-  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)
+e001<-read.delim("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files/CDR_e001_revised.txt")%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, plot_id)%>%
+  summarize(anpp=sum(abundance))
 e002<-read.delim("CDR_e002_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)
 megarich<-read.delim("CEH_Megarich_anpp.txt")%>%
@@ -85,9 +88,6 @@ wenndex<-read.delim("SEV_WENNDEx_anpp.txt")%>%
 uk<-read.delim("SKY_UK_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
-fireplots<-read.delim("MAERC_fireplots_anpp.txt")%>%
-  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
-  mutate(community_type=0)
 wet<-read.delim("NANT_wet_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)
 gb<-read.delim("NGBER_gb_anpp.txt")%>%
@@ -99,7 +99,7 @@ mnr<-read.delim("MNR_watfer_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0)
 
-anpp <- rbind(bgp, biocon, bowman, clonal, e001, e002, events, exp1, fireplots, gb, imagine, imgers, irg, kgfert, lind, megarich, mnr, nfert, nsfc, oface, pplots, ramps, rhps, rio, rmapc, snfert, t7, tide, uk, wapaclip, watering, wenndex, wet)
+anpp <- rbind(bgp, biocon, bowman, clonal, e001, e002, events, exp1, gb, imagine, imgers, irg, kgfert, lind, megarich, mnr, nfert, nsfc, oface, pplots, ramps, rhps, rio, rmapc, snfert, t7, tide, uk, wapaclip, watering, wenndex, wet)
 
 write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
 
