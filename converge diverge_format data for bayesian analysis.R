@@ -4,6 +4,8 @@ library(dplyr)
 #kim's
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
+#Meghan
+setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 ###read in data
 
@@ -46,7 +48,12 @@ divCompareExp <- merge(divCompare, expInfo, by=c('exp_year', 'treatment', 'plot_
 #here is where we need to add in the site level info (ANPP, rarefied richness, MAP, MAT)
 #go meghan go!
 
+SiteExp<-read.csv("SiteExperimentDetails_Nov2015.csv")%>%
+  select(-X)
 
+ForAnalysis<-merge(divCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
+
+write.csv(ForAnalysis, "ForBayesianAnalysis_Nov2015.csv")
 
 
 
