@@ -107,46 +107,6 @@ for(i in 1:length(exp$exp)) {
   estimatedRichness<-rbind(chao2, estimatedRichness)
 }
 
-<<<<<<< HEAD
+
 ExpRichness<-estimatedRichness%>%
   filter(n==22)
-=======
-  #calculate rarefied value
-  #we should get all of the chao richness estimates for samples 1-X for each experiment, cbind them all together, find the min sample number across all experiments, and then use that to get rarefied richness for each of the experiments
-  
-  #in theory we could also get estimated richness from our pool/species accumulation curves by extrapolating out beyond the number of samples collected
-
-pplots<-species%>%
-  filter(project_name=="pplots")%>%
-  spread(genus_species, abundance, fill=0)
-
-specpool(pplots[,7:ncol(pplots)])
-pool<-poolaccum(pplots[,7:ncol(pplots)])
-chao <- as.data.frame(as.matrix(pool$chao))
-chao$average<-rowMeans(chao)
-chao$n<-row.names(chao)
-chao2<-chao%>%
-  select(n, average)
-specpool<-as.data.frame(as.matrix(specpool$chao))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> 96f7a42509688759bd6f8a65b163db38b9d14f02
-
-merge<-merge(ExpRichness, exp, by="exp", all=T)
-
