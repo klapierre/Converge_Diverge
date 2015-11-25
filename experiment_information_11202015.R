@@ -22,7 +22,7 @@ library(dplyr)
 #   a factor was not considered a pulse if all plots experienced it (e.g., solarization in ASGA clonal, wildfire in SEV WENNDex)
 
 watering<-read.delim("ANG_watering.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='W', 20, ifelse(treatment=='S', 20, 0)), temp=0, precip_vari=0,
@@ -34,7 +34,7 @@ watering<-read.delim("ANG_watering.txt")%>%
   unique()
 
 mat2<-read.delim("ARC_mat2.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='NP', 10, 0), p=ifelse(treatment=='NP', 5, 0), k=0, other_nut=0,
          lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -45,7 +45,7 @@ mat2<-read.delim("ARC_mat2.txt")%>%
   unique()
 
 mnt<-read.delim("ARC_mnt.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='NP', 10, 0), p=ifelse(treatment=='NP', 5, 0), k=0, other_nut=0,
          lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -56,7 +56,7 @@ mnt<-read.delim("ARC_mnt.txt")%>%
   unique()
 
 clonal<-read.delim("ASGA_Clonal.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='mixed_CO', 0, ifelse(treatment=='non-clonal_CO', 0, 20.1)), p=0, k=0, other_nut=0,
          lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -69,7 +69,7 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
   unique()
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='2_0_CO', 0, ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='2_1_CO', 0, ifelse(treatment=='1_0_CO', 0, 20.1)))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -85,7 +85,7 @@ exp1<-read.delim("ASGA_Exp1.txt")%>%
 
 #16 spp plots are controls
 lind<-read.delim("BAY_LIND.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='rain_rich1', 8, ifelse(treatment=='rain_rich2', 8, ifelse(treatment=='rain_rich4', 8, ifelse(treatment=='rain_rich8', 8, ifelse(treatment=='rain_rich16', 8, 0))))),
@@ -97,7 +97,7 @@ lind<-read.delim("BAY_LIND.txt")%>%
   unique()
 
 events<-read.delim("Bt_EVENT2.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
          precip_vari=ifelse(treatment=='CM-N1', 'reduced variability', ifelse(treatment=='D1-N1', 'early drought', ifelse(treatment=='D2-N1', 'late drought', 0))),
@@ -108,7 +108,7 @@ events<-read.delim("Bt_EVENT2.txt")%>%
   unique()
 
 pq<-read.delim("BUX_PQ.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=ifelse(treatment=='wet', 20, ifelse(treatment=='warm wet', 20, ifelse(treatment=='dry', -20, ifelse(treatment=='warm dry', -20, 0)))),
          temp=ifelse(treatment=='warm', 3, ifelse(treatment=='warm dry', 3, ifelse(treatment=='warm wet', 3, 0))),
@@ -119,7 +119,7 @@ pq<-read.delim("BUX_PQ.txt")%>%
   unique()
 
 pennings<-read.delim("CAR_Pennings.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='NPK'&calendar_year>1999, 164, ifelse(treatment=='NPK'&calendar_year==1999, 84, 0)),
          p=ifelse(treatment=='NPK'&calendar_year>1999, 82, ifelse(treatment=='NPK'&calendar_year==1999, 42, 0)),
@@ -132,7 +132,7 @@ pennings<-read.delim("CAR_Pennings.txt")%>%
   unique()
 
 rmapc<-read.delim("CAU_RMAPC.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='N', 9, ifelse(treatment=='NP', 9, 0)),
          p=ifelse(treatment=='P', 2.6, ifelse(treatment=='NP', 2.6, 0)),
@@ -145,7 +145,7 @@ rmapc<-read.delim("CAU_RMAPC.txt")%>%
   unique()
 
 biocon<-read.delim("CDR_biocon.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=1, water=0, other_manipulation=0,
          n=ifelse(treatment=='N_X', 4, ifelse(treatment=='N_C', 4, 0)),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
@@ -158,7 +158,7 @@ biocon<-read.delim("CDR_biocon.txt")%>%
   unique()
 
 e001<-read.delim("CDR_e001_revised.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='2_y_n', 1.02, ifelse(treatment=='3_y_n', 2.04, ifelse(treatment=='4_y_n', 3.40, ifelse(treatment=='5_y_n', 5.44, ifelse(treatment=='6_y_n', 9.52, ifelse(treatment=='7_y_n', 17, ifelse(treatment=='8_y_n', 27.2, 0))))))),
          p=ifelse(treatment=='9_y_n', 0, 4.6), k=ifelse(treatment=='9_y_n', 0, 6.1),
@@ -171,7 +171,7 @@ e001<-read.delim("CDR_e001_revised.txt")%>%
   unique()
 
 e002<-read.delim("CDR_e002.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='2_f_u_c', 1.02, ifelse(treatment=='2_f_u_n', 1.02, ifelse(treatment=='3_f_u_c', 2.04, ifelse(treatment=='3_f_u_n', 2.04, ifelse(treatment=='4_f_u_c', 3.4, ifelse(treatment=='4_f_u_n', 3.4, ifelse(treatment=='5_f_u_c', 5.44, ifelse(treatment=='5_f_u_n', 5.44, ifelse(treatment=='6_f_u_c', 9.52, ifelse(treatment=='6_f_u_n', 9.52, ifelse(treatment=='7_f_u_c', 17, ifelse(treatment=='7_f_u_n', 17, ifelse(treatment=='8_f_u_c', 27.2, ifelse(treatment=='8_f_u_n', 27.2, 0)))))))))))))),
          p=ifelse(treatment=='9_f_u_c', 0, ifelse(treatment=='9_f_u_n', 0, 4.6)),
@@ -187,7 +187,7 @@ e002<-read.delim("CDR_e002.txt")%>%
   unique()
 
 megarich<-read.delim("CEH_Megarich.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=1, water=0, other_manipulation=1,
          n=10, p=2, k=2, other_nut=0, lime=0, soil_carbon=0,
          CO2=ifelse(treatment=='EcAt', 280, ifelse(treatment=='EcEt', 280, 0)),
@@ -200,7 +200,7 @@ megarich<-read.delim("CEH_Megarich.txt")%>%
   unique()
 
 yu<-read.delim("IMGERS_Yu.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N2', 5.6, ifelse(treatment=='N3', 11.2, ifelse(treatment=='N4', 22.4, ifelse(treatment=='N5', 39.2, ifelse(treatment=='N6', 56, 0))))),
          p=ifelse(treatment=='N0', 0, 1.55),
@@ -213,7 +213,7 @@ yu<-read.delim("IMGERS_Yu.txt")%>%
   unique()
 
 interaction<-read.delim("RIO_interaction.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='N1W1', 5, ifelse(treatment=='N1W2', 5, ifelse(treatment=='N1W0', 5, 0))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -227,7 +227,7 @@ interaction<-read.delim("RIO_interaction.txt")%>%
   unique()
 
 imagine<-read.delim("CLE_imagine.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=1, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
          CO2=ifelse(treatment=='TDCO2', 200, 0),
@@ -240,7 +240,7 @@ imagine<-read.delim("CLE_imagine.txt")%>%
   unique()
 
 culardoch<-read.delim("CUL_culardoch.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N10', 1, ifelse(treatment=='N10burn', 1, ifelse(treatment=='N10clip', 1, ifelse(treatment=='N10burnclip', 1, ifelse(treatment=='N20', 2, ifelse(treatment=='N20burn', 2, ifelse(treatment=='N20clip', 2, ifelse(treatment=='N20burnclip', 2, ifelse(treatment=='N50', 5, ifelse(treatment=='N50burn', 5, ifelse(treatment=='N50clip', 5, ifelse(treatment=='N50burnclip', 5, 0)))))))))))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -255,7 +255,7 @@ culardoch<-read.delim("CUL_culardoch.txt")%>%
   unique()
 
 gap2<-read.delim("DCGS_gap2.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=1, carbon=0, water=0, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
          precip_vari=0, precip_season=0, mow_clip=ifelse(treatment=='_018', '18 ft opening', ifelse(treatment=='_033', '33 ft opening', ifelse(treatment=='_066', '66 ft opening', ifelse(treatment=='_100', '100 ft opening', ifelse(treatment=='_150', '150 ft opening', 0))))),
@@ -265,7 +265,7 @@ gap2<-read.delim("DCGS_gap2.txt")%>%
   unique()
 
 nsfc<-read.delim("DL_NSFC.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='N', 10, ifelse(treatment=='WN', 10, 0)),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -277,7 +277,7 @@ nsfc<-read.delim("DL_NSFC.txt")%>%
   unique()
 
 warmnut<-read.delim("Finse_WarmNut.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='nutrient addition', 10, ifelse(treatment=='warming + nutrient addition', 10, 0)),
          p=ifelse(treatment=='nutrient addition', 2, ifelse(treatment=='warming + nutrient addition', 2, 0)),
@@ -291,7 +291,7 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
   unique()
 
 face<-read.delim("GVN_FACE.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=1, water=0, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
          CO2=ifelse(treatment=='A', 0, 160),
@@ -303,7 +303,7 @@ face<-read.delim("GVN_FACE.txt")%>%
   unique()
 
 study119<-read.delim("JRN_Study119.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='T', 10, 0),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -314,7 +314,7 @@ study119<-read.delim("JRN_Study119.txt")%>%
   unique()
 
 study278<-read.delim("JRN_study278.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='P1N1', 10, ifelse(treatment=='P2N1', 10, ifelse(treatment=='P3N1', 10, ifelse(treatment=='P4N1', 10, ifelse(treatment=='P5N1', 10, 0))))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -326,7 +326,7 @@ study278<-read.delim("JRN_study278.txt")%>%
   unique()
 
 gce<-read.delim("JSP_GCE2.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=1, water=1, other_manipulation=1,
          n=ifelse(treatment=='N', 7, ifelse(treatment=='RN', 7, ifelse(treatment=='HN', 7, ifelse(treatment=='HRN', 7, ifelse(treatment=='CN', 7, ifelse(treatment=='CRN', 7, ifelse(treatment=='CHN', 7, ifelse(treatment=='CHRN', 7, 0)))))))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
@@ -340,7 +340,7 @@ gce<-read.delim("JSP_GCE2.txt")%>%
   unique()
 
 wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='U CH', -50, ifelse(treatment=='U CD', 50, ifelse(treatment=='U WH', -50, ifelse(treatment=='U WD', 50, ifelse(treatment=='C CH', -50, ifelse(treatment=='C CD', 50, ifelse(treatment=='C WH', -50, ifelse(treatment=='C WD', 50, 0)))))))),
@@ -354,7 +354,7 @@ wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
   unique()
 
 t7<-read.delim("KBS_T7.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='T0F1', 12.3, ifelse(treatment=='T1F1', 12.3, 0)),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -366,7 +366,7 @@ t7<-read.delim("KBS_T7.txt")%>%
   unique()
 
 bffert<-read.delim("KLU_BFFert.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N1F0', 17.5, ifelse(treatment=='N1F1', 17.5, 0)),
          p=ifelse(treatment=='N1F0', 5, ifelse(treatment=='N1F1', 5, 0)),
@@ -380,7 +380,7 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
   unique()
 
 kgfert<-read.delim("KLU_KGFert.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N1B0', 17.5, ifelse(treatment=='N1B1', 17.5, 0)),
          p=ifelse(treatment=='N1B0', 5.8, ifelse(treatment=='N1B1', 5.8, 0)),
@@ -394,7 +394,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
   unique()
 
 bgp<-read.delim("KNZ_BGP.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='u_u_p', 0, ifelse(treatment=='u_u_c', 0, ifelse(treatment=='u_m_p', 0, ifelse(treatment=='u_m_c', 0, ifelse(treatment=='b_u_p', 0, ifelse(treatment=='b_u_c', 0, ifelse(treatment=='b_m_p', 0, ifelse(treatment=='b_m_c', 0, 10)))))))),
          p=ifelse(treatment=='u_u_n', 0, ifelse(treatment=='u_u_c', 0, ifelse(treatment=='u_m_n', 0, ifelse(treatment=='u_m_c', 0, ifelse(treatment=='b_u_n', 0, ifelse(treatment=='b_u_c', 0, ifelse(treatment=='b_m_n', 0, ifelse(treatment=='b_m_c', 0, 10)))))))),
@@ -409,7 +409,7 @@ bgp<-read.delim("KNZ_BGP.txt")%>%
   unique()
 
 irg<-read.delim("KNZ_IRG.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='i', 30, 0),
@@ -420,7 +420,7 @@ irg<-read.delim("KNZ_IRG.txt")%>%
   unique()
 
 pplots<-read.delim("KNZ_PPLOTS.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N0P0', 0, ifelse(treatment=='N0P1', 0, ifelse(treatment=='N0P2', 0, ifelse(treatment=='N0P3', 0, 10)))),
          p=ifelse(treatment=='N0P1', 2.5, ifelse(treatment=='N0P2', 5, ifelse(treatment=='N0P3', 10, ifelse(treatment=='N1P1', 2.5, ifelse(treatment=='N1P2', 5, ifelse(treatment=='N1P3', 10, 0)))))),
@@ -432,7 +432,7 @@ pplots<-read.delim("KNZ_PPLOTS.txt")%>%
   unique()
 
 ramps<-read.delim("KNZ_Ramps.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='AD', -30, ifelse(treatment=='DD', -30, 0)),
@@ -445,7 +445,7 @@ ramps<-read.delim("KNZ_Ramps.txt")%>%
   unique()
 
 rhps<-read.delim("KNZ_RHPs.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N', 5, ifelse(treatment=='stone+N', 5, 0)),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -457,7 +457,7 @@ rhps<-read.delim("KNZ_RHPs.txt")%>%
   unique()
 
 e6<-read.delim("KUFS_E6.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N0P0S0', 0, ifelse(treatment=='N0P8S0', 0, ifelse(treatment=='N4P0S0', 4, ifelse(treatment=='N4P8S0', 4, ifelse(treatment=='N8P0S0', 8, ifelse(treatment=='N8P8S0', 8, 16)))))),
          p=ifelse(treatment=='N0P0S0', 0, ifelse(treatment=='N4P0S0', 0, ifelse(treatment=='N8P0S0', 0, 8))),
@@ -469,7 +469,7 @@ e6<-read.delim("KUFS_E6.txt")%>%
   unique()
 
 clip<-read.delim("LATNJA_CLIP.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='N', 5, ifelse(treatment=='TN', 5, 0)),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0,
@@ -481,7 +481,7 @@ clip<-read.delim("LATNJA_CLIP.txt")%>%
   unique()
 
 herbwood<-read.delim("LG_HerbWood.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='F', 2.4, ifelse(treatment=='FW', 2.4, 0)),
          p=ifelse(treatment=='F', 0.66, ifelse(treatment=='FW', 0.66, 0)),
@@ -495,7 +495,7 @@ herbwood<-read.delim("LG_HerbWood.txt")%>%
   unique()
 
 fireplots<-read.delim("MAERC_fireplots.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='snpg', 5, ifelse(treatment=='snpu', 5, ifelse(treatment=='snug', 5, ifelse(treatment=='snuu', 5, ifelse(treatment=='unpg', 5, ifelse(treatment=='unpu', 5, ifelse(treatment=='unug', 5, ifelse(treatment=='unuu', 5, ifelse(treatment=='wnpg', 5, ifelse(treatment=='wnpu', 5, ifelse(treatment=='wnug', 5, ifelse(treatment=='wnuu', 5, 0)))))))))))),
          p=ifelse(treatment=='snpg', 5, ifelse(treatment=='snpu', 5, ifelse(treatment=='supg', 5, ifelse(treatment=='supu', 5, ifelse(treatment=='unpg', 5, ifelse(treatment=='unpu', 5, ifelse(treatment=='uupg', 5, ifelse(treatment=='uupu', 5, ifelse(treatment=='wnpg', 5, ifelse(treatment=='wnpu', 5, ifelse(treatment=='wupg', 5, ifelse(treatment=='wupu', 5, 0)))))))))))),
@@ -511,7 +511,7 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
   unique()
 
 mwatfer<-read.csv("MNR_watfer.csv")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
          n=ifelse(treatment=='F', 10, ifelse(treatment=='FW', 10, 0)),
          p=ifelse(treatment=='F', 10, ifelse(treatment=='FW', 10, 0)),
@@ -525,7 +525,7 @@ mwatfer<-read.csv("MNR_watfer.csv")%>%
   unique()
 
 wet<-read.delim("NANT_wet.txt")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment)%>%
+  select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='1N0P', 67.2, ifelse(treatment=='1N1P', 67.2, 0)),
          p=ifelse(treatment=='0N0P', 0, ifelse(treatment=='1N0P', 0, 33.6)),
@@ -537,7 +537,7 @@ wet<-read.delim("NANT_wet.txt")%>%
   unique()
 
 gb<-read.delim("NGBER_gb.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
          precip_vari=0,
@@ -549,7 +549,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
   unique()
 
 herbdiv<-read.delim("NIN_herbdiv.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=1,
          n=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF', 0, ifelse(treatment=='3NF', 0, ifelse(treatment=='4NF', 0, ifelse(treatment=='5NF', 0, 12))))),
          p=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF', 0, ifelse(treatment=='3NF', 0, ifelse(treatment=='4NF', 0, ifelse(treatment=='5NF', 0, 3.3))))),
@@ -563,7 +563,7 @@ herbdiv<-read.delim("NIN_herbdiv.txt")%>%
   unique()
 
 ccd<-read.delim("NTG_CCD.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=0, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='CH-', -60, ifelse(treatment=='CH+', 60, ifelse(treatment=='CL-', -60, ifelse(treatment=='CL+', 60, ifelse(treatment=='CN-', -60, ifelse(treatment=='CN+', 60, ifelse(treatment=='WH-', -60, ifelse(treatment=='WH+', 60, ifelse(treatment=='WL-', -60, ifelse(treatment=='WL+', 60, ifelse(treatment=='WN-', -60, ifelse(treatment=='WN+', 60, 0)))))))))))),
@@ -578,7 +578,7 @@ ccd<-read.delim("NTG_CCD.txt")%>%
   unique()
 
 nfert<-read.delim("NWT_246NFert.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='x', 0, ifelse(treatment=='low', 2, ifelse(treatment=='med', 4, 6))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -589,7 +589,7 @@ nfert<-read.delim("NWT_246NFert.txt")%>%
   unique()
 
 bowman<-read.delim("NWT_bowman.txt")%>%
-  select(site_code, project_name, calendar_year, treatment, community_type)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment, community_type)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control', 0, ifelse(treatment=='P', 0, 10)))),
          p=ifelse(treatment=='P'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control', 0, ifelse(treatment=='N', 0, 10)))),
@@ -601,7 +601,7 @@ bowman<-read.delim("NWT_bowman.txt")%>%
   unique()
 
 snow<-read.delim("NWT_snow.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=1,
          n=ifelse(calendar_year==2006, 0, ifelse(treatment=='XNX'&calendar_year<2011, 28, ifelse(treatment=='XNW'&calendar_year<2011, 28, ifelse(treatment=='PNX'&calendar_year<2011, 28, ifelse(treatment=='PNW'&calendar_year<2011, 28, ifelse(treatment=='XNX'&calendar_year>2010, 10, ifelse(treatment=='XNW'&calendar_year>=2011, 10, ifelse(treatment=='PNX'&calendar_year>=2011, 10, ifelse(treatment=='PNW'&calendar_year>=2011, 10, 0))))))))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -614,7 +614,7 @@ snow<-read.delim("NWT_snow.txt")%>%
   unique()
 
 oface<-read.delim("ORNL_FACE.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=1, water=0, other_manipulation=0,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0,
          CO2=ifelse(treatment=='elevated', 170, 0),
@@ -625,7 +625,7 @@ oface<-read.delim("ORNL_FACE.txt")%>%
   unique()
 
 tide<-read.delim("PIE_Tide.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='Enriched', 37.5, 0),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -636,7 +636,7 @@ tide<-read.delim("PIE_Tide.txt")%>%
   unique()
 
 snfert<-read.delim("SEV_NFert.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='F', 10, 0),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0, precip=0, temp=0,
@@ -647,7 +647,7 @@ snfert<-read.delim("SEV_NFert.txt")%>%
   unique()
 
 wenndex<-read.delim("SEV_WENNDEx.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=1,
          n=ifelse(treatment=='C', 0, ifelse(treatment=='P', 0, ifelse(treatment=='T', 0, ifelse(treatment=='TP', 0, 2)))),
          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -661,7 +661,7 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
 
 #dropped because only cessation
 # esa<-read.delim("SGS_ESA.txt")%>%
-#   select(site_code, project_name, calendar_year, treatment)%>%
+#   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
 #   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
 #          n=ifelse(treatment=='control', 0, ifelse(treatment=='water', 0, 10)),
 #          p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
@@ -672,7 +672,7 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
 #   unique()
 
 uk<-read.delim("SKY_UK.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0, p=0, k=0, other_nut=0, lime=0, soil_carbon=0, CO2=0,
          precip=ifelse(treatment=='C', 0, ifelse(treatment=='H', 0, 30)),
@@ -684,7 +684,7 @@ uk<-read.delim("SKY_UK.txt")%>%
   unique()
 
 gane<-read.delim("SVA_GANE.txt")%>%
-  select(site_code, project_name, calendar_year, treatment)%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='C', 0, ifelse(treatment=='P', 0, ifelse(treatment=='LN', 0.5, ifelse(treatment=='LNP', 0.5, 5)))),
          p=ifelse(treatment=='P', 1, ifelse(treatment=='LNP', 1, ifelse(treatment=='HNP', 1, 0))),
