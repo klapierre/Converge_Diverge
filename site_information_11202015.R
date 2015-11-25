@@ -58,14 +58,16 @@ ExpLength<-ExpInfo%>%
 
 
 ##calculate chao richness and rarefied richness for each site
-#import species data
+
 species <- read.csv("SpeciesRawAbundance_Nov2015.csv")%>%
   select(site_code, project_name, community_type, plot_id, calendar_year, genus_species, abundance)%>%
   mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
   tbl_df()%>%
   group_by(exp,site_code, project_name, community_type, calendar_year, plot_id, genus_species)%>%
-  summarise(abundance=mean(abundance))
+  summarise(abundance=mean(abundance))%>%
+  filter(genus_species!="")
+
 
 SampleIntensity<-species%>%
   tbl_df()%>%
@@ -75,9 +77,8 @@ SampleIntensity<-species%>%
   group_by(exp)%>%
   summarize(SampleIntensity=length(SampleIntensity))
 
-exp=species%>%
-  select(exp)%>%
-  unique()
+exp<-SampleIntensity%>%
+  select(exp)
 
 #create empty dataframe for loop
 estimatedRichness=data.frame(row.names=1) 
@@ -106,40 +107,8 @@ for(i in 1:length(exp$exp)) {
   estimatedRichness<-rbind(chao2, estimatedRichness)
 }
 
-  #calculate rarefied value
-  #we should get all of the chao richness estimates for samples 1-X for each experiment, cbind them all together, find the min sample number across all experiments, and then use that to get rarefied richness for each of the experiments
-  
-  #in theory we could also get estimated richness from our pool/species accumulation curves by extrapolating out beyond the number of samples collected
+ExpRichness<-estimatedRichness%>%
+  filter(n==22)
 
-pplots<-species%>%
-  filter(project_name=="pplots")%>%
-  spread(genus_species, abundance, fill=0)
-
-specpool(pplots[,7:ncol(pplots)])
-pool<-poolaccum(pplots[,7:ncol(pplots)])
-chao <- as.data.frame(as.matrix(pool$chao))
-chao$average<-rowMeans(chao)
-chao$n<-row.names(chao)
-chao2<-chao%>%
-  select(n, average)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+merge<-merge(ExpRichness, exp, by="exp", all=T)
 
