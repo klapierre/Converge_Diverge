@@ -45,9 +45,13 @@ ExpList<-ExpInfo%>%
 #   unique()
 #write.csv(siteList, "SiteList_LatLong.csv")
 
-SiteClimate<-read.csv("siteList_climate.csv")
+SiteClimate<-read.csv("siteList_climate.csv")%>%
+  mutate(MAP=ifelse(site_code=="Finse", 1030, MAP))%>%
+  select(site_code, MAP, MAT)
+#for Finse_WarmNut there is a big differnce between this and what they published, and thier coordinates were VERY vauge. I am replacing with thier value. 1030 mm
 
-ExpANPP<-read.csv("ExperimentANPP.csv")
+ExpANPP<-read.csv("ExperimentANPP.csv")%>%
+  select(-X)
 
 ExpLength<-ExpInfo%>%
   tbl_df()%>%
@@ -107,6 +111,20 @@ for(i in 1:length(exp$exp)) {
   estimatedRichness<-rbind(chao2, estimatedRichness)
 }
 
-
 ExpRichness<-estimatedRichness%>%
-  filter(n==22)
+  filter(n==22)%>%
+  separate(exp, c("site_code", "project_name", "community_type"), sep="::")%>%
+  mutate(rrich=aveChao)%>%
+  select(-n, -aveChao)
+
+ExpDetails1<-merge(ExpRichness, ExpLength, by=c("site_code","project_name","community_type"))
+ExpDetails<-merge(ExpDetails1, ExpANPP, by=c("site_code","project_name","community_type"))
+
+SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
+
+write.csv(SiteExpDetails, "SiteExperimentDetails_Nov2015.csv")
+
+pairs(SiteExpDetails[,c(2,3,6:8)])
+with(SiteExpDetails,cor.test(MAP, anpp))
+with(SiteExpDetails,cor.test(rrich, experiment_length))
+
