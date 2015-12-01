@@ -515,4 +515,9 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
 
 write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2015.csv")
 
+##for Codyn dataset
+expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
+forcodyn<-merge(expinfo, relcov, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
+  select(site_code,project_name,community_type,calendar_year,treatment_year,genus_species,relcov,plot_mani)
 
+write.csv(forcodyn,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
