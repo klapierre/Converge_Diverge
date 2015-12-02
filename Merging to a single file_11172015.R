@@ -520,4 +520,31 @@ expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInform
 forcodyn<-merge(expinfo, relcov, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
   select(site_code,project_name,community_type,calendar_year,treatment_year,genus_species,relcov,plot_mani, plot_id)
 
-write.csv(forcodyn,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
+##get sp1 sp2
+species<-forcodyn%>%
+  select(site_code,project_name, genus_species)%>%
+  mutate(exp=paste(site_code, project_name, sep="::"))%>%
+  unique()
+
+exp<-species%>%
+  select(site_code,project_name)%>%
+  mutate(exp=paste(site_code, project_name, sep="::"))%>%
+  unique()
+
+forcodynsp<-data.frame(row.names = 1)
+
+for (i in 1: length(exp$exp)) {
+  
+  subset<-species%>%
+    filter(exp==exp$exp[i])
+  
+  newnames<-subset%>%
+    mutate(sp="sp", num=seq(1,nrow(subset), by=1), species=paste(sp, num, sep=""))
+  
+  forcodynsp<-rbind(newnames, forcodynsp)
+}
+
+forcodyn2<-merge(forcodyn, forcodynsp, by=c("site_code", "project_name", "genus_species"))%>%
+  select(-genus_species, -sp, -num, -exp)
+
+write.csv(forcodyn2,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
