@@ -545,6 +545,10 @@ for (i in 1: length(exp$exp)) {
 }
 
 forcodyn2<-merge(forcodyn, forcodynsp, by=c("site_code", "project_name", "genus_species"))%>%
-  select(-genus_species, -sp, -num, -exp)
+  select(-genus_species, -sp, -num, -exp)%>%
+  #there are some repeat species!GAH
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type, calendar_year, treatment_year, plot_mani, plot_id, species)%>%
+  summarize(relcov=mean(relcov))
 
 write.csv(forcodyn2,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
