@@ -55,6 +55,11 @@ exp12<-merge(exp1, exp1_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+nitphos<-read.csv("AZI_NitPhos.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
+  
 lind<-read.delim("BAY_LIND.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -precip,-plant_mani, -plot_id1, -plot_mani, -data_type, -species_num)%>%
   gather(species_code, abundance, sp1:sp56)%>%
@@ -114,14 +119,9 @@ biocon2<-merge(biocon, biocon_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
-e001<-read.delim("CDR_e001_revised.txt")%>%
+e001<-read.csv("CDR_e001.csv")%>%
   mutate(block=0)%>%
-  select(-N)%>%
-  filter(abundance!=0)
-
-mwatfer<-read.csv("MNR_watfer.csv")%>%
-  mutate(genus_species=species_name)%>%
-  select(-X, -species_name, -species)%>%
+  select(-data_type)%>%
   filter(abundance!=0)
 
 e002<-read.delim("CDR_e002.txt")%>%
@@ -131,7 +131,7 @@ e002<-read.delim("CDR_e002.txt")%>%
 e002_names<-read.delim("CDR_e002_specieslist.txt")%>%
   mutate(species_code=tolower(species_code))
 e0022<-merge(e002, e002_names,by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
+  filter(abundance!=0, calendar_year<1992)%>%##drops everything once cessation starts
   select(-species_code)
 
 megarich<-read.delim("CEH_Megarich.txt")%>%
@@ -143,21 +143,6 @@ megarich_names<-read.delim("CEH_Megarich_specieslist.txt")
 megarich2<-merge(megarich, megarich_names,by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
-
-yu<-read.delim("IMGERS_Yu.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -p, -k, -plot_mani, -data_type, -species_num)%>%
-  gather(species_code, abundance, sp1:sp29)%>%
-  mutate(community_type=0)
-yu_names<-read.delim("IMGERS_Yu_specieslist.txt")
-yu2<-merge(yu, yu_names,by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
-
-interaction<-read.delim("RIO_interaction.txt")%>%
-  select(-n, -precip, -precip_vari, -plot_mani, -data_type)%>%
-  gather(genus_species, abundance, Mulinum.spinosum:Forb.spp)%>%
-  mutate(block=0)%>%
-  filter(abundance!=0)
 
 imagine<-read.delim("CLE_imagine.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -c, -data_type,-plot_mani, -plant_mani, -precip, -temp, -species_num)%>%
@@ -213,6 +198,20 @@ face<-read.delim("GVN_FACE.txt")%>%
          block=0)
 face_names<-read.delim("GVN_FACE_specieslist.txt")
 face2<-merge(face, face_names, by="species_code", all=T)%>%
+  filter(abundance!=0)%>%
+  select(-species_code)
+
+nde<-read.csv("IMGERS_NDE.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0)%>%
+  filter(abundance!=0)
+
+yu<-read.delim("IMGERS_Yu.txt")%>%
+  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -p, -k, -plot_mani, -data_type, -species_num)%>%
+  gather(species_code, abundance, sp1:sp29)%>%
+  mutate(community_type=0)
+yu_names<-read.delim("IMGERS_Yu_specieslist.txt")
+yu2<-merge(yu, yu_names,by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
@@ -300,23 +299,20 @@ irg2<-merge(irg, irg_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
-pplots<-read.delim("KNZ_PPLOTS.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n,-p, -data_type,-plot_mani, -species_num)%>%
-  gather(species_code, abundance, sp1:sp232)%>%
-  mutate(community_type=0)
-pplots_names<-read.delim("KNZ_PPLOTS_specieslist.txt")
-pplots2<-merge(pplots, pplots_names, by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
+gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
+  select(-data_type)%>%
+  mutate(block=0)%>%
+  filter(abundance!=0)
 
-ramps<-read.delim("KNZ_Ramps.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -precip, -precip_vari, -temp, -data_type,-plot_mani, -species_num, -plot_id1)%>%
-  gather(species_code, abundance, sp1:sp232)%>%
-  mutate(community_type=0)
-ramps_names<-read.delim("KNZ_Ramps_specieslist.txt")
-ramps2<-merge(ramps, ramps_names, by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
+pplots<-read.csv("KNZ_PPLOTS.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
+
+ramps<-read.csv("KNZ_Ramps.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
 
 rhps<-read.delim("KNZ_RHPs.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -soil_depth, -data_type,-plot_mani, -species_num)%>%
@@ -344,6 +340,11 @@ clip2<-merge(clip, clip_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+pme<-read.csv("LEFT_PME.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0)%>%
+  filter(abundance!=0)
+
 herbwood<-read.delim("LG_HerbWood.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n,-precip, -p, -k, -data_type, -plot_mani, -species_num, -plot_id1)%>%
   gather(species_code, abundance, sp1:sp232)%>%
@@ -363,6 +364,11 @@ fireplots2<-merge(fireplots, fireplots_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+mwatfer<-read.csv("MNR_watfer.csv")%>%
+  mutate(genus_species=species_name)%>%
+  select(-species_name, -species)%>%
+  filter(abundance!=0)
+
 wet<-read.delim("NANT_wet.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -p, -data_type, -plot_mani, -species_num, -plot_id1)%>%
   gather(species_code, abundance, sp1:sp101)%>%
@@ -381,15 +387,10 @@ gb2<-merge(gb, gb_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code, -X, -X.1, -X.2)
 
-herbdiv<-read.delim("NIN_herbdiv.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n,-p, -k, -other_nut,-herb_removal, -data_type, -plot_mani, -species_num)%>%
-  gather(species_code, abundance, sp1:sp94)%>%
-  mutate(community_type=0)
-herbdiv_names<-read.delim("NIN_herbdiv_specieslist.txt")%>%
-  mutate(species_code=tolower(species_code))
-herbdiv2<-merge(herbdiv, herbdiv_names,by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
+herbdiv<-read.csv("NIN_herbdiv.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
 
 ccd<-read.delim("NTG_CCD.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -clip,-precip, -temp, -data_type, -plot_mani, -species_num)%>%
@@ -445,6 +446,32 @@ tide2<-merge(tide, tide_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+interaction<-read.delim("RIO_interaction.txt")%>%
+  select(-n, -precip, -precip_vari, -plot_mani, -data_type)%>%
+  gather(genus_species, abundance, Mulinum.spinosum:Forb.spp)%>%
+  mutate(block=0)%>%
+  filter(abundance!=0)
+
+lucero<-read.csv("SCL_Lucero.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0)%>%
+  filter(abundance!=0)
+
+ter<-read.csv("SCL_TER.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0)%>%
+  filter(abundance!=0)
+
+cxn<-read.csv("SERC_CXN.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
+
+tmece<-read.csv("SERC_TMECE.csv")%>%
+  select(-data_type)%>%
+  mutate(block=0)%>%
+  filter(abundance!=0)
+
 snfert<-read.delim("SEV_NFert.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -data_type, -plot_mani, -species_num)%>%
   gather(species_code, abundance, sp1:sp232)%>%
@@ -466,6 +493,10 @@ wenndex2<-merge(wenndex, wenndex_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
+  select(-data_type)%>%
+  filter(abundance!=0)
+
 uk<-read.delim("SKY_UK.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -temp, -precip, -plot_id1, -data_type, -plot_mani, -species_num)%>%
   gather(species_code, abundance, sp1:sp26)%>%
@@ -474,6 +505,14 @@ uk_names<-read.delim("SKY_UK_specieslist.txt")
 uk2<-merge(uk, uk_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
+
+nitrogen<-read.csv("SR_Nitrogen.csv")%>%
+  select(-data_type)%>%
+  filter(abundance!=0)
+
+water<-read.csv("SR_WATER.csv")%>%
+  select(-data_type)%>%
+  filter(abundance!=0)
 
 gane<-read.delim("SVA_GANE.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulations, -num_manipulations, -experiment_year, -n, -p, -data_type, -plot_mani, -species_num)%>%
@@ -485,23 +524,34 @@ gane2<-merge(gane, gane_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   select(-species_code)
 
+tface<-read.csv("TAS_FACE.csv")%>%
+  select(-data_type, -X)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
+
+lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0)%>%
+  filter(abundance!=0)
+
+nitadd<-read.csv("YMN_NitAdd.csv")%>%
+  select(-data_type)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
+
 #merge all datasets
-combine<-rbind(wapaclip2, bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, e0022,
-               e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2,herbdiv2,
-               herbwood2, imagine2, irg2, kgfert2, lind2, mat22, megarich2, mnt2, nfert2, nsfc2, oface2, 
-               pennings2, pplots2,pq2, yu2, ramps2, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72,
-               tide2, uk2, warmnut2, watering, wenndex2, wet2, mwatfer, interaction, e001)
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e001, e0022, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering, water, wenndex2, wet2, yu2)
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_Nov2015.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_Feb2016.csv")
 
 ###get species list
 species_list<-combine%>%
   select(site_code, project_name, genus_species)%>%
   unique()
 
-write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_Nov2015.csv")
+write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_Feb2016.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -513,7 +563,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2015.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Feb2015.csv")
 
 ##for Codyn dataset
 expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
