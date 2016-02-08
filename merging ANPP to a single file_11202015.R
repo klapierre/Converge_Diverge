@@ -100,8 +100,8 @@ oface<-read.delim("ORNL_FACE_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0, block=0)
 tide<-read.delim("PIE_Tide_anpp.txt")%>%
-  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp, block)%>%
-  mutate(community_type=0)
+  select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
+  mutate(community_type=0, block=0)
 interaction<-read.delim("RIO_interaction_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(block=0)
