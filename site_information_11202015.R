@@ -7,51 +7,50 @@ library(dplyr)
 library(vegan)
 
 #import the list of all experiments site information
-ExpInfo <- read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
+ExpInfo <- read.csv("SpeciesRelativeAbundance_Feb2016.csv")%>%
   select(-X)
 
 ExpList<-ExpInfo%>%
-  select(site_code, project_name)%>%
+  select(site_code, project_name, community_type)%>%
   unique()
-#write.csv(ExpList, "Experiment_List.csv")
+#write.csv(ExpList, "Experiment_List_Feb2016.csv")
 
-#Getting control ANPP
-# ANPP<-read.csv("ANPP_Nov2015.csv")
-# 
-# Experiment_Info<-read.csv("ExperimentInformation_Nov2015.csv")%>%
-#   select(site_code, project_name, community_type, treatment, plot_mani)%>%
-#   unique()
-# 
-# ExpList<-Experiment_Info%>%
-#   select(site_code, project_name, community_type)%>%
-#   unique()
-# 
-# controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"))%>%
-#   filter(plot_mani==0)%>%
-#   na.omit%>%
-#   tbl_df()%>%
-#   group_by(site_code, project_name, community_type, treatment_year)%>%
-#   summarize(anpp=mean(anpp))%>%
-#   tbl_df()%>%
-#   group_by(site_code, project_name, community_type)%>%
-#   summarize(anpp=mean(anpp))
-# 
-# ExpANPP<-merge(controlANPP, ExpList, by=c("site_code","project_name","community_type"), all=T)
-# 
-# write.csv(ExpANPP, "ExperimentANPP_toadd.csv")
+#Getting ANPP
+ANPP<-read.csv("ANPP_Feb2016.csv")
+
+Experiment_Info<-read.csv("ExperimentInformation_Feb2016.csv")%>%
+  select(site_code, project_name, community_type, treatment, plot_mani)%>%
+  unique()
+
+ExpList2<-Experiment_Info%>%
+  select(site_code, project_name, community_type)%>%
+  unique()
+
+controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"))%>%
+  filter(plot_mani==0)%>%
+  na.omit%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type, treatment_year)%>%
+  summarize(anpp=mean(anpp))%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(anpp=mean(anpp))
+
+ANPP_nocont<-read.csv("ANPP_noControls.csv")
+
+AllANPP<-rbind(ANPP_nocont, controlANPP)
+
+ExpANPP<-merge(AllANPP, ExpList2, by=c("site_code","project_name","community_type"), all=T)
 
 # siteList<-ExpInfo%>%
 #   select(site_code)%>%
 #   unique()
 #write.csv(siteList, "SiteList_LatLong.csv")
 
-SiteClimate<-read.csv("siteList_climate.csv")%>%
+SiteClimate<-read.csv("siteList_climate_Feb2016.csv")%>%
   mutate(MAP=ifelse(site_code=="Finse", 1030, MAP))%>%
   select(site_code, MAP, MAT)
 #for Finse_WarmNut there is a big differnce between this and what they published, and thier coordinates were VERY vauge. I am replacing with thier value. 1030 mm
-
-ExpANPP<-read.csv("ExperimentANPP.csv")%>%
-  select(-X)
 
 ExpLength<-ExpInfo%>%
   tbl_df()%>%
@@ -63,7 +62,7 @@ ExpLength<-ExpInfo%>%
 
 ##calculate chao richness and rarefied richness for each site
 
-species <- read.csv("SpeciesRawAbundance_Nov2015.csv")%>%
+species <- read.csv("SpeciesRawAbundance_Feb2016.csv")%>%
   select(site_code, project_name, community_type, plot_id, calendar_year, genus_species, abundance)%>%
   mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
@@ -79,7 +78,7 @@ SampleIntensity<-species%>%
   summarize(SampleIntensity=length(abundance))%>%
   tbl_df()%>%
   group_by(exp)%>%
-  summarize(SampleIntensity=length(SampleIntensity))
+  summarize(SampleIntensity=length(SampleIntensity))#how many plots were sampled over the course of the experiment
 
 exp<-SampleIntensity%>%
   select(exp)
@@ -112,17 +111,21 @@ for(i in 1:length(exp$exp)) {
 }
 
 ExpRichness<-estimatedRichness%>%
-  filter(n==22)%>%
+  filter(n==34)%>%#the lowest sampling intensity, not including GVN_FACE
   separate(exp, c("site_code", "project_name", "community_type"), sep="::")%>%
   mutate(rrich=aveChao)%>%
   select(-n, -aveChao)
+
+gface<-data.frame(site_code="GVN", project_name="FACE", community_type=0, rrich=30.85)
+
+ExpRichness<-rbind(ExpRichness, gface)
 
 ExpDetails1<-merge(ExpRichness, ExpLength, by=c("site_code","project_name","community_type"))
 ExpDetails<-merge(ExpDetails1, ExpANPP, by=c("site_code","project_name","community_type"))
 
 SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
 
-write.csv(SiteExpDetails, "SiteExperimentDetails_Nov2015.csv")
+write.csv(SiteExpDetails, "SiteExperimentDetails_Feb2016.csv")
 
 pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
