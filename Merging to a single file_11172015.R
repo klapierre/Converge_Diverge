@@ -559,7 +559,7 @@ totcov<-combine%>%
   group_by(site_code, project_name, community_type, calendar_year, treatment_year, treatment, block, plot_id)%>%
   summarise(totcov=sum(abundance))
 
-relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id"))%>%
+relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type", "calendar_year", "treatment_year", "treatment", "block", "plot_id"), all=T)%>%
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
