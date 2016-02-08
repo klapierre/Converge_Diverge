@@ -13,7 +13,7 @@ setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
+alldata<-read.csv("SpeciesRelativeAbundance_Feb2016.csv")%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
@@ -21,7 +21,7 @@ alldata<-read.csv("SpeciesRelativeAbundance_Nov2015.csv")%>%
   group_by(exp_year, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
   summarise(relcov=mean(relcov))
 
-expinfo<-read.csv("ExperimentInformation_Nov2015.csv")%>%
+expinfo<-read.csv("ExperimentInformation_Feb2016.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
@@ -53,7 +53,7 @@ for(i in 1:length(exp_year$exp_year)) {
   
   #transpose data
   species=subset%>%
-    spread(genus_species, relcov, fill=0)
+   spread(genus_species, relcov, fill=0)
 
   #calculate bray-curtis dissimilarities
   bc=vegdist(species[,5:ncol(species)], method="bray")
@@ -109,4 +109,4 @@ for(i in 1:length(exp_year$exp_year)) {
 
 
 #write csv
-write.csv(for.analysis, 'DiversityMetrics_Nov2015.csv')
+write.csv(for.analysis, 'DiversityMetrics_Feb2016.csv')
