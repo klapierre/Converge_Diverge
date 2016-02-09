@@ -78,8 +78,8 @@ anppCompareExp <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plo
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
 
-test<-ForAnalysis%>%
+test<-ForANPPAnalysis%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-write.csv(ForAnalysis, "ForBayesianAnalysisANPP_Feb2016.csv")
+write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Feb2016.csv")
