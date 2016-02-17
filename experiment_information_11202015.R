@@ -1,8 +1,7 @@
+#Kim's
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
 
-# #Meghan
-# 
-
+#Meghan's
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
 
 library(tidyr)
