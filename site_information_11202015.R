@@ -15,18 +15,18 @@ ExpInfo <- read.csv("SpeciesRelativeAbundance_Feb2016.csv")%>%
 ExpList<-ExpInfo%>%
   select(site_code, project_name, community_type)%>%
   unique()
-#write.csv(ExpList, "Experiment_List_Feb2016.csv")
 
 #Getting ANPP
 ANPP<-read.csv("ANPP_Feb2016.csv")
 
-Experiment_Info<-read.csv("ExperimentInformation_Feb2016.csv")%>%
-  select(site_code, project_name, community_type, treatment, plot_mani)%>%
+Experiment_Info<-read.csv("ExperimentInformation_Feb2016a.csv")%>%
+  select(site_code, project_name, community_type, treatment, plot_mani, public)%>%
   unique()
 
 ExpList2<-Experiment_Info%>%
-  select(site_code, project_name, community_type)%>%
+  select(site_code, project_name, community_type, public)%>%
   unique()
+# write.csv(ExpList2, "Experiment_List_Feb2016a.csv")
 
 controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","community_type","treatment"))%>%
   filter(plot_mani==0)%>%
@@ -52,14 +52,12 @@ ExpANPP<-merge(AllANPP, ExpList2, by=c("site_code","project_name","community_typ
 SiteClimate<-read.csv("siteList_climate_Feb2016.csv")%>%
   mutate(MAP=ifelse(site_code=="Finse", 1030, MAP))%>%
   select(site_code, MAP, MAT)
-#for Finse_WarmNut there is a big differnce between this and what they published, and thier coordinates were VERY vauge. I am replacing with thier value. 1030 mm
+#for Finse_WarmNut there is a big differnce between this and what they published, and their coordinates were VERY vauge. I am replacing with their value: 1030 mm.
 
 ExpLength<-ExpInfo%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(experiment_length=max(treatment_year))
-
-##need to rarefy species. not sure how to do this with cover data.
 
 
 ##calculate chao richness and rarefied richness for each site
@@ -127,7 +125,7 @@ ExpDetails<-merge(ExpDetails1, ExpANPP, by=c("site_code","project_name","communi
 
 SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
 
-write.csv(SiteExpDetails, "SiteExperimentDetails_Feb2016.csv")
+write.csv(SiteExpDetails, "SiteExperimentDetails_Feb2016a.csv")
 
 pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
