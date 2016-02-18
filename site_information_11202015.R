@@ -1,5 +1,7 @@
+#kim's
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
+#meghan's
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 library(tidyr)
