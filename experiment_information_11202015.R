@@ -1530,7 +1530,7 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
 #kim's
-write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Feb2015a.csv')
+write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Feb2016a.csv')
 
 #meghan's
 write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016a.csv")
