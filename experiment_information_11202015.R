@@ -20,6 +20,7 @@ library(dplyr)
 #   resource_mani=1 for all control plots and any treatment plot that directly manipulates a resource; resource_mani=0 for plots where no resource was directly manipulated (except for the controls)
 # pulse is a binary variable for treatments that were a one time application that did not also get applied to the control plots (e.g., burning in CUL, which was a treatment just in the first year of the experiment, but was not applied to the controls)
 #   a factor was not considered a pulse if all plots experienced it (e.g., solarization in ASGA clonal, wildfire in SEV WENNDex)
+# public means the dataset is publically available and we don't need to ask permission to use it
 
 watering<-read.delim("ANG_watering.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
@@ -41,6 +42,7 @@ watering<-read.delim("ANG_watering.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='W', 1, ifelse(treatment=='S', 1, 0)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 mat2<-read.delim("ARC_mat2.txt")%>%
@@ -63,6 +65,7 @@ mat2<-read.delim("ARC_mat2.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NP', 2, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 mnt<-read.delim("ARC_mnt.txt")%>%
@@ -85,6 +88,7 @@ mnt<-read.delim("ARC_mnt.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NP', 2, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 clonal<-read.delim("ASGA_Clonal.txt")%>%
@@ -107,6 +111,7 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='non-clonal_UN'|treatment=='non-clonal_LP'|treatment=='non-clonal_SP', 2, ifelse(treatment=='non-clonal_CO'|treatment=='mixed_LP'|treatment=='mixed_SP'|treatment=='mixed_UN', 1, 0)))%>%
   mutate(resource_mani=ifelse(treatment=='non-clonal_CO', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
@@ -129,6 +134,7 @@ exp1<-read.delim("ASGA_Exp1.txt")%>%
          pulse=ifelse(treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_0_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='2_1_CO', 1, 0))%>%
   mutate(plot_mani=ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='1_0_PA'|treatment=='1_0_UN'|treatment=='1_1_CO'|treatment=='2_0_CO', 1, ifelse(treatment=='1_1_PA'|treatment=='1_1_UN'|treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_1_CO', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='2_0_CO'|treatment=='1_1_CO'|treatment=='2_1_CO', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 nitphos<-read.csv("AZI_NitPhos.csv")%>%
@@ -151,6 +157,7 @@ nitphos<-read.csv("AZI_NitPhos.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0P0', 0, ifelse(treatment=="N1P0", 1, ifelse(treatment=="N2P0", 1, ifelse(treatment=="N3P0", 1, 2)))))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 #16 spp plots are controls
@@ -175,6 +182,7 @@ lind<-read.delim("BAY_LIND.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 events<-read.delim("Bt_EVENT2.txt")%>%
@@ -197,6 +205,7 @@ events<-read.delim("Bt_EVENT2.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CA-N1', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 pq<-read.delim("BUX_PQ.txt")%>%
@@ -219,6 +228,7 @@ pq<-read.delim("BUX_PQ.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='warm'|treatment=='dry'|treatment=='wet', 1, ifelse(treatment=='control', 0, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='warm', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 pennings<-read.delim("CAR_Pennings.txt")%>%
@@ -240,6 +250,7 @@ pennings<-read.delim("CAR_Pennings.txt")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NPK', 3, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 rmapc<-read.delim("CAU_RMAPC.txt")%>%
@@ -261,6 +272,7 @@ rmapc<-read.delim("CAU_RMAPC.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Cont', 0, ifelse(treatment=='NP', 2, 1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 biocon<-read.delim("CDR_biocon.txt")%>%
@@ -283,6 +295,7 @@ biocon<-read.delim("CDR_biocon.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='X_X', 0, ifelse(treatment=='N_C', 2, 1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 e001<-read.csv("CDR_e001.csv")%>%
@@ -304,6 +317,7 @@ e001<-read.csv("CDR_e001.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1_y_n', 4, ifelse(treatment=='9_y_n', 0, 5)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 e002<-read.delim("CDR_e002.txt")%>%
@@ -325,6 +339,7 @@ e002<-read.delim("CDR_e002.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1_f_u_n', 4, ifelse(treatment=='9_f_u_n', 0, 5)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   filter(calendar_year<1992)%>%##drops everything once cessation starts
   unique()
 
@@ -348,6 +363,7 @@ megarich<-read.delim("CEH_Megarich.txt")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='AcAt', 0, ifelse(treatment=='EcEt', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='AcEt', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 imagine<-read.delim("CLE_imagine.txt")%>%
@@ -370,6 +386,7 @@ imagine<-read.delim("CLE_imagine.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='T', 1, ifelse(treatment=='TD', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 culardoch<-read.delim("CUL_culardoch.txt")%>%
@@ -392,6 +409,7 @@ culardoch<-read.delim("CUL_culardoch.txt")%>%
         pulse=ifelse(treatment=='burn'|treatment=='burnclip'|treatment=='N10burn'|treatment=='N10burnclip'|treatment=='N20burn'|treatment=='N20burnclip'|treatment=='N50burn'|treatment=='N50burnclip', 1, 0))%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N10'|treatment=='N20'|treatment=='N50'|treatment=='burn'|treatment=='clip', 1, ifelse(treatment=='N10burnclip'|treatment=='N20burnclip'|treatment=='N50burnclip', 3, 2))))%>%
   mutate(resource_mani=ifelse(treatment=='burn'|treatment=='clip'|treatment=='burnclip', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 gap2<-read.delim("DCGS_gap2.txt")%>%
@@ -414,6 +432,7 @@ gap2<-read.delim("DCGS_gap2.txt")%>%
          pulse=1)%>%
   mutate(plot_mani=ifelse(treatment=='_000', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 nsfc<-read.delim("DL_NSFC.txt")%>%
@@ -436,6 +455,7 @@ nsfc<-read.delim("DL_NSFC.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='WN', 2, 1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 warmnut<-read.delim("Finse_WarmNut.txt")%>%
@@ -458,6 +478,7 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='warming', 1, ifelse(treatment=='nutrient addition', 3, 4))))%>%
   mutate(resource_mani=ifelse(treatment=='warming', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 face<-read.delim("GVN_FACE.txt")%>%
@@ -480,6 +501,7 @@ face<-read.delim("GVN_FACE.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='E', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 nde<-read.csv("IMGERS_NDE.csv")%>%
@@ -502,6 +524,7 @@ nde<-read.csv("IMGERS_NDE.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=="N0M0", 0, ifelse(treatment=="N1M0"|treatment=='N0M1'|treatment=="N1M0"|treatment=="N2M0"|treatment=="N3M0"|treatment=="N4M0"|treatment=="N5M0"|treatment=="N6M0"|treatment=="N7M0"|treatment=="N8M0", 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=="N0M1", 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 yu<-read.delim("IMGERS_Yu.txt")%>%
@@ -524,6 +547,7 @@ yu<-read.delim("IMGERS_Yu.txt")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0', 0, ifelse(treatment=='N1', 2, 3)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 study119<-read.delim("JRN_Study119.txt")%>%
@@ -545,6 +569,7 @@ study119<-read.delim("JRN_Study119.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='T', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 study278<-read.delim("JRN_study278.txt")%>%
@@ -567,6 +592,7 @@ study278<-read.delim("JRN_study278.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='P3N0', 0, ifelse(treatment=='P1N0'|treatment=='P2N0'|treatment=='P3N1'|treatment=='P4N0'|treatment=='P5N0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 gce<-read.delim("JSP_GCE2.txt")%>%
@@ -589,6 +615,7 @@ gce<-read.delim("JSP_GCE2.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='amb', 0, ifelse(treatment=='N'|treatment=='R'|treatment=='H'|treatment=='C', 1, ifelse(treatment=='HRN'|treatment=='CRN'|treatment=='CHN'|treatment=='CHR', 3, ifelse(treatment=='CHRN', 4, 2)))))%>%
   mutate(resource_mani=ifelse(treatment=='H', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
@@ -611,6 +638,7 @@ wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='U CC', 0, ifelse(treatment=='U CH', 1, ifelse(treatment=='U CD', 1, ifelse(treatment=='U WC', 1, ifelse(treatment=='C CC', 1, ifelse(treatment=='C WH', 3, ifelse(treatment=='C WD', 3, 2))))))))%>%
   mutate(resource_mani=ifelse(treatment=='U WC', 0, ifelse(treatment=='C CC', 0, ifelse(treatment=='C WC', 0, 1))))%>%
+  mutate(public=0)%>%
   unique()
 
 t7<-read.delim("KBS_T7.txt")%>%
@@ -631,6 +659,7 @@ t7<-read.delim("KBS_T7.txt")%>%
          successional=1, plant_mani=0, pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='T0F0', 0, ifelse(treatment=='T1F1', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='T1F0', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 bffert<-read.delim("KLU_BFFert.txt")%>%
@@ -653,6 +682,7 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F1', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
+  mutate(public=0)%>%
   unique()
 
 kgfert<-read.delim("KLU_KGFert.txt")%>%
@@ -675,6 +705,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 4, 1))))%>%
+  mutate(public=0)%>%
   unique()
 
 bgp<-read.delim("KNZ_BGP.txt")%>%
@@ -697,6 +728,7 @@ bgp<-read.delim("KNZ_BGP.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='u_u_c', 0, ifelse(treatment=='u_u_n'|treatment=='u_u_p'|treatment=='u_m_c'|treatment=='b_u_c', 1, ifelse(treatment=='b_u_b'|treatment=='b_m_n'|treatment=='b_m_p'|treatment=='u_m_b', 3, ifelse(treatment=='b_u_n'|treatment=='b_u_p'|treatment=='u_u_b'|treatment=='u_m_n'|treatment=='u_m_p'|treatment=='b_m_c', 2, 4)))))%>%
   mutate(resource_mani=ifelse(treatment=='u_m_c'|treatment=='b_u_c'|treatment=='b_m_c', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 irg<-read.delim("KNZ_IRG.txt")%>%
@@ -718,6 +750,7 @@ irg<-read.delim("KNZ_IRG.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='i', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
@@ -739,6 +772,7 @@ gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Open_Ungrazed', 0, ifelse(treatment=="Rainout_Grazed",2,1)))%>%
   mutate(resource_mani=ifelse(treatment=="Open_Grazed",0,1))%>%
+  mutate(public=0)%>%
   unique()
 
 pplots<-read.csv("KNZ_PPLOTS.csv")%>%
@@ -761,6 +795,7 @@ pplots<-read.csv("KNZ_PPLOTS.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N1P0', 0, ifelse(treatment=='N1P1'|treatment=='N1P2'|treatment=='N1P3'|treatment=='N2P0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 ramps<-read.csv("KNZ_Ramps.csv")%>%
@@ -783,6 +818,7 @@ ramps<-read.csv("KNZ_Ramps.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='ambient_control', 0, ifelse(treatment=='delayed_heated', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='ambient_heated', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 rhps<-read.delim("KNZ_RHPs.txt")%>%
@@ -806,6 +842,7 @@ rhps<-read.delim("KNZ_RHPs.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='stone+N', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='stone', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 e6<-read.delim("KUFS_E6.txt")%>%
@@ -827,6 +864,7 @@ e6<-read.delim("KUFS_E6.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0P0S0', 0, ifelse(treatment=='N4P0S0'|treatment=='N8P0S0'|treatment=='N16P0S0'|treatment=='N0P8S0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 clip<-read.delim("LATNJA_CLIP.txt")%>%
@@ -848,6 +886,7 @@ clip<-read.delim("LATNJA_CLIP.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CONTROL', 0, ifelse(treatment=='TN', 3, ifelse(treatment=='T',1,2))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 pme<-read.csv("LEFT_PME.csv")%>%
@@ -870,6 +909,7 @@ pme<-read.csv("LEFT_PME.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, 1))%>%#We are considering this to be 1 manipulation, even when they manipulated precip in the winter and summer .
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 herbwood<-read.delim("LG_HerbWood.txt")%>%
@@ -892,6 +932,7 @@ herbwood<-read.delim("LG_HerbWood.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='W', 1, ifelse(treatment=='F', 3, 4))))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 fireplots<-read.delim("MAERC_fireplots.txt")%>%
@@ -914,6 +955,7 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=="wuug", 0, ifelse(treatment=="wnug"|treatment=="wupg"|treatment=="wuuu", 1, ifelse(treatment=="suuu"|treatment=='uuuu'|treatment=='wnpg'|treatment=='wnuu'|treatment=="wupu", 2, ifelse(treatment=='snuu'|treatment=='supu'|treatment=='unuu'|treatment=='uupu'|treatment=='wnpu',3, 4)))))%>%
   mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 mwatfer<-read.csv("MNR_watfer.csv")%>%
@@ -936,6 +978,7 @@ mwatfer<-read.csv("MNR_watfer.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='W', 1, ifelse(treatment=='F', 3, 4))))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 wet<-read.delim("NANT_wet.txt")%>%
@@ -957,6 +1000,7 @@ wet<-read.delim("NANT_wet.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0N0P', 0, ifelse(treatment=='1N1P', 2, 1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 gb<-read.delim("NGBER_gb.txt")%>%
@@ -979,6 +1023,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='AMBIENT', 0, 1))%>%
   mutate(resource_mani=ifelse(treatment=='CURRENT', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
@@ -1001,6 +1046,7 @@ herbdiv<-read.csv("NIN_herbdiv.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF'|treatment=='3NF', 1, ifelse(treatment=='4NF', 2, ifelse(treatment=='2F'|treatment=='3F', 4, ifelse(treatment=='4F', 5, ifelse(treatment=='1F'|treatment=='5NF', 3, 6)))))))%>%
   mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 ccd<-read.delim("NTG_CCD.txt")%>%
@@ -1024,6 +1070,7 @@ ccd<-read.delim("NTG_CCD.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='CN-'|treatment=='CN+', 1,ifelse(treatment=='CNA', 0,ifelse(treatment=='CH-'|treatment=='CH+'|treatment=='CL-'|treatment=='CL+'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA'|treatment=='WN-'|treatment=='WN+', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 nfert<-read.delim("NWT_246NFert.txt")%>%
@@ -1046,6 +1093,7 @@ nfert<-read.delim("NWT_246NFert.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='x', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 bowman<-read.delim("NWT_bowman.txt")%>%
@@ -1067,6 +1115,7 @@ bowman<-read.delim("NWT_bowman.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Control', 0, ifelse(treatment=='NP', 2, 1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 snow<-read.delim("NWT_snow.txt")%>%
@@ -1089,6 +1138,7 @@ snow<-read.delim("NWT_snow.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='XXX', 0, ifelse(treatment=='XXW'|treatment=='XNX'|treatment=='PXX', 1, ifelse(treatment=='XNW'|treatment=='PXW'|treatment=='PNX', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='XXW', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 oface<-read.delim("ORNL_FACE.txt")%>%
@@ -1111,6 +1161,7 @@ oface<-read.delim("ORNL_FACE.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='elevated', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 tide<-read.delim("PIE_Tide.txt")%>%
@@ -1133,6 +1184,7 @@ tide<-read.delim("PIE_Tide.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Enriched', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 interaction<-read.delim("RIO_interaction.txt")%>%
@@ -1155,6 +1207,7 @@ interaction<-read.delim("RIO_interaction.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N1W0'|treatment=='N0W1'|treatment=='N0W2', 1, 2)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 lucero<-read.csv("SCL_Lucero.csv")%>%
@@ -1177,6 +1230,7 @@ lucero<-read.csv("SCL_Lucero.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N1', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 ter<-read.csv("SCL_TER.csv")%>%
@@ -1199,6 +1253,7 @@ ter<-read.csv("SCL_TER.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='OO', 0, ifelse(treatment=="CF",2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=="CO", 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 cxn<-read.csv("SERC_CXN.csv")%>%
@@ -1221,6 +1276,7 @@ cxn<-read.csv("SERC_CXN.csv")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='t1', 0, ifelse(treatment=='t4',2,1)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 tmece<-read.csv("SERC_TMECE.csv")%>%
@@ -1242,6 +1298,7 @@ tmece<-read.csv("SERC_TMECE.csv")%>%
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='A', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 snfert<-read.delim("SEV_NFert.txt")%>%
@@ -1264,6 +1321,7 @@ snfert<-read.delim("SEV_NFert.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='F', 1, 0))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=1)%>%
   unique()
 
 wenndex<-read.delim("SEV_WENNDEx.txt")%>%
@@ -1285,6 +1343,7 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='N'|treatment=='P'|treatment=='T', 1, ifelse(treatment=='TPN', 3, 2))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
+  mutate(public=1)%>%
   unique()
 
 grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
@@ -1306,6 +1365,7 @@ grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 uk<-read.delim("SKY_UK.txt")%>%
@@ -1328,6 +1388,7 @@ uk<-read.delim("SKY_UK.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='HP', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='H', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 nitrogen<-read.csv("SR_Nitrogen.csv")%>%
@@ -1349,6 +1410,7 @@ nitrogen<-read.csv("SR_Nitrogen.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0_CONTROL', 0, ifelse(treatment=='1_NITROGEN',2,1)))%>%
   mutate(resource_mani=ifelse(treatment=='1_CONTROL',0,1))%>%
+  mutate(public=0)%>%
   unique()
 
 water<-read.csv("SR_Water.csv")%>%
@@ -1369,6 +1431,7 @@ water<-read.csv("SR_Water.csv")%>%
          plant_mani=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0), pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0_CONTROL_1', 0, ifelse(treatment=='1_WATER_0',3,ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=='0_WATER_1',1,2))))%>%
   mutate(resource_mani=ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=="1_CONTROL_0",0,1))%>%
+  mutate(public=0)%>%
   unique()
 
 gane<-read.delim("SVA_GANE.txt")%>%
@@ -1391,6 +1454,7 @@ gane<-read.delim("SVA_GANE.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='LN'|treatment=='HN'|treatment=='P', 1, 2)))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 tface<-read.csv("TAS_FACE.csv")%>%
@@ -1413,6 +1477,7 @@ tface<-read.csv("TAS_FACE.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='UnwarmedControl', 0, ifelse(treatment=='WarmedFACE',2,1)))%>%
   mutate(resource_mani=ifelse(treatment=='WarmedControl',0,1))%>%
+  mutate(public=0)%>%
   unique()
 
 lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
@@ -1435,6 +1500,7 @@ lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='gcc',0,ifelse(treatment=='ghc'|treatment=='gsc'|treatment=='ncc',1, ifelse(treatment=='nhc'|treatment=='nsc',2,ifelse(treatment=="gcn",3,ifelse(treatment=='nhn'|treatment=='nsn',5,4))))))%>%
   mutate(resource_mani=ifelse(treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 1))%>%
+  mutate(public=0)%>%
   unique()
 
 nitadd<-read.csv("YMN_NitAdd.csv")%>%
@@ -1457,17 +1523,20 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0', 0, 1))%>%
   mutate(resource_mani=1)%>%
+  mutate(public=0)%>%
   unique()
 
 ###merge all datasets
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
-write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Nov2015.csv')
+#kim's
+write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Feb2015a.csv')
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016.csv")
+#meghan's
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016a.csv")
 
-##checking
-check<-combine%>%
-  select(-calendar_year, -treatment_year)%>%
-  unique()
-write.csv(check, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016_CHECK.csv")
+# ##checking
+# check<-combine%>%
+#   select(-calendar_year, -treatment_year)%>%
+#   unique()
+# write.csv(check, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016_CHECK.csv")
