@@ -126,7 +126,17 @@ e001<-read.csv("CDR_e001.csv")%>%
 e001_names<-read.csv("CDR_e001_e002_specieslist.csv")
 e0012<-merge(e001, e001_names, by="spcode")%>%
   filter(abundance!=0)%>%
-  select(-spcode)
+  select(-spcode)%>%
+  filter(genus_species!="Forb_seedlings",
+         genus_species!="Fungi_",
+         genus_species!="Miscellaneous_grasses",
+         genus_species!="Miscellaneous_herbs",
+         genus_species!="Miscellaneous_legumes",
+         genus_species!="Miscellaneous_litter",
+         genus_species!="Miscellaneous_rushes",
+         genus_species!="Miscellaneous_sedges",
+         genus_species!="Miscellaneous_sp.",
+         genus_species!="Miscellaneous_woody")
 
 e002<-read.delim("CDR_e002.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -p, -k, -lime, -n, -other_nut, -burn, -herb_removal, -true_plot_mani, -plot_mani, -cessation, -dist, -data_type, -species_num)%>%
