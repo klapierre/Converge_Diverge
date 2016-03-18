@@ -1533,7 +1533,7 @@ combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e
 write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Feb2016a.csv')
 
 #meghan's
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016a.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_March2016.csv")
 
 # ##checking
 # check<-combine%>%
