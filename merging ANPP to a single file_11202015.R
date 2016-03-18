@@ -36,7 +36,8 @@ e001<-read.csv("CDR_e001_anpp.csv")%>%
   mutate(block=0)
 e002<-read.delim("CDR_e002_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
-  mutate(block=0)
+  mutate(block=0)%>%
+  filter(calendar_year<1992)##drops everything once cessation starts
 megarich<-read.delim("CEH_Megarich_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp, block)%>%
   mutate(community_type=0)
@@ -108,7 +109,8 @@ interaction<-read.delim("RIO_interaction_anpp.txt")%>%
 cxn<-read.csv("SERC_CXN_anpp.csv")%>%
   mutate(community_type=0, block=0)
 tmece<-read.csv("SERC_TMECE_anpp.csv")%>%
-  mutate(block=0)
+  mutate(block=0)%>%
+  filter(treatment!="C")
 snfert<-read.delim("SEV_NFert_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0, block=0)
@@ -130,4 +132,4 @@ anpp <- rbind(bgp, biocon, bowman, clonal, cxn, e001, e002, events, exp1, gb, gf
 
 write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
 
-write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Feb2016.csv")
+write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_March2016.csv")
