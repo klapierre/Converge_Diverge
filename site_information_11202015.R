@@ -9,7 +9,7 @@ library(dplyr)
 library(vegan)
 
 #import the list of all experiments site information
-ExpInfo <- read.csv("SpeciesRelativeAbundance_Feb2016.csv")%>%
+ExpInfo <- read.csv("SpeciesRelativeAbundance_March2016.csv")%>%
   select(-X)
 
 ExpList<-ExpInfo%>%
@@ -17,9 +17,9 @@ ExpList<-ExpInfo%>%
   unique()
 
 #Getting ANPP
-ANPP<-read.csv("ANPP_Feb2016.csv")
+ANPP<-read.csv("ANPP_March2016.csv")
 
-Experiment_Info<-read.csv("ExperimentInformation_Feb2016a.csv")%>%
+Experiment_Info<-read.csv("ExperimentInformation_March2016.csv")%>%
   select(site_code, project_name, community_type, treatment, plot_mani, public)%>%
   unique()
 
@@ -62,7 +62,7 @@ ExpLength<-ExpInfo%>%
 
 ##calculate chao richness and rarefied richness for each site
 
-species <- read.csv("SpeciesRawAbundance_Feb2016.csv")%>%
+species <- read.csv("SpeciesRawAbundance_March2016.csv")%>%
   select(site_code, project_name, community_type, plot_id, calendar_year, genus_species, abundance)%>%
   mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
@@ -125,9 +125,10 @@ ExpDetails<-merge(ExpDetails1, ExpANPP, by=c("site_code","project_name","communi
 
 SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
 
-write.csv(SiteExpDetails, "SiteExperimentDetails_Feb2016a.csv")
+write.csv(SiteExpDetails, "SiteExperimentDetails_March2016.csv")
 
 pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
+with(SiteExpDetails,plot(MAP, anpp))
 with(SiteExpDetails,cor.test(rrich, experiment_length))
 
