@@ -123,6 +123,10 @@ e001<-read.csv("CDR_e001.csv")%>%
   mutate(block=0)%>%
   select(-data_type)%>%
   filter(abundance!=0)
+e001_names<-read.csv("CDR_e001_e002_specieslist.csv")
+e0012<-merge(e001, e001_names, by="spcode")%>%
+  filter(abundance!=0)%>%
+  select(-spcode)
 
 e002<-read.delim("CDR_e002.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -p, -k, -lime, -n, -other_nut, -burn, -herb_removal, -true_plot_mani, -plot_mani, -cessation, -dist, -data_type, -species_num)%>%
@@ -132,7 +136,10 @@ e002_names<-read.delim("CDR_e002_specieslist.txt")%>%
   mutate(species_code=tolower(species_code))
 e0022<-merge(e002, e002_names,by="species_code", all=T)%>%
   filter(abundance!=0, calendar_year<1992)%>%##drops everything once cessation starts
-  select(-species_code)
+  mutate(spcode=genus_species)%>%
+  select(-species_code, -genus_species)
+e0023<-merge(e0022, e001_names, by="spcode")%>%
+  select(-spcode)
 
 megarich<-read.delim("CEH_Megarich.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -clip, -c, -temp, -n, -p, -k, -true_plot_mani, -plot_mani, -data_type, -species_num)%>%
@@ -385,7 +392,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
 gb_names<-read.delim("NGBER_gb_specieslist.txt")
 gb2<-merge(gb, gb_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
-  select(-species_code, -X, -X.1, -X.2)
+  select(-species_code)
 
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
   select(-data_type)%>%
@@ -455,7 +462,8 @@ interaction<-read.delim("RIO_interaction.txt")%>%
 lucero<-read.csv("SCL_Lucero.csv")%>%
   select(-data_type)%>%
   mutate(community_type=0)%>%
-  filter(abundance!=0)
+  filter(abundance!=0)%>%
+  filter(genus_species!="Standing.dead")
 
 ter<-read.csv("SCL_TER.csv")%>%
   select(-data_type)%>%
@@ -508,11 +516,11 @@ uk2<-merge(uk, uk_names, by="species_code", all=T)%>%
 
 nitrogen<-read.csv("SR_Nitrogen.csv")%>%
   select(-data_type)%>%
-  filter(abundance!=0)
+  filter(abundance!=0, genus_species!="UNKNOWN SPECIES", genus_species!="GRASS SPECIES", genus_species!="FORB SPECIES")
 
 water<-read.csv("SR_WATER.csv")%>%
   select(-data_type)%>%
-  filter(abundance!=0)
+  filter(abundance!=0, genus_species!="UNKNOWN SPECIES", genus_species!="GRASS SPECIES", genus_species!="FORB SPECIES")
 
 gane<-read.delim("SVA_GANE.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulations, -num_manipulations, -experiment_year, -n, -p, -data_type, -plot_mani, -species_num)%>%
@@ -540,18 +548,18 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   filter(abundance!=0)
 
 #merge all datasets
-combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e001, e0022, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering, water, wenndex2, wet2, yu2)
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering, water, wenndex2, wet2, yu2)
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_Feb2016.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRawAbundance_March2016.csv")
 
 ###get species list
 species_list<-combine%>%
   select(site_code, project_name, genus_species)%>%
   unique()
 
-write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_Feb2016.csv")
+write.csv(species_list, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesList_March2016.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -563,7 +571,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Feb2016.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2016.csv")
 
 ##for Codyn dataset
 expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
