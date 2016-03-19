@@ -1,5 +1,7 @@
 library(tidyr)
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
 
 #kim's
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
@@ -34,14 +36,34 @@ divTrt <- subset(div, subset=(plot_mani!=0))
 #merge controls and treatments
 divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
 #calculate change in disperion, H, S, and evenness
-  mutate(dispersion_change=dispersion-ctl_dispersion, H_change=H-ctl_H, S_change=(S-ctl_S)/ctl_S, SimpEven_change=SimpEven-ctl_SimpEven)%>%
-  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change, S_change, SimpEven_change)
+  mutate(dispersion_change=dispersion-ctl_dispersion, 
+         H_change=H-ctl_H, 
+         S_PC=(S-ctl_S)/ctl_S, 
+         SimpEven_change=SimpEven-ctl_SimpEven)%>%
+  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change,S_PC)
+# 
+# ##comparing change vs percent change
+# d1<-qplot(dispersion_PC, data=divCompare, geom="histogram")+
+#   ggtitle("dispersion percent change")
+# d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
+#   ggtitle("dispersion change")
+# 
+# s1<-qplot(S_PC, data=divCompare, geom="histogram")+
+#   ggtitle("richness percent change")
+# s2<-qplot(S_change, data=divCompare, geom="histogram")+
+#   ggtitle("richness change")
+# 
+# e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
+#   ggtitle("even percent change")
+# e2<-qplot(SimpEven_change, data=divCompare, geom="histogram")+
+#   ggtitle("even change")
+
 
 ###merging with experiment (treatment) information
 divCompareExp <- merge(divCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
   filter(pulse==0, resource_mani==1, treatment_year>0)%>%
-  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change, S_change, SimpEven_change, site_code, project_name, community_type, calendar_year)
+  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change, S_PC, SimpEven_change, site_code, project_name, community_type, calendar_year)
 
 SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
   select(-X)
@@ -66,14 +88,21 @@ anppTrt <- subset(anppMeans2, subset=(plot_mani!=0))
 
 #merge controls and treatments
 anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
-  mutate(anpp_change=anpp-ctl_anpp)%>%
-  select(exp_year, treatment, plot_mani, anpp_change)
+  mutate(anpp_PC=(anpp-ctl_anpp)/ctl_anpp)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC)
+
+# a1<-qplot(anpp_PC, data=anppCompare, geom="histogram")+
+#   ggtitle("anpp percent change")
+# a2<-qplot(anpp_change, data=anppCompare, geom="histogram")+
+#   ggtitle("anpp change")
+# 
+# grid.arrange(d1, d2, s1, s2, e1, e2, a1, a2, ncol=2)
 
 ###merging with experiment (treatment) information
 anppCompareExp <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
   filter(pulse==0, resource_mani==1, treatment_year>0)%>%
-  select(exp_year, treatment, plot_mani, anpp_change, site_code, project_name, community_type, calendar_year)
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
 
