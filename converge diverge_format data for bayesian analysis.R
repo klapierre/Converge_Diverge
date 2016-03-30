@@ -42,21 +42,36 @@ divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
   select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change,S_PC)
 # 
-# ##comparing change vs percent change
+##comparing change vs percent change
 # d1<-qplot(dispersion_PC, data=divCompare, geom="histogram")+
 #   ggtitle("dispersion percent change")
-# d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
-#   ggtitle("dispersion change")
-# 
-# s1<-qplot(S_PC, data=divCompare, geom="histogram")+
-#   ggtitle("richness percent change")
+
+theme_set(theme_bw(16))
+d2<-qplot(dispersion_change, data=divCompareExp, geom="histogram")+
+  ggtitle("Within Treatment Change")+
+  xlab("Trt Disp - Cont Disp")+
+  geom_vline(xintercept = 0, size=2)
+
+m<-qplot(mean_change, data=divCompare, geom="histogram")+
+  ggtitle("Among Treatment Change")+
+  xlab(" Distance between Centriods")+
+  geom_vline(xintercept = 0, size=2)
+
+s1<-qplot(S_PC, data=divCompareExp, geom="histogram")+
+  ggtitle("Richness Percent Change")+
+  xlab("Percent Change in Richness")+
+  geom_vline(xintercept = 0, size=2)
 # s2<-qplot(S_change, data=divCompare, geom="histogram")+
 #   ggtitle("richness change")
-# 
+
 # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
 #   ggtitle("even percent change")
-# e2<-qplot(SimpEven_change, data=divCompare, geom="histogram")+
-#   ggtitle("even change")
+e2<-qplot(SimpEven_change, data=divCompare, geom="histogram")+
+  ggtitle("Evenness Change")+
+  xlab("Trt Evenness - Cont Evenness")+
+  geom_vline(xintercept = 0, size=2)
+
+grid.arrange( m, d2,s1, e2, ncol=2)
 
 
 ###merging with experiment (treatment) information
