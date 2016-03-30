@@ -12,11 +12,15 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_March2016.csv')%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep='::'))
+expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep='::'))%>%
+  select(-X)%>%
+  filter(treatment_year!=0)
 
 #diversity data
-div <- read.csv('DiversityMetrics_March2016.csv')
+div <- merge(read.csv('DiversityMetrics_March2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  select(-X)%>%
+  filter(treatment_year!=0)
 
 anpp<-read.csv("ANPP_March2016.csv")%>%
   select(-X)%>%
@@ -31,7 +35,10 @@ divControls <- subset(div, subset=(plot_mani==0))%>%
   names(divControls)[names(divControls)=='H'] <- 'ctl_H'
   names(divControls)[names(divControls)=='S'] <- 'ctl_S'
   names(divControls)[names(divControls)=='SimpEven'] <- 'ctl_SimpEven'
-divTrt <- subset(div, subset=(plot_mani!=0))
+divTrt <- div%>%
+  #removing treatments that were low levels of resource manipulation, not manipulating any resource, pulses
+  #plus filtering to get only treatments
+  filter(max_trt==1, resource_mani==1, pulse==0, plot_mani>0)
 
 #merge controls and treatments
 divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
@@ -40,14 +47,14 @@ divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
          H_change=H-ctl_H, 
          S_PC=(S-ctl_S)/ctl_S, 
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
-  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change,S_PC)
+  select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
 # 
 ##comparing change vs percent change
 # d1<-qplot(dispersion_PC, data=divCompare, geom="histogram")+
 #   ggtitle("dispersion percent change")
 
 theme_set(theme_bw(16))
-d2<-qplot(dispersion_change, data=divCompareExp, geom="histogram")+
+d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
   ggtitle("Within Treatment Change")+
   xlab("Trt Disp - Cont Disp")+
   geom_vline(xintercept = 0, size=2)
@@ -57,7 +64,7 @@ m<-qplot(mean_change, data=divCompare, geom="histogram")+
   xlab(" Distance between Centriods")+
   geom_vline(xintercept = 0, size=2)
 
-s1<-qplot(S_PC, data=divCompareExp, geom="histogram")+
+s1<-qplot(S_PC, data=divCompare, geom="histogram")+
   ggtitle("Richness Percent Change")+
   xlab("Percent Change in Richness")+
   geom_vline(xintercept = 0, size=2)
@@ -73,19 +80,45 @@ e2<-qplot(SimpEven_change, data=divCompare, geom="histogram")+
 
 grid.arrange( m, d2,s1, e2, ncol=2)
 
+# #without cdr
+# divCompareTest <- divCompare%>%
+#   filter(site_code!='CDR')
+# 
+# theme_set(theme_bw(16))
+# d2<-qplot(dispersion_change, data=divCompareTest, geom="histogram")+
+#   ggtitle("Within Treatment Change")+
+#   xlab("Trt Disp - Cont Disp")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# m<-qplot(mean_change, data=divCompareTest, geom="histogram")+
+#   ggtitle("Among Treatment Change")+
+#   xlab(" Distance between Centriods")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# s1<-qplot(S_PC, data=divCompareTest, geom="histogram")+
+#   ggtitle("Richness Percent Change")+
+#   xlab("Percent Change in Richness")+
+#   geom_vline(xintercept = 0, size=2)
+# # s2<-qplot(S_change, data=divCompare, geom="histogram")+
+# #   ggtitle("richness change")
+# 
+# # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
+# #   ggtitle("even percent change")
+# e2<-qplot(SimpEven_change, data=divCompareTest, geom="histogram")+
+#   ggtitle("Evenness Change")+
+#   xlab("Trt Evenness - Cont Evenness")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# grid.arrange( m, d2,s1, e2, ncol=2)
+
 
 ###merging with experiment (treatment) information
-divCompareExp <- merge(divCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
-  #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
-  filter(pulse==0, resource_mani==1, treatment_year>0)%>%
-  select(exp_year, treatment, plot_mani, mean_change, dispersion_change, H_change, S_PC, SimpEven_change, site_code, project_name, community_type, calendar_year)
-
 SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
   select(-X)
 
-ForAnalysis<-merge(divCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
+ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
-write.csv(ForAnalysis, "ForBayesianAnalysis_March2016.csv")
+write.csv(ForAnalysis, "ForBayesianAnalysis_March2016b.csv")
 
 
 ##doing the same thing for anpp
@@ -116,13 +149,17 @@ anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
 ###merging with experiment (treatment) information
 anppCompareExp <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
-  filter(pulse==0, resource_mani==1, treatment_year>0)%>%
-  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year)
+  filter(pulse==0, resource_mani==1, max_trt==1, treatment_year>0)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
+
+qplot(anpp_PC, data=anppCompareExp, geom="histogram")+
+  xlab("ANPP Percent Change")+
+  geom_vline(xintercept = 0, size=2)
 
 test<-ForANPPAnalysis%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_March2016.csv")
+write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_March2016b.csv")
