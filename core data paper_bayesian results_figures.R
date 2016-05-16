@@ -5,11 +5,11 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 
-setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\converge diverge core paper_2015\\bayesian output')
+setwd('C:\\Users\\Kim\\Desktop\\bayesian output')
 
 theme_set(theme_bw())
-theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24),
-             axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24),
+theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
+             axis.title.y=element_text(size=40, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=34),
              plot.title = element_text(size=24, vjust=2),
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
              legend.title=element_blank(), legend.text=element_text(size=20))
@@ -43,13 +43,45 @@ expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon))
 
+rawData <- read.csv('ForBayesianAnalysis_March2016b.csv')
+
+rawData2<- rawData%>%
+  filter(plot_mani<6, anpp!='NA')%>%
+  summarise(mean_mean=mean(mean_change), std_mean=sd(mean_change), mean_disp=mean(dispersion_change), std_disp=sd(dispersion_change), mean_rich=mean(S_PC), std_rich=sd(S_PC), mean_even=mean(SimpEven_change), std_even=sd(SimpEven_change)) #to backtransform
+
+expInfoSummary <- rawData%>%
+  filter(plot_mani<6, anpp!='NA')%>%
+  filter(treatment_year!=0)%>%
+  summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
+            plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
+            rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
+            anpp_median=median(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
+            MAP_median=median(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
+            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT)
+            )%>%
+  gather(variable, estimate)
+
+################################################################################
+################################################################################
+
+chainsCommunity <- read.csv('fullChains.csv')
+
+#mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
+chainsCommunity2 <- chainsCommunity%>%
+  select(lp__, U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4)%>%
+  gather(key=parameter, value=value, U_int.2.1:mu_quad.4)%>%
+  group_by(parameter)%>%
+  summarise(median=median(value))
+
 ###mean change
 mean <- read.csv('mean change_experiment_coefs.csv')%>%
   left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at 10 years
-  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads)%>%
+  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads,
+         yr20=Intercepts + 20*Slopes + (20^2)*Quads,
+         final_year_estimate=Intercepts + alt_length*Slopes + (alt_length^2)*Quads)%>%
   mutate(curve1='stat_function(fun=function(x){',
          curve2=' + ',
          curve3='*x + ',
@@ -59,40 +91,37 @@ mean <- read.csv('mean change_experiment_coefs.csv')%>%
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-#temporary solution until we get the model output for each plot mani
-mean2 <- mean%>%
-  group_by(plot_mani)%>%
-  summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
-  mutate(curve1='stat_function(fun=function(x){',
-         curve2=' + ',
-         curve3='*x + ',
-         curve4='*x^2}, size=3, xlim=c(0,',
-         curve5='), colour=',
-         curve6=') +',
-         color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
-         curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# #temporary solution until we get the model output for each plot mani
+# mean2 <- mean%>%
+#   group_by(plot_mani)%>%
+#   summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
+#   mutate(curve1='stat_function(fun=function(x){',
+#          curve2=' + ',
+#          curve3='*x + ',
+#          curve4='*x^2}, size=3, xlim=c(0,',
+#          curve5='), colour=',
+#          curve6=') +',
+#          color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
+#          curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-#change in mean at 10 years vs. gamma diversity
-ggplot(data=mean, aes(x=rrich, y=yr10)) +
-  geom_point(aes(color=as.factor(plot_mani))) +
-  stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
-  scale_color_manual(values=c('#1400E5', '#4A06AC', '#800C74', '#B6123C', '#EC1804')) +
-  xlab('Gamma Diversity') +
-  ylab('Mean Change at 10 Years') +
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(breaks=seq(0,140,20)) +
-  theme(legend.position='none')
+# #change in mean at 10 years vs. gamma diversity
+# ggplot(data=mean, aes(x=rrich, y=yr10)) +
+#   geom_point(aes(color=as.factor(plot_mani))) +
+#   stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
+#   scale_color_manual(values=c('#1400E5', '#4A06AC', '#800C74', '#B6123C', '#EC1804')) +
+#   xlab('Gamma Diversity') +
+#   ylab('Mean Change at 10 Years') +
+#   scale_y_continuous(limits=c(0,1)) +
+#   scale_x_continuous(breaks=seq(0,140,20)) +
+#   theme(legend.position='none')
 
 
-#inset
-meanInset <- ggplot(data=barGraphStats(data=mean, variable='yr10', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_fill_manual(values=c('#1400E5', '#4A06AC', '#800C74', '#B6123C', '#EC1804')) +
-  xlab('# Manipulations') +
-  ylab('Mean Change at 10 Years') +
-  theme(legend.position='none') +
-  scale_y_continuous(limits=c(0,0.8))
+#inset - density plot of mean change (all datapoints)
+meanInset <- ggplot(data=rawData, aes(x=mean_change)) +
+  geom_density() +
+  xlab('Mean Change') +
+  ylab('Density')
+
 
 #main figure
 meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
@@ -396,21 +425,29 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){0.276706854 + 0.011850926*x + -0.001318645*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
 #last five are the main plot_mani effect lines
 #estimated as mean across treatment lines
-stat_function(fun=function(x){0.225826535465116 + 0.0211942352248062*x + -0.00118092065891473*x^2}, size=3, xlim=c(0,23), colour='#1400E5') +
-  stat_function(fun=function(x){0.271413614225806 + 0.0266793354516129*x + -0.00135212659139785*x^2}, size=3, xlim=c(0,22), colour='#4A06AC') +
-  stat_function(fun=function(x){0.230185510736842 + 0.0273805365526316*x + -0.00111226168421053*x^2}, size=3, xlim=c(0,21), colour='#800C74') +
-  stat_function(fun=function(x){0.2754957387 + 0.02449257535*x + -0.00117701135*x^2}, size=3, xlim=c(0,22), colour='#B6123C') +
-  stat_function(fun=function(x){0.3674298516 + 0.0552450649*x + -0.0023149092*x^2}, size=3, xlim=c(0,22), colour='#EC1804')
+  #mani1
+  stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,23), colour='#1400E5') +
+  #mani2
+  stat_function(fun=function(x){((-0.5441655 + 0.18185) + (0.132175+0.03107995)*x + (-0.00629647-0.00158602)*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  #mani3
+  stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,21), colour='#800C74') +
+  #mani4
+  stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#B6123C') +
+  #mani5
+  stat_function(fun=function(x){((-0.5441655 + 0.731963) + (0.132175 + 0.212783)*x + (-0.00629647-0.007026515)*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#EC1804')
+
+
+
 
 
 meanInsetPlot <- function() {
   print(meanPlot)
   
-  theme_update(axis.title.x=element_text(size=10, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=8), axis.title.y=element_text(size=10, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=8), plot.title = element_blank())
+  theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
   
-  print(meanInset, vp=viewport(width = 0.13, height = 0.25, x = 0.10, y = 0.99, just = c("left","top")))
+  print(meanInset, vp=viewport(width = 0.13, height = 0.25, x = 0.115, y = 0.99, just = c("left","top")))
   
-  theme_update(axis.title.x=element_text(size=20, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=16), axis.title.y=element_text(size=20, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=16))
+  theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
 }
 
 meanInsetPlot() #export at 1200x1000
@@ -424,7 +461,9 @@ dispersion <- read.csv('dispersion_experiment_coefs.csv')%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at 10 years
-  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads)%>%
+  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads,
+         yr20=Intercepts + 20*Slopes + (20^2)*Quads,
+         final_year_estimate=Intercepts + alt_length*Slopes + (alt_length^2)*Quads)%>%
   mutate(curve1='stat_function(fun=function(x){',
          curve2=' + ',
          curve3='*x + ',
@@ -432,26 +471,31 @@ dispersion <- read.csv('dispersion_experiment_coefs.csv')%>%
          curve5='), colour=#bdbdbd) +',
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-#temporary solution until we get the model output for each plot mani
-dispersion2 <- dispersion%>%
-  summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
-  mutate(curve1='stat_function(fun=function(x){',
-         curve2=' + ',
-         curve3='*x + ',
-         curve4='*x^2}, size=3, xlim=c(0,',
-         curve5='), colour=black)',
-         curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# #temporary solution until we get the model output for each plot mani
+# dispersion2 <- dispersion%>%
+#   summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
+#   mutate(curve1='stat_function(fun=function(x){',
+#          curve2=' + ',
+#          curve3='*x + ',
+#          curve4='*x^2}, size=3, xlim=c(0,',
+#          curve5='), colour=black)',
+#          curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
+# #change in dispersion at 10 years vs. MAT
+# ggplot(data=dispersion, aes(x=MAT, y=yr10)) +
+#   geom_point() +
+#   stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
+#   xlab(expression(atop('Mean Annual Temperature ' ( degree~C)))) +
+#   ylab('Change in Dispersion at 10 Years') +
+#   scale_y_continuous(limits=c(-0.4,0.6), breaks=seq(-0.4,0.6,0.2)) +
+#   scale_x_continuous(breaks=seq(-50,20,10)) +
+#   theme(legend.position='none')
 
-#change in dispersion at 10 years vs. MAT
-ggplot(data=dispersion, aes(x=MAT, y=yr10)) +
-  geom_point() +
-  stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
-  xlab(expression(atop('Mean Annual Temperature ' ( degree~C)))) +
-  ylab('Change in Dispersion at 10 Years') +
-  scale_y_continuous(limits=c(-0.4,0.6), breaks=seq(-0.4,0.6,0.2)) +
-  scale_x_continuous(breaks=seq(-50,20,10)) +
-  theme(legend.position='none')
+#dispersion density plot with all data points
+dispersionInset <- ggplot(data=rawData, aes(x=dispersion_change)) +
+  geom_density() +
+  xlab('Dispersion Change') +
+  ylab('Density')
 
 
 #main figure
@@ -460,7 +504,7 @@ dispersionPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
-  ylab('Change in Dispersion')
+  ylab('Dispersion Change')
 
 dispersionPlot <- dispersionPlot + 
   #below are the individual treatment lines
@@ -754,11 +798,24 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){-0.227560838 + 0.00392271*x + 0.000586313*x^2}, size=0.5, xlim=c(0,2), colour='#bdbdbd') +
   stat_function(fun=function(x){-0.131284251 + 0.005102001*x + 0.000164646*x^2}, size=0.5, xlim=c(0,2), colour='#bdbdbd') +
   stat_function(fun=function(x){-0.064842918 + 0.011684862*x + -0.000238832*x^2}, size=0.5, xlim=c(0,2), colour='#bdbdbd') +
-#last one is mean line
-  stat_function(fun=function(x){-0.00023007264137931 + -0.0026408128137931*x + 0.00008045236482758*x^2}, size=3, xlim=c(0,23), colour='black')
+#estimated as mean across treatment lines
+  #overall line (because plot mani not significant)
+  stat_function(fun=function(x){(-0.02694475 + -0.002949595*x + 0.00675485*x^2)*0.09064568 - 0.00235573}, size=3, xlim=c(0,23), colour='black')
+
   
 
-print(dispersionPlot)
+dispersionInsetPlot <- function() {
+  print(dispersionPlot)
+  
+  theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
+  
+  print(dispersionInset, vp=viewport(width = 0.13, height = 0.25, x = 0.83, y = 0.99, just = c("left","top")))
+  
+  theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
+}
+
+dispersionInsetPlot() #export at 1200x1000
+
 
 
 
@@ -771,7 +828,9 @@ richness <- read.csv('richness_experiment_coefs.csv')%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at 10 years
-  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads)%>%
+  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads,
+         yr20=Intercepts + 20*Slopes + (20^2)*Quads,
+         final_year_estimate=Intercepts + alt_length*Slopes + (alt_length^2)*Quads)%>%
   mutate(curve1='stat_function(fun=function(x){',
          curve2=' + ',
          curve3='*x + ',
@@ -781,41 +840,36 @@ richness <- read.csv('richness_experiment_coefs.csv')%>%
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-#temporary solution until we get the model output for each plot mani
-richness2 <- richness%>%
-  group_by(plot_mani)%>%
-  summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
-  mutate(curve1='stat_function(fun=function(x){',
-         curve2=' + ',
-         curve3='*x + ',
-         curve4='*x^2}, size=3, xlim=c(0,',
-         curve5='), colour=',
-         curve6=') +',
-         color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
-         curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# #temporary solution until we get the model output for each plot mani
+# richness2 <- richness%>%
+#   group_by(plot_mani)%>%
+#   summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
+#   mutate(curve1='stat_function(fun=function(x){',
+#          curve2=' + ',
+#          curve3='*x + ',
+#          curve4='*x^2}, size=3, xlim=c(0,',
+#          curve5='), colour=',
+#          curve6=') +',
+#          color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
+#          curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-
-#change in richness at 10 years vs. MAT
-ggplot(data=richness, aes(x=MAT, y=yr10)) +
-  geom_point() +
-  # stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
-  xlab(expression(atop('Mean Annual Temperature ' ( degree~C)))) +
-  ylab('Proportional Change in Richness at 10 Years') +
-  scale_y_continuous(limits=c(-1.5,1.5), breaks=seq(-2,2,0.5)) +
-  scale_x_continuous(breaks=seq(-50,20,10)) +
-  theme(legend.position='none')
+# #change in richness at 10 years vs. MAT
+# ggplot(data=richness, aes(x=MAT, y=yr10)) +
+#   geom_point() +
+#   # stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
+#   xlab(expression(atop('Mean Annual Temperature ' ( degree~C)))) +
+#   ylab('Proportional Change in Richness at 10 Years') +
+#   scale_y_continuous(limits=c(-1.5,1.5), breaks=seq(-2,2,0.5)) +
+#   scale_x_continuous(breaks=seq(-50,20,10)) +
+#   theme(legend.position='none')
 
 
 
 #inset
-richnessInset <- ggplot(data=barGraphStats(data=richness, variable='yr10', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_fill_manual(values=c('#1400E5', '#4A06AC', '#800C74', '#B6123C', '#EC1804')) +
-  xlab('# Manipulations') +
-  ylab('Richness Change at 10 Years') +
-  theme(legend.position='none') +
-  scale_y_continuous(limits=c(-0.65,0), breaks=seq(-0.65,0,0.2))
+richnessInset <- ggplot(data=rawData, aes(x=S_PC)) +
+  geom_density() +
+  xlab('Proportion Richness Change') +
+  ylab('Density')
 
 
 #main figure
@@ -1119,22 +1173,28 @@ stat_function(fun=function(x){-0.021677338 + -0.007322007*x + 0.000567061*x^2}, 
   stat_function(fun=function(x){-0.071263876 + -0.001682708*x + 0.00131175*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
   stat_function(fun=function(x){-0.300856218 + -0.029632228*x + 0.003821639*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
 #mean lines by plot mani
-  stat_function(fun=function(x){0.00267512806976744 + -0.0154918668449612*x + 0.000885660265891473*x^2}, size=3, xlim=c(0,23), colour='#1400E5') +
-  stat_function(fun=function(x){-0.00957866068817204 + -0.0142169824623656*x + 0.000614596752688172*x^2}, size=3, xlim=c(0,22), colour='#4A06AC') +
-  stat_function(fun=function(x){-0.0274286430789474 + -0.0191942912105263*x + 0.00119270465789474*x^2}, size=3, xlim=c(0,21), colour='#800C74') +
-  stat_function(fun=function(x){-0.03834009005 + -0.02798215435*x + 0.0024850954*x^2}, size=3, xlim=c(0,22), colour='#B6123C') +
-  stat_function(fun=function(x){-0.2067020596 + -0.0676648616*x + 0.0036091387*x^2}, size=3, xlim=c(0,22), colour='#EC1804')
+  #estimated as mean across treatment lines
+  #mani1
+  stat_function(fun=function(x){(0.319741 + -0.0520446*x + 0.00197122*x^2)*0.2287037 - 0.07758351}, size=3, xlim=c(0,23), colour='#1400E5') +
+  #mani2
+  stat_function(fun=function(x){(0.319741 + -0.0520446*x + 0.00197122*x^2)*0.2287037 - 0.07758351}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  #mani3
+  stat_function(fun=function(x){(0.319741 + -0.0520446*x + 0.00197122*x^2)*0.2287037 - 0.07758351}, size=3, xlim=c(0,21), colour='#800C74') +
+  #mani4
+  stat_function(fun=function(x){(0.319741 + -0.0520446*x + 0.00197122*x^2)*0.2287037 - 0.07758351}, size=3, xlim=c(0,22), colour='#B6123C') +
+  #mani5
+  stat_function(fun=function(x){((0.319741-0.694714) + (-0.0520446-0.3041105)*x + (0.00197122+0.009461835)*x^2)*0.2287037 - 0.07758351}, size=3, xlim=c(0,22), colour='#EC1804')
                                   
 
 
 richnessInsetPlot <- function() {
   print(richnessPlot)
   
-  theme_update(axis.title.x=element_text(size=10, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=8), axis.title.y=element_text(size=10, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=8), plot.title = element_blank())
+  theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
   
   print(richnessInset, vp=viewport(width = 0.13, height = 0.25, x = 0.30, y = 0.99, just = c("left","top")))
   
-  theme_update(axis.title.x=element_text(size=20, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=16), axis.title.y=element_text(size=20, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=16))
+  theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
 }
 
 richnessInsetPlot() #export at 1200x1000
@@ -1150,7 +1210,9 @@ evenness <- read.csv('evenness_experiment_coefs.csv')%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at 10 years
-  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads)%>%
+  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads,
+         yr20=Intercepts + 20*Slopes + (20^2)*Quads,
+         final_year_estimate=Intercepts + alt_length*Slopes + (alt_length^2)*Quads)%>%
   mutate(curve1='stat_function(fun=function(x){',
          curve2=' + ',
          curve3='*x + ',
@@ -1160,42 +1222,37 @@ evenness <- read.csv('evenness_experiment_coefs.csv')%>%
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-#temporary solution until we get the model output for each plot mani
-evenness2 <- evenness%>%
-  group_by(plot_mani)%>%
-  summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
-  mutate(curve1='stat_function(fun=function(x){',
-         curve2=' + ',
-         curve3='*x + ',
-         curve4='*x^2}, size=3, xlim=c(0,',
-         curve5='), colour=',
-         curve6=') +',
-         color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
-         curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# #temporary solution until we get the model output for each plot mani
+# evenness2 <- evenness%>%
+#   group_by(plot_mani)%>%
+#   summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
+#   mutate(curve1='stat_function(fun=function(x){',
+#          curve2=' + ',
+#          curve3='*x + ',
+#          curve4='*x^2}, size=3, xlim=c(0,',
+#          curve5='), colour=',
+#          curve6=') +',
+#          color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
+#          curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-
-#change in evenness at 10 years vs. gamma diversity
-ggplot(data=evenness, aes(x=rrich, y=yr10)) +
-  geom_point() +
-  # stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
-  xlab('Gamma Diversity') +
-  ylab('Change in Evenness at 10 Years') +
-  scale_y_continuous(limits=c(-0.3,0.6), breaks=seq(-0.4,0.6,0.1)) +
-  scale_x_continuous(breaks=seq(0,200,25)) +
-  theme(legend.position='none')
+# #change in evenness at 10 years vs. gamma diversity
+# ggplot(data=evenness, aes(x=rrich, y=yr10)) +
+#   geom_point() +
+#   # stat_smooth(method='gam', se=T, formula = y ~ s(x), color='black') +
+#   xlab('Gamma Diversity') +
+#   ylab('Change in Evenness at 10 Years') +
+#   scale_y_continuous(limits=c(-0.3,0.6), breaks=seq(-0.4,0.6,0.1)) +
+#   scale_x_continuous(breaks=seq(0,200,25)) +
+#   theme(legend.position='none')
 
 
 
 
 #inset
-evennessInset <- ggplot(data=barGraphStats(data=evenness, variable='yr10', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_fill_manual(values=c('#1400E5', '#4A06AC', '#800C74', '#B6123C', '#EC1804')) +
-  xlab('# Manipulations') +
-  ylab('Evenness Change at 10 Years') +
-  theme(legend.position='none') +
-  scale_y_continuous(limits=c(-0.05,0.25), breaks=seq(0,0.25,0.05))
+evennessInset <- ggplot(data=rawData, aes(x=SimpEven_change)) +
+  geom_density() +
+  xlab('Evenness Change') +
+  ylab('Density')
 
 
 #main figure
@@ -1499,46 +1556,258 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){-0.005363076 + 0.004512983*x + -0.001339912*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
   stat_function(fun=function(x){0.012179776 + 0.012014257*x + -0.001943581*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
 #mean lines by plot mani
-  stat_function(fun=function(x){0.00293846857364341 + 0.00533058117054264*x + -0.000542890395348837*x^2}, size=3, xlim=c(0,23), colour='#1400E5') +
-  stat_function(fun=function(x){0.00297671711827957 + 0.00556390375268817*x + -0.000544442086021505*x^2}, size=3, xlim=c(0,22), colour='#4A06AC') +
-  stat_function(fun=function(x){0.0156813946315789 + 0.000391953710526316*x + -0.000184083631578947*x^2}, size=3, xlim=c(0,21), colour='#800C74') +
-  stat_function(fun=function(x){0.01447510875 + 0.00846276915*x + -0.00103233725*x^2}, size=3, xlim=c(0,22), colour='#B6123C') +
-  stat_function(fun=function(x){0.0346586845 + 0.0387329255*x + -0.0023920641*x^2}, size=3, xlim=c(0,22), colour='#EC1804')
+  #estimated as mean across treatment lines
+  #mani1
+  stat_function(fun=function(x){(-0.167144 + 0.01842445*x + -0.00178622*x^2)*0.1034254 + 0.019179}, size=3, xlim=c(0,23), colour='#1400E5') +
+  #mani2
+  stat_function(fun=function(x){(-0.167144 + 0.01842445*x + -0.00178622*x^2)*0.1034254 + 0.019179}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  #mani3
+  stat_function(fun=function(x){(-0.167144 + 0.01842445*x + -0.00178622*x^2)*0.1034254 + 0.019179}, size=3, xlim=c(0,21), colour='#800C74') +
+  #mani4
+  stat_function(fun=function(x){(-0.167144 + 0.01842445*x + -0.00178622*x^2)*0.1034254 + 0.019179}, size=3, xlim=c(0,22), colour='#B6123C') +
+  #mani5
+  stat_function(fun=function(x){((-0.167144+0.281125) + (0.01842445+0.445834)*x + (-0.00178622-0.0236129)*x^2)*0.1034254 + 0.019179}, size=3, xlim=c(0,22), colour='#EC1804')
 
 
 
 evennessInsetPlot <- function() {
   print(evennessPlot)
   
-  theme_update(axis.title.x=element_text(size=10, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=8), axis.title.y=element_text(size=10, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=8), plot.title = element_blank())
+  theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
   
   print(evennessInset, vp=viewport(width = 0.13, height = 0.25, x = 0.80, y = 0.99, just = c("left","top")))
   
-  theme_update(axis.title.x=element_text(size=20, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=16), axis.title.y=element_text(size=20, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=16))
+  theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
 }
 
 evennessInsetPlot() #export at 1200x1000
 
 
 
+###all four variables in one figure
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanInsetPlot(), vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionInsetPlot(), vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessInsetPlot(), vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessInsetPlot(), vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 
 
-#by resource mani
+
+
+
+
+###magnitude change in the four variables at 10 yrs, 20 yrs, final year
+meanEstimates <- mean%>%
+  summarise(yr10_median=median(yr10), yr20_median=median(yr20), final_median=median(final_year_estimate), yr10_sd=sd(yr10), yr20_sd=sd(yr20), final_sd=sd(final_year_estimate))%>%
+  mutate(yr10_CI=yr10_sd*2, yr20_CI=yr20_sd*2, final_CI=final_sd*2)%>%
+  gather(key=timepoint, value=estimate)%>%
+  separate(timepoint, c('timepoint', 'stat'), sep = '_')%>%
+  spread(key=stat, value=estimate)%>%
+  mutate(variable='mean change')
+dispersionEstimates <- dispersion%>%
+  summarise(yr10_median=median(yr10), yr20_median=median(yr20), final_median=median(final_year_estimate), yr10_sd=sd(yr10), yr20_sd=sd(yr20), final_sd=sd(final_year_estimate))%>%
+  mutate(yr10_CI=yr10_sd*2, yr20_CI=yr20_sd*2, final_CI=final_sd*2)%>%
+  gather(key=timepoint, value=estimate)%>%
+  separate(timepoint, c('timepoint', 'stat'), sep = '_')%>%
+  spread(key=stat, value=estimate)%>%
+  mutate(variable='dispersion')
+richnessEstimates <- richness%>%
+  summarise(yr10_median=median(yr10), yr20_median=median(yr20), final_median=median(final_year_estimate), yr10_sd=sd(yr10), yr20_sd=sd(yr20), final_sd=sd(final_year_estimate))%>%
+  mutate(yr10_CI=yr10_sd*2, yr20_CI=yr20_sd*2, final_CI=final_sd*2)%>%
+  gather(key=timepoint, value=estimate)%>%
+  separate(timepoint, c('timepoint', 'stat'), sep = '_')%>%
+  spread(key=stat, value=estimate)%>%
+  mutate(variable='richness')
+evennessEstimates <- evenness%>%
+  summarise(yr10_median=median(yr10), yr20_median=median(yr20), final_median=median(final_year_estimate), yr10_sd=sd(yr10), yr20_sd=sd(yr20), final_sd=sd(final_year_estimate))%>%
+  mutate(yr10_CI=yr10_sd*2, yr20_CI=yr20_sd*2, final_CI=final_sd*2)%>%
+  gather(key=timepoint, value=estimate)%>%
+  separate(timepoint, c('timepoint', 'stat'), sep = '_')%>%
+  spread(key=stat, value=estimate)%>%
+  mutate(variable='evenness')
+estimates <- rbind(meanEstimates, dispersionEstimates, richnessEstimates, evennessEstimates)
+  
+estimates10yr <- ggplot(data=subset(estimates, timepoint=='yr10'), aes(x=variable, y=median)) +
+  geom_bar(stat='identity', fill='white', color='black') +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  ylab('Response at 10 years') +
+  scale_x_discrete(limits=c('mean change', 'dispersion', 'richness', 'evenness'),
+                   labels=c('Mean Change', 'Dispersion Change', 'Proportion Richness Change', 'Evenness Change')) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x  = element_text(angle=90, hjust=1))
+
+estimates20yr <- ggplot(data=subset(estimates, timepoint=='yr20'), aes(x=variable, y=median)) +
+  geom_bar(stat='identity', fill='white', color='black') +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  ylab('Response at 20 years') +
+  scale_x_discrete(limits=c('mean change', 'dispersion', 'richness', 'evenness'),
+                   labels=c('Mean Change', 'Dispersion Change', 'Proportion Richness Change', 'Evenness Change')) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x  = element_text(angle=90, hjust=1))
+
+estimatesFinalyr <- ggplot(data=subset(estimates, timepoint=='final'), aes(x=variable, y=median)) +
+  geom_bar(stat='identity', fill='white', color='black') +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  ylab('Response in Final Year') +
+  scale_x_discrete(limits=c('mean change', 'dispersion', 'richness', 'evenness'),
+                   labels=c('Mean Change', 'Dispersion Change', 'Proportion Richness Change', 'Evenness Change')) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x  = element_text(angle=90, hjust=1))
+  
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(estimates10yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(estimates20yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(estimatesFinalyr, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+
+
+
+###by resource mani
+
+#mean change
 meanResource <- mean%>%
   mutate(multi_resource=nutrients+water+carbon)%>%
   filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, water, carbon, yr10)
-  gather(key=resource, value=manipulated, nutrients:carbon)
+  select(site_code, project_name, community_type, treatment, nutrients, water, carbon, yr10)%>%
+  gather(key=resource, value=manipulated, nutrients:carbon)%>%
+  filter(manipulated!=0)
+
+meanResourcePlot <- ggplot(data=barGraphStats(data=meanResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
+  coord_cartesian(ylim=c(0, 0.5)) +
+  xlab('')+
+  annotate('text', x=0.5, y=0.49, label='(a)', size=10, hjust='left')
+
+#dispersion change
+dispersionResource <- dispersion%>%
+  mutate(multi_resource=nutrients+water+carbon)%>%
+  filter(multi_resource==1)%>%
+  select(site_code, project_name, community_type, treatment, nutrients, water, carbon, yr10)%>%
+  gather(key=resource, value=manipulated, nutrients:carbon)%>%
+  filter(manipulated!=0)
+
+dispersionResourcePlot <- ggplot(data=barGraphStats(data=dispersionResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-0.08, 0.1, 0.04), name='Change in Dispersion') +
+  coord_cartesian(ylim=c(-0.08, 0.1)) +
+  xlab('')+
+  annotate('text', x=0.5, y=0.095, label='(b)', size=10, hjust='left')
+
+#richness change
+richnessResource <- richness%>%
+  mutate(multi_resource=nutrients+water+carbon)%>%
+  filter(multi_resource==1)%>%
+  select(site_code, project_name, community_type, treatment, nutrients, water, carbon, yr10)%>%
+  gather(key=resource, value=manipulated, nutrients:carbon)%>%
+  filter(manipulated!=0)
+
+richnessResourcePlot <- ggplot(data=barGraphStats(data=richnessResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
+  coord_cartesian(ylim=c(-0.22, 0.16)) +
+  xlab('Resource Manipulated')+
+  annotate('text', x=0.5, y=0.145, label='(c)', size=10, hjust='left')
+
+#evenness change
+evennessResource <- evenness%>%
+  mutate(multi_resource=nutrients+water+carbon)%>%
+  filter(multi_resource==1)%>%
+  select(site_code, project_name, community_type, treatment, nutrients, water, carbon, yr10)%>%
+  gather(key=resource, value=manipulated, nutrients:carbon)%>%
+  filter(manipulated!=0)
+
+evennessResourcePlot <- ggplot(data=barGraphStats(data=evennessResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
+  coord_cartesian(ylim=c(0, 0.06)) +
+  xlab('Resource Manipulated')+
+  annotate('text', x=0.5, y=0.058, label='(d)', size=10, hjust='left') 
   
-  
-  
-  
-  
-  
-  
-  
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanResourcePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionResourcePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessResourcePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessResourcePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
   
   
 
+#other inset options
+
+#inset - density plot of mean change (all datapoints)
+mean10yr <- ggplot(data=mean, aes(x=yr10)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+mean20yr <- ggplot(data=mean, aes(x=yr20)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+meanFinalYear <- ggplot(data=mean, aes(x=final_year_estimate)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+dispersion10yr <- ggplot(data=dispersion, aes(x=yr10)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+dispersion20yr <- ggplot(data=dispersion, aes(x=yr20)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+dispersionFinalYear <- ggplot(data=dispersion, aes(x=final_year_estimate)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+richness10yr <- ggplot(data=richness, aes(x=yr10)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+richness20yr <- ggplot(data=richness, aes(x=yr20)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+richnessFinalYear <- ggplot(data=richness, aes(x=final_year_estimate)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+evenness10yr <- ggplot(data=evenness, aes(x=yr10)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+evenness20yr <- ggplot(data=evenness, aes(x=yr20)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+evennessFinalYear <- ggplot(data=evenness, aes(x=final_year_estimate)) +
+  geom_density() +
+  xlab('') +
+  ylab('')
+
+
+pushViewport(viewport(layout=grid.layout(3,4)))
+print(mean10yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(mean20yr, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(meanFinalYear, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
+print(dispersion10yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(dispersion20yr, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(dispersionFinalYear, vp=viewport(layout.pos.row = 3, layout.pos.col = 2))
+print(richness10yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(richness20yr, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
+print(richnessFinalYear, vp=viewport(layout.pos.row = 3, layout.pos.col = 3))
+print(evenness10yr, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
+print(evenness20yr, vp=viewport(layout.pos.row = 2, layout.pos.col = 4))
+print(evennessFinalYear, vp=viewport(layout.pos.row = 3, layout.pos.col = 4))
+
+
+#########################################################################################################
+#########################################################################################################
+
+#full chains data
+chains <- read.csv('fullChains_anpp.csv')%>%
+  select(-X)
 
