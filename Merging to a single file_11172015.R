@@ -13,10 +13,13 @@ library(dplyr)
 # nov 20, 2015 -checked all plots have recorded species, so the fitler abundance !=0 step will not remove any plots.
 
 watering<-read.delim("ANG_watering.txt")%>%
-  gather(genus_species, abundance, Danthonia.californica:Cirsium.occidentale)%>%
+  gather(species_code, abundance, sp1:sp43)%>%
   mutate(community_type=0,
          block=0)%>%
-  select(-data_type)%>%
+  select(-data_type)
+watering_names<-read.delim("ANG_watering_specieslist.txt")
+watering2<-merge(watering,watering_names, by="species_code", all=T)%>%
+  select(-species_code)%>%
   filter(abundance!=0)#this drops 3 plotsin 2011 and 2013 (plots 3, 4, and 7) which had no pin hits but did have species
 
 mat2<-read.delim("ARC_mat2.txt")%>%
@@ -44,7 +47,13 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
 clonal_names<-read.delim("ASGA_Clonal_specieslist.txt")
 clonal2<-merge(clonal, clonal_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
-  select(-species_code)
+  select(-species_code)%>%
+  filter(genus_species!="No plants present",
+         genus_species!="unknown grass",
+         genus_species!="unknown dicot",
+         genus_species!="Standing Dead biomass from current year production",
+         genus_species!="unknown Asteraceae",
+         genus_species!="unknonw Polygonaceae")
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -burn, -clip, -precip, -p, -dist, -patchiness, -plant_mani, -plot_id1, -plot_mani, -data_type, -species_num)%>%
@@ -127,16 +136,16 @@ e001_names<-read.csv("CDR_e001_e002_specieslist.csv")
 e0012<-merge(e001, e001_names, by="spcode")%>%
   filter(abundance!=0)%>%
   select(-spcode)%>%
-  filter(genus_species!="Forb_seedlings",
-         genus_species!="Fungi_",
-         genus_species!="Miscellaneous_grasses",
-         genus_species!="Miscellaneous_herbs",
-         genus_species!="Miscellaneous_legumes",
-         genus_species!="Miscellaneous_litter",
-         genus_species!="Miscellaneous_rushes",
-         genus_species!="Miscellaneous_sedges",
-         genus_species!="Miscellaneous_sp.",
-         genus_species!="Miscellaneous_woody")
+  filter(genus_species!="Forb seedlings",
+         genus_species!="Fungi ",
+         genus_species!="Miscellaneous grasses",
+         genus_species!="Miscellaneous herbs",
+         genus_species!="Miscellaneous legumes",
+         genus_species!="Miscellaneous litter",
+         genus_species!="Miscellaneous rushes",
+         genus_species!="Miscellaneous sedges",
+         genus_species!="Miscellaneous sp.",
+         genus_species!="Miscellaneous woody")
 
 e002<-read.delim("CDR_e002.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -p, -k, -lime, -n, -other_nut, -burn, -herb_removal, -true_plot_mani, -plot_mani, -cessation, -dist, -data_type, -species_num)%>%
@@ -465,9 +474,12 @@ tide2<-merge(tide, tide_names, by="species_code", all=T)%>%
 
 interaction<-read.delim("RIO_interaction.txt")%>%
   select(-n, -precip, -precip_vari, -plot_mani, -data_type)%>%
-  gather(genus_species, abundance, Mulinum.spinosum:Forb.spp)%>%
-  mutate(block=0)%>%
-  filter(abundance!=0)
+  gather(species_code, abundance, sp1:sp10)%>%
+  mutate(block=0)
+interaction_names<-read.delim("RIO_interaction_specieslist.txt")
+interaction2<-merge(interaction, interaction_names, by="species_code", all=T)%>%
+  filter(abundance!=0)%>%
+  select(-species_code)  
 
 lucero<-read.csv("SCL_Lucero.csv")%>%
   select(-data_type)%>%
@@ -558,7 +570,8 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   filter(abundance!=0)
 
 #merge all datasets
-combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering, water, wenndex2, wet2, yu2)
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu2)%>%
+  mutate(genus_species=tolower(genus_species))
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
