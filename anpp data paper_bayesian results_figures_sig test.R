@@ -50,21 +50,7 @@ rawData <- read.csv('ForBayesianAnalysisANPP_March2016b.csv')# get SD and means 
 mean(rawData$anpp_PC, na.rm=T) #0.3557605
 sd(rawData$anpp_PC, na.rm=T) #0.5999784
 
-?rawData2<- rawData%>%
-  filter(plot_mani<6, anpp!='NA')%>%
-  summarise(mean_mean=mean(mean_change), std_mean=sd(mean_change), mean_disp=mean(dispersion_change), std_disp=sd(dispersion_change), mean_rich=mean(S_PC), std_rich=sd(S_PC), mean_even=mean(SimpEven_change), std_even=sd(SimpEven_change)) #to backtransform
 
-# expInfoSummary <- rawData%>%
-#   filter(plot_mani<6, anpp!='NA')%>%
-#   filter(treatment_year!=0)%>%
-#   summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
-#             plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
-#             rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
-#             anpp_median=median(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
-#             MAP_median=median(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
-#             MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT)
-#             )%>%
-#   gather(variable, estimate)
 
 ################################################################################
 ################################################################################
@@ -131,15 +117,13 @@ mean<-merge(means3, expInfo2, by=c('site_code', 'project_name', 'community_type'
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-write.csv(mean, "to_clean.csv", row.names = F)
-
-
+#write.csv(mean, "to_clean.csv", row.names = F)
 
 #main figure
 meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(xlim=c(0,24), ylim=c(-1,2.5))  +
+  coord_cartesian(xlim=c(0,24), ylim=c(-1,4))  +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
-  ylim(-1,2) +
+  ylim(-1,4) +
   xlab('Standardized Year') +
   ylab('ANPP Percent Change')
 
