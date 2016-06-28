@@ -49,6 +49,14 @@ rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
   summarise(mean_mean=mean(mean_change), std_mean=sd(mean_change), mean_disp=mean(dispersion_change), std_disp=sd(dispersion_change), mean_rich=mean(S_PC), std_rich=sd(S_PC), mean_even=mean(SimpEven_change), std_even=sd(SimpEven_change)) #to backtransform
 
+#select just data in this analysis
+expInfo2 <- rawData%>%
+  filter(plot_mani<6, anpp!='NA')%>%
+  filter(treatment_year!=0)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani))
+
+#for table of experiment summarizing various factors
 expInfoSummary <- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
   filter(treatment_year!=0)%>%
@@ -64,26 +72,36 @@ expInfoSummary <- rawData%>%
 ################################################################################
 ################################################################################
 
+#raw chains data
 chainsCommunity <- read.csv('fullChains.csv')
 
+#gather the intercepts, linear slopes, and quadratic slopes for all treatments
+#set any that are not significant (CI overlaps 0) as 0
 chainsMeanIntercept <- chainsCommunity[,7:296]%>%
   gather(key=parameter, value=value, B.1.1.1:B.290.1.1)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), median=median(value))%>%
-  mutate(lower=median-sd, upper=median+sd)
+  summarise(sd=sd(value), intercept=median(value))%>%
+  mutate(lower=intercept-sd, upper=intercept+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
+  select(parameter, intercept)
+names(chainsMeanIntercept)[1] <- 'parameter1'
 
 chainsMeanSlope <- chainsCommunity[,1167:1456]%>%
   gather(key=parameter, value=value, B.1.1.2:B.290.1.2)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), median=median(value))%>%
-  mutate(lower=median-sd, upper=median+sd)
+  summarise(sd=sd(value), slope=median(value))%>%
+  mutate(lower=slope-sd, upper=slope+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
+  select(parameter, slope)
+names(chainsMeanSlope)[1] <- 'parameter2'
 
 chainsMeanQuad <- chainsCommunity[,2327:2616]%>%
   gather(key=parameter, value=value, B.1.1.3:B.290.1.3)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), median=median(value))%>%
-  mutate(lower=median-sd, upper=median+sd)
+  summarise(sd=sd(value), quad=median(value))%>%
+  mutate(lower=quad-sd, upper=quad+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
+  select(parameter, quad)
+names(chainsMeanQuad)[1] <- 'parameter3'
 
+#get values for overall (mean) lines across levels of plot mani
 #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
 chainsCommunity2 <- chainsCommunity%>%
   select(lp__, U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4)%>%
@@ -92,14 +110,24 @@ chainsCommunity2 <- chainsCommunity%>%
   summarise(median=median(value))
 
 ###mean change
-mean <- read.csv('mean change_experiment_coefs.csv')%>%
-  left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
+#merge together with experiment list
+mean <- cbind(chainsMeanIntercept, chainsMeanSlope, chainsMeanQuad)%>%
+  select(-parameter2, -parameter3)%>%
+  separate(parameter1, into=c('head', 'exp', 'type', 'variable'), sep='\\.', remove=F)%>%
+  select(-head, -type)%>%
+  mutate(exp2=as.integer(exp))
+
+mean2 <- mean[order(mean$exp2),]
+mean3 <- cbind(expInfo2, mean2)%>%
+  select(-exp2, -exp)
+  
+mean4 <- left_join(mean3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
-  #get estimates at 10 years
-  mutate(yr10=Intercepts + 10*Slopes + (10^2)*Quads,
-         yr20=Intercepts + 20*Slopes + (20^2)*Quads,
-         final_year_estimate=Intercepts + alt_length*Slopes + (alt_length^2)*Quads)%>%
+  #get estimates at various time points
+  mutate(yr10=intercept + 10*slope + (10^2)*quad,
+         yr20=intercept + 20*slope + (20^2)*quad,
+         final_year_estimate=intercept + alt_length*slope + (alt_length^2)*quad)%>%
   mutate(curve1='stat_function(fun=function(x){',
          curve2=' + ',
          curve3='*x + ',
@@ -107,8 +135,9 @@ mean <- read.csv('mean change_experiment_coefs.csv')%>%
          curve5='), colour=',
          curve6=') +',
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
-         curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-
+         curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
+#need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+write.csv(mean4,'mean_equations.csv', row.names=F)
 
 # #change in mean at 10 years vs. gamma diversity
 # ggplot(data=mean, aes(x=rrich, y=yr10)) +
@@ -122,11 +151,11 @@ mean <- read.csv('mean change_experiment_coefs.csv')%>%
 #   theme(legend.position='none')
 
 
-#inset - density plot of mean change (all datapoints)
-meanInset <- ggplot(data=mean, aes(x=final_year_estimate)) +
-  geom_density() +
-  xlab('Mean Change') +
-  ylab('Density')
+# #inset - density plot of mean change (all datapoints)
+# meanInset <- ggplot(data=mean, aes(x=final_year_estimate)) +
+#   geom_density() +
+#   xlab('Mean Change') +
+#   ylab('Density')
 
 
 #main figure
@@ -139,297 +168,297 @@ meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
 
 meanPlot <- meanPlot + 
 #below are the individual treatment lines
-  stat_function(fun=function(x){0.230929386 + 0.021502518*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.262171061 + 0.02401176*x + -0.001525823*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.264315375 + 0.030791937*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.206609096 + 0.031686224*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.227275001 + 0.021500391*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.270091532 + 0.027955621*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.248493062 + 0.029207605*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.25755068 + 0.029005406*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.034425311*x + -0.001183539*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){0.252928172 + 0*x + -0*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){0.260585623 + 0.04300529*x + -0.001497189*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.219919105 + 0.051229869*x + -0.0015955*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.37634329 + 0.056351027*x + -0.002208445*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.433885054 + 0.065284875*x + -0.002671376*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.530320075 + 0.054212157*x + -0.003370371*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.505870741 + 0*x + -0.001773763*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.488987074 + 0*x + -0.001834057*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.484917572 + 0.019967268*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.387016459 + 0.039793413*x + -0.002103177*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.41234162 + 0.035825734*x + -0.001983006*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.389915554 + 0.035089413*x + -0.001925995*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.370785749 + 0.024994854*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.042219887*x + -0.001975358*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.413064501 + 0.045393826*x + -0.00241283*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.375913542 + 0.036219329*x + -0.001965967*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.032617514*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.02973926*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.031268726*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.030973806*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.351048582 + 0.037485093*x + -0.001483422*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.176098128 + 0.023011823*x + -0.001517118*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.197645645 + 0.016056216*x + -0.001328941*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.139780634 + 0.018570418*x + -0.00128736*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.178500188 + 0.034384225*x + -0.001931856*x^2}, size=0.5, xlim=c(0,15), colour='#1400E544') +
-  stat_function(fun=function(x){0.21031503 + 0.04433613*x + -0.002585511*x^2}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.168717393 + 0.023587201*x + -0.001663977*x^2}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.171530146 + 0.012670687*x + -0.001056369*x^2}, size=0.5, xlim=c(0,15), colour='#1400E544') +
-  stat_function(fun=function(x){0.056500464 + 0.03138637*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.036331593 + 0.021532631*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.043494051 + 0.016490855*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.036586787 + 0.017710923*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.058007813 + 0.025308658*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.031204735 + 0.028832469*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.205895487 + 0*x + -0.002044338*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.228201187 + 0*x + -0.001977204*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.029693835*x + -0.00294958*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.02500285*x + -0.002734868*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.019490479*x + -0.002490953*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.21825915 + 0*x + -0.002228367*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.233517739 + 0.029103656*x + -0.002951409*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.209729359 + 0.015962118*x + -0.002418104*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.229964751 + 0.015391477*x + -0.002460041*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.250137875 + 0*x + -0.00226389*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.01690313*x + -0.002331721*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.256035165 + 0*x + -0.001919981*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.280592275 + 0.025900795*x + -0.002667701*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.300746635 + 0.031266174*x + -0.002934133*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.240956573 + 0.014305837*x + -0.002156138*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.246521514 + 0.031779115*x + -0.00242456*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.209583558 + 0*x + -0.001562067*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.273619681 + 0.029979143*x + -0.002424654*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.041813192*x + -0.00289906*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.200072034 + 0.017587664*x + -0.001831191*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.199834363 + 0.01524691*x + -0.001158153*x^2}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.193679582 + 0.021933711*x + -0.00151169*x^2}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){0.092756796 + 0*x + -0*x^2}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){0.414275994 + 0.054686563*x + -0.001778748*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){0.162265736 + 0*x + -0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){0.238162534 + 0.090281176*x + -0.002742005*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){0.23110513 + -0*x + 0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){0.431619097 + 0.034674722*x + -0.001197686*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){0.332504534 + 0.022716138*x + -0.001433731*x^2}, size=0.5, xlim=c(0,20), colour='#B6123C44') +
-  stat_function(fun=function(x){0.526499813 + 0.051668293*x + -0.002729824*x^2}, size=0.5, xlim=c(0,20), colour='#EC180444') +
-  stat_function(fun=function(x){0.212155578 + 0*x + -0*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.042198876*x + -0.001606892*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){0.274940653 + 0*x + -0.001127782*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){0.488647665 + 0.092501368*x + -0.004392884*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){0.224272382 + 0*x + -0*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){0.354865101 + 0.079669083*x + -0.00290311*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){0.185333106 + 0.018662883*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.216815344 + 0.023667588*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.18501105 + 0.043916505*x + -0.001759745*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.134870692 + 0.029399766*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#800C7444') +
-  stat_function(fun=function(x){0.084538683 + 0*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.103025822 + 0.02063256*x + -0.001783486*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.033612517*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.243143675 + 0.030087941*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.239141204 + 0.05581129*x + -0.001529445*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.170299003 + 0.038571371*x + -0*x^2}, size=0.5, xlim=c(0,7), colour='#800C7444') +
-  stat_function(fun=function(x){0.231644356 + 0.045839225*x + -0.00168189*x^2}, size=0.5, xlim=c(0,7), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.037862866*x + -0.001476611*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.033613708*x + -0^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.183128566 + 0*x + -0*x^2}, size=0.5, xlim=c(0,7), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.221359678 + 0.031098681*x + -0*x^2}, size=0.5, xlim=c(0,7), colour='#800C7444') +
-  stat_function(fun=function(x){0.206548019 + 0*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.177079861 + 0*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.168546157 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.160470783 + 0.022087083*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.111038079 + 0.019262931*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.141435145 + 0.02610461*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.126222151 + 0.020588836*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.122275143 + 0.019326985*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.148797591 + 0.028556604*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.213510916 + 0.032284485*x + -0.001890864*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){0.245896798 + 0.023463602*x + -0.001633979*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){0.239492862 + 0.029539103*x + -0.001843644*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.24326889 + 0.021690511*x + -0.001472961*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){0.249007619 + 0.025506519*x + -0.00170458*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){0.236549194 + 0.035860355*x + -0.002274106*x^2}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
-  stat_function(fun=function(x){0.225421778 + 0.032975041*x + -0.00194032*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.251787793 + 0.033789962*x + -0.002161701*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.225248501 + 0.033361235*x + -0.001924413*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){0.2261655 + 0.027389684*x + -0.001734446*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.243098165 + 0.030633377*x + -0.001811821*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.203956434 + 0.022703548*x + -0.001422709*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){0.213013031 + 0.019043464*x + -0.001372079*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){0.206904101 + 0.02252959*x + -0.001641347*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.387045892 + 0.03220648*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.351790432 + 0.032924428*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.351972216 + 0.026820346*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0 + 0.02847979*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.357430231 + 0.02758678*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.360967481 + 0.02104657*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.377678382 + 0.027230103*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.034229322*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + -0*x + 0*x^2}, size=0.5, xlim=c(0,23), colour='#1400E544') +
-  stat_function(fun=function(x){0.646820613 + 0.024231738*x + -0.000792657*x^2}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.171654001 + 0*x + -0*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){0.244530742 + 0.018780528*x + -0.001734863*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.196132001 + 0.023560746*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.160551169 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.402715514 + 0.018596363*x + -0.000976014*x^2}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.021489928*x + -0.000880253*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){0.356586047 + 0.033082393*x + -0.001035054*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){0.373853782 + 0.03420627*x + -0.001352192*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){0.378325215 + 0.041800687*x + -0.001948674*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.021443568*x + -0.000586184*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.386339088 + 0.013074915*x + -0.000804871*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){0.452625602 + 0.022434998*x + -0.001418926*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.445655219 + 0.033188043*x + -0.002082931*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.361731279 + 0.021366924*x + -0.001116561*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.010623636*x + -0*x^2}, size=0.5, xlim=c(0,21), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0*x^2}, size=0.5, xlim=c(0,21), colour='#1400E544') +
-  stat_function(fun=function(x){0.193902622 + 0.029048534*x + -0.001235522*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.18373831 + 0.02216798*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.20742189 + 0.020333642*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.176285781 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.149509414 + 0.02430702*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.131342203 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.134903017 + 0.025878508*x + -0.000777135*x^2}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){0.167058713 + 0*x + 0*x^2}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){0.186414875 + 0*x + -0*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){0.216915636 + 0.036364619*x + -0.001814552*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){0.249747172 + 0.044406393*x + -0.002199385*x^2}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.175268831 + 0*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.142193073 + 0.012028609*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.161395778 + 0.028078369*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
-  stat_function(fun=function(x){0.143497116 + 0.03288198*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.20518477 + 0*x + 0.00155233*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.241345234 + 0.032013213*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.031379055*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.4883495 + 0.126389*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.304715 + 0.141138*x + -0.00896859*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.292111 + 0.180991*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.631301 + 0.1862475*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5098295 + 0.1263765*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){-0.2581595 + 0.1643195*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){-0.3851125 + 0.1716785*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.331873 + 0.17049*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.2023475*x + -0.00695669*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3590435 + 0*x + 0*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){-0.314034 + 0.2527795*x + -0.00880028*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.5530665 + 0.3011225*x + -0.00937814*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.3663745 + 0.331224*x + -0.01298095*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){0.7045975 + 0.383736*x + -0.015702*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){1.27143 + 0.318652*x + -0.0198106*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){1.12772 + 0*x + -0.01042595*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){1.02848 + 0*x + -0.01078035*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){1.00456 + 0.117365*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.42911 + 0.2339005*x + -0.0123622*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0.577968 + 0.210579*x + -0.01165585*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0.4461505 + 0.206251*x + -0.01132075*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.333708 + 0.1469165*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.248163*x + -0.0116109*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0.582217 + 0.266819*x + -0.0141823*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.3638485 + 0.2128925*x + -0.0115557*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1917215*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1748035*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1837935*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.18206*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.2176955 + 0.2203325*x + -0.00871936*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8106405 + 0.1352605*x + -0.008917425*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.683987 + 0.09437635*x + -0.007811345*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-1.02411 + 0.1091545*x + -0.007566935*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.7965215 + 0.202106*x + -0.0113552*x^2}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){-0.609518 + 0.260602*x + -0.0151973*x^2}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8540235 + 0.1386425*x + -0.00978064*x^2}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8374905 + 0.07447665*x + -0.0062092*x^2}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){-1.51362 + 0.184485*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-1.63217 + 0.126566*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-1.59007 + 0.0969311*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-1.63067 + 0.1041025*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-1.50476 + 0.148761*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-1.662305 + 0.1694735*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-0.6354955 + 0*x + -0.01201635*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5043855 + 0*x + -0.01162175*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1745365*x + -0.01733725*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1469635*x + -0.0160752*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1145625*x + -0.0146415*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5628235 + 0*x + -0.01309805*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4731355 + 0.1710675*x + -0.017348*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6129605 + 0.09382325*x + -0.0142133*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4940195 + 0.0904691*x + -0.0144598*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.3754445 + 0*x + -0.01330685*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.0993544*x + -0.01370555*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.340781 + 0*x + -0.0112854*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1522415*x + -0.0156804*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1837785*x + -0.01724645*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.429411 + 0.08408785*x + -0.0126735*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.396701 + 0.1867935*x + -0.01425125*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6138175 + 0*x + -0.009181625*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.2374215 + 0.1762135*x + -0.0142518*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.2457725*x + -0.0170403*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.669725 + 0.103378*x + -0.0107635*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.671122 + 0.08961935*x + -0.00680747*x^2}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.707299 + 0.1289235*x + -0.00888552*x^2}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){-1.30051 + 0*x + 0*x^2}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
+  stat_function(fun=function(x){0.589338 + 0.3214405*x + -0.01045525*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
+  stat_function(fun=function(x){-0.8919455 + 0.0441775*x + 0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.445834 + 0.530661*x + -0.01611715*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
+  stat_function(fun=function(x){-0.4873165 + 0*x + 0*x^2}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
+  stat_function(fun=function(x){0.6912785 + 0.2038135*x + -0.00703984*x^2}, size=0.5, xlim=c(0,22), colour='#EC180444') +
+  stat_function(fun=function(x){0 + 0.1335225*x + -0.008427285*x^2}, size=0.5, xlim=c(0,20), colour='#B6123C44') +
+  stat_function(fun=function(x){1.248975 + 0.3036995*x + -0.01604555*x^2}, size=0.5, xlim=c(0,20), colour='#EC180444') +
+  stat_function(fun=function(x){-0.5986995 + 0*x + 0*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.2480395*x + -0.0094451*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){-0.229657 + 0*x + -0.006628955*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){1.026485 + 0.543711*x + -0.0258208*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){-0.5274785 + 0*x + 0*x^2}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){0.2401285 + 0.4682845*x + -0.0170641*x^2}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){-0.7563585 + 0.109698*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.57131 + 0.139115*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.7582515 + 0.2581355*x + -0.01034355*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.05297 + 0.172808*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#800C7444') +
+  stat_function(fun=function(x){-1.348815 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-1.24015 + 0.1212755*x + -0.0104831*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.19757*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4165555 + 0.176853*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4400815 + 0.3280515*x + -0.00898988*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.844727 + 0.2267175*x + 0*x^2}, size=0.5, xlim=c(0,7), colour='#800C7444') +
+  stat_function(fun=function(x){-0.484147 + 0.269437*x + -0.00988593*x^2}, size=0.5, xlim=c(0,7), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.222553*x + -0.008679325*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.197577*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.7693165 + 0*x + 0*x^2}, size=0.5, xlim=c(0,7), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.544599 + 0.182794*x + 0*x^2}, size=0.5, xlim=c(0,7), colour='#800C7444') +
+  stat_function(fun=function(x){-0.63166 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.80487 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.85503 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.902496 + 0.129825*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-1.193055 + 0.113225*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-1.014385 + 0.1534395*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.103805 + 0.1210185*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-1.127005 + 0.1136015*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.9711095 + 0.167852*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.590733 + 0.189764*x + -0.01111425*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){-0.400373 + 0.137916*x + -0.009604315*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.4380145 + 0.173627*x + -0.0108367*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){-0.4158195 + 0.127494*x + -0.008657875*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){-0.382088 + 0.149924*x + -0.0100193*x^2}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.455317 + 0.2107825*x + -0.0133669*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.5207225 + 0.193823*x + -0.01140495*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.3657465 + 0.198613*x + -0.0127062*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){-0.521741 + 0.196093*x + -0.01131145*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.516351 + 0.160993*x + -0.01019485*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.416823 + 0.180059*x + -0.01064965*x^2}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){-0.646893 + 0.1334485*x + -0.0083625*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5936595 + 0.111935*x + -0.0080649*x^2}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){-0.629567 + 0.132426*x + -0.009647625*x^2}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.429283 + 0.1893055*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.222056 + 0.1935255*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.2231245 + 0.1576465*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.1674005*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){0.255206 + 0.1621515*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0.2759975 + 0.123709*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0.374222 + 0.160055*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.2011955*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,23), colour='#1400E544') +
+  stat_function(fun=function(x){1.956205 + 0.142431*x + -0.004659135*x^2}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8367625 + 0*x + 0*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4084025 + 0.1103895*x + -0.0101973*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.692884 + 0.138487*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.9020235 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0.521387 + 0.109307*x + -0.005736885*x^2}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.126315*x + -0.005174015*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){0.250244 + 0.194454*x + -0.006083915*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){0.3517415 + 0.20106*x + -0.00794801*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){0.378024 + 0.245699*x + -0.01145405*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1260425*x + -0.003445515*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.4251285 + 0.07685265*x + -0.004730925*x^2}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){0.814752 + 0.13187*x + -0.008340265*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.773781 + 0.195075*x + -0.0122432*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.280487 + 0.125592*x + -0.006563*x^2}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.06244435*x + 0*x^2}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.0630326*x + 0*x^2}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){-0.705988 + 0.1707435*x + -0.007262235*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.7657325 + 0.1303005*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6265235 + 0.1195185*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8095375 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.9669255 + 0.1428735*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.07371 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-1.05278 + 0.1521105*x + -0.0045679*x^2}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){-0.863773 + 0*x + 0*x^2}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){-0.75 + 0*x + 0*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5707205 + 0.2137465*x + -0.0106657*x^2}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){-0.377741 + 0.261015*x + -0.0129277*x^2}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.815515 + 0*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){-1.00993 + 0.0707026*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.897059 + 0.165041*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){-1.002265 + 0.193276*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.639673 + 0*x + 0.009124395*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4271265 + 0.1881695*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.184442*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
   stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.031664277*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.359924331 + 0.045986217*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.266884163 + 0.056284421*x + -0.001675281*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.280226497 + 0.053399277*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.279816399 + 0.036711939*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.296853353 + 0.038498471*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.23399189 + 0.032650008*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.167682834 + 0.02130891*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.177982399 + 0.025512814*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.181873519 + 0.025245795*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.246126728 + 0.029025311*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.250579107 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
-  stat_function(fun=function(x){0.165482207 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.251976637 + 0.01974712*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
-  stat_function(fun=function(x){0.215662461 + 0.016847421*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
-  stat_function(fun=function(x){0.228364766 + 0.014081113*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
-  stat_function(fun=function(x){0.243304873 + 0.043823614*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
-  stat_function(fun=function(x){0.253866777 + 0.042833119*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
-  stat_function(fun=function(x){0.217004273 + 0.039462425*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
-  stat_function(fun=function(x){0.179172881 + 0*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.176647902 + 0.033122629*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
-  stat_function(fun=function(x){0.17276163 + 0*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
-  stat_function(fun=function(x){0.203789707 + 0.021451819*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.1528175 + 0*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
-  stat_function(fun=function(x){0.197601496 + 0.017488478*x + -0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.026167983*x + -0.001276188*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.02048846*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0 + 0.023714714*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.256341823 + 0.031811269*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#800C7444') +
-  stat_function(fun=function(x){0 + 0.029523195*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#B6123C44') +
-  stat_function(fun=function(x){0.252979381 + 0.038472101*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.154122394 + 0.027309213*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.209291785 + 0.043498156*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.206741457 + 0.028264916*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.208998907 + 0.025900114*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.026762927*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.226807314 + 0.018823826*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.037523202*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.237639555 + 0*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.259423382 + 0.0258683*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.359927819 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.432920844 + 0.044692722*x + -0.002807794*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.381273052 + 0.034273045*x + -0.001820549*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.019653038*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.02497614*x + -0.001950477*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.356919927 + 0.016319271*x + -0.001616396*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.018223354*x + -0.001606864*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.235814574 + 0*x + -0.001627748*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.270821389 + 0.02280435*x + -0.001915609*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.208666814 + 0*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.19018699 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.05430258*x + -0.001866135*x^2}, size=0.5, xlim=c(0,5), colour='#800C7444') +
-  stat_function(fun=function(x){0 + 0.047485995*x + -0.001655464*x^2}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.047808901*x + -0.001617279*x^2}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.053605219*x + -0.001918748*x^2}, size=0.5, xlim=c(0,5), colour='#EC180444') +
-  stat_function(fun=function(x){0.171317739 + 0.016972382*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.118306868 + 0.033496233*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.18628311 + 0.065670559*x + -0.001807713*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.124018121 + 0.030336841*x + -0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){0.093148945 + 0.01411747*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.122500564 + 0.033656155*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.124303939 + 0.022475659*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.145399762 + 0.031374036*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#800C7444') +
-  stat_function(fun=function(x){0.143675753 + 0.020362734*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.147866982 + 0*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.141501496 + 0*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.158699733 + 0*x + -0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.166254255 + 0.016904781*x + -0.001413259*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0.235672941 + 0*x + -0*x^2}, size=0.5, xlim=c(0,7), colour='#1400E544') +
-  stat_function(fun=function(x){0.066290575 + 0*x + -0*x^2}, size=0.5, xlim=c(0,7), colour='#1400E544') +
-  stat_function(fun=function(x){0.199322613 + 0*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.224405849 + 0*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.221920595 + 0*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.186889707 + 0.018288768*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.189141799 + 0*x + -0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.235925243 + 0.018755179*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.215343212 + 0.02148559*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.245393044 + 0.019511065*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.223195887 + 0.031605923*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.271063994 + 0*x + -0.001837775*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0.00182886*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.197506308 + 0.023498734*x + -0.002490783*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){0.210232432 + 0.015816742*x + -0.002536284*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){0.077388133 + 0*x + -0.001474587*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){0.087784757 + 0*x + -0.001714932*x^2}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.158780715 + 0*x + 0*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0.000840271*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
-  stat_function(fun=function(x){0.03341472 + 0.037417212*x + -0.002066182*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
-  stat_function(fun=function(x){0.22262187 + 0*x + -0.001475355*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
-  stat_function(fun=function(x){0.130798639 + 0.039854914*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.129730224 + 0.041991063*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.133538577 + 0.0286637*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.133221285 + 0.036650607*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.206606629 + 0.014993791*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.169838972 + 0.025115731*x + -0.001476843*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
-  stat_function(fun=function(x){0.185743373 + 0.037495216*x + -0.001913474*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.165812088 + 0.024629841*x + -0.001475891*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.037698096*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.220553263 + 0.023792208*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.046494139*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.15727932 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.215567698 + 0.02113793*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0.018634047*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.234500067 + 0.031099532*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.25887029 + 0*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + -0*x + -0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0*x + -0.001850075*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0.440077859 + 0*x + -0.002206003*x^2}, size=0.5, xlim=c(0,4), colour='#800C7444') +
-  stat_function(fun=function(x){0.401007412 + 0*x + -0.002004315*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.39534907 + 0*x + -0.001860887*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0 + 0.028710656*x + -0.002300434*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0.00191133*x^2}, size=0.5, xlim=c(0,4), colour='#800C7444') +
-  stat_function(fun=function(x){0 + 0.033906501*x + -0.002448744*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.162807428 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0.255856784 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.208078846 + 0.019881012*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){0 + 0*x + -0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){0.322484612 + 0.007737378*x + -0.001270659*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
-  stat_function(fun=function(x){0.247561942 + 0.024541204*x + -0.001652742*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
-  stat_function(fun=function(x){0.241731854 + 0.031946777*x + -0.00197068*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
-  stat_function(fun=function(x){0.273621638 + 0.032687607*x + -0.002125387*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.028155183*x + -0.001922593*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.029392281*x + -0.002033441*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
-  stat_function(fun=function(x){0.420676102 + 0.031447617*x + -0.002369625*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
-  stat_function(fun=function(x){0 + 0.023773068*x + -0.001845754*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
-  stat_function(fun=function(x){0.276706854 + 0*x + -0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  #last five are the main plot_mani effect lines
+  stat_function(fun=function(x){0 + 0.1861185*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){0.269866 + 0.270301*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.277012 + 0.3308325*x + -0.009847085*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.313874*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.215788*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.226289*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-0.4703485 + 0.1919125*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.8601045 + 0.125251*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.799565 + 0.149961*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.7766935 + 0.1483915*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3990215 + 0.170607*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){-0.372851 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.8730395 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3646365 + 0.116071*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.5780865 + 0.09902695*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){-0.503424 + 0.08276695*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){-0.415608 + 0.2575895*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.3535265 + 0.2517675*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){-0.5701995 + 0.231955*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){-0.7925675 + 0*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.807409 + 0.1946905*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){-0.830252 + 0*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){-0.647873 + 0.126091*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.947481 + 0*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6842465 + 0.102795*x + 0*x^2}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.153812*x + -0.007501265*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1204285*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.139392*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.3389785 + 0.1869825*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.1735335*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.3587425 + 0.226134*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.939811 + 0.16052*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6155325 + 0.2556765*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.630523 + 0.1661375*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.617254 + 0.1522375*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.157309*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5125785 + 0.110644*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.2205565*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.448908 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3208655 + 0.1520505*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.2698865 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){0.69893 + 0.262698*x + -0.01650385*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){0.395351 + 0.2014525*x + -0.01070095*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.115518*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1468065*x + -0.01146465*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){0.2522065 + 0.09592255*x + -0.009500965*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1071145*x + -0.009444935*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.459635 + 0*x + -0.00956769*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.2538695 + 0.134041*x + -0.0112597*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.619206 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){-0.727828 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.3191835*x + -0.0109689*x^2}, size=0.5, xlim=c(0,5), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.2791165*x + -0.0097306*x^2}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.2810145*x + -0.009506155*x^2}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.3150845*x + -0.01127815*x^2}, size=0.5, xlim=c(0,5), colour='#EC180444') +
+  stat_function(fun=function(x){-0.838739 + 0.09976145*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){-1.15033 + 0.1968865*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){-0.7507745 + 0.386003*x + -0.0106255*x^2}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.11676 + 0.178316*x + 0*x^2}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){-1.298205 + 0.08298065*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-1.12568 + 0.1978265*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.11508 + 0.132109*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-0.9910815 + 0.1844125*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#800C7444') +
+  stat_function(fun=function(x){-1.001215 + 0.1196895*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.9765795 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.013995 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){-0.912906 + 0*x + 0*x^2}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8685015 + 0.0993641*x + -0.008306955*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){-0.4604675 + 0*x + 0*x^2}, size=0.5, xlim=c(0,7), colour='#1400E544') +
+  stat_function(fun=function(x){-1.456075 + 0*x + 0*x^2}, size=0.5, xlim=c(0,7), colour='#1400E544') +
+  stat_function(fun=function(x){-0.67413 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.526694 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.541302 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.747209 + 0.107499*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.7339715 + 0*x + 0*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.4589845 + 0.1102405*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.579963 + 0.1262895*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.403334 + 0.1146835*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){-0.533806 + 0.1857755*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.2524435 + 0*x + -0.0108022*x^2}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0*x + -0.0107498*x^2}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.684806 + 0.1381225*x + -0.0146405*x^2}, size=0.5, xlim=c(0,3), colour='#1400E544') +
+  stat_function(fun=function(x){-0.6100035 + 0.09296875*x + -0.01490795*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){-1.390845 + 0*x + -0.00866743*x^2}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){-1.329735 + 0*x + -0.01008015*x^2}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.91243 + 0*x + 0*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0*x + -0.004939005*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){-1.649315 + 0.2199335*x + -0.01214475*x^2}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){-0.53718 + 0*x + -0.008671945*x^2}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){-1.076905 + 0.234262*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-1.083185 + 0.246818*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){-1.0608 + 0.1684815*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-1.062665 + 0.2154275*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.6313155 + 0.08813155*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.847431 + 0.147627*x + -0.00868069*x^2}, size=0.5, xlim=c(0,6), colour='#800C7444') +
+  stat_function(fun=function(x){-0.753947 + 0.220392*x + -0.01124715*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.8711005 + 0.144771*x + -0.008675095*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.2215845*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.549339 + 0.1398475*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.2732865*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.921255 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.5786435 + 0.124246*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0.1095285*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.4673615 + 0.182799*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3241165 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0*x + -0.0108745*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){0.740998 + 0*x + -0.0129666*x^2}, size=0.5, xlim=c(0,4), colour='#800C7444') +
+  stat_function(fun=function(x){0.511347 + 0*x + -0.0117811*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){0.478088 + 0*x + 0*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){0 + 0.1687575*x + -0.01352165*x^2}, size=0.5, xlim=c(0,4), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0*x + -0.01123455*x^2}, size=0.5, xlim=c(0,4), colour='#800C7444') +
+  stat_function(fun=function(x){0 + 0.199298*x + -0.0143934*x^2}, size=0.5, xlim=c(0,4), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.8887615 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3418295 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.622662 + 0.116858*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+  stat_function(fun=function(x){-0.3404345 + 0.1198685*x + -0.00888389*x^2}, size=0.5, xlim=c(0,6), colour='#1400E544') +
+  stat_function(fun=function(x){0 + 0*x + 0*x^2}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
+  stat_function(fun=function(x){-0.3905855 + 0.14425*x + -0.009714605*x^2}, size=0.5, xlim=c(0,2), colour='#800C7444') +
+  stat_function(fun=function(x){-0.424854 + 0.187779*x + -0.0115834*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
+  stat_function(fun=function(x){-0.23741 + 0.1921335*x + -0.01249275*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.1654925*x + -0.01130075*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.172764*x + -0.0119523*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
+  stat_function(fun=function(x){0.626957 + 0.184845*x + -0.01392835*x^2}, size=0.5, xlim=c(0,2), colour='#B6123C44') +
+  stat_function(fun=function(x){0 + 0.139735*x + -0.0108491*x^2}, size=0.5, xlim=c(0,2), colour='#EC180444') +
+  stat_function(fun=function(x){-0.2192755 + 0*x + 0*x^2}, size=0.5, xlim=c(0,2), colour='#1400E544') +
+    #last five are the main plot_mani effect lines
   #estimated as mean across treatment lines
   #mani1
   stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,23), colour='#1400E5') +
@@ -444,17 +473,17 @@ meanPlot <- meanPlot +
 
 
 
-meanInsetPlot <- function() {
-  print(meanPlot)
-  
-  theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
-  
-  print(meanInset, vp=viewport(width = 0.13, height = 0.25, x = 0.115, y = 0.99, just = c("left","top")))
-  
-  theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
-}
+# meanInsetPlot <- function() {
+#   print(meanPlot)
+#   
+#   theme_update(axis.title.x=element_text(size=15, vjust=-0.35, margin=margin(t=5)), axis.text.x=element_text(size=10), axis.title.y=element_text(size=15, angle=90, vjust=0.5, margin=margin(r=5)), axis.text.y=element_text(size=10), plot.title = element_blank())
+#   
+#   print(meanInset, vp=viewport(width = 0.13, height = 0.25, x = 0.115, y = 0.99, just = c("left","top")))
+#   
+#   theme_update(axis.title.x=element_text(size=30, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=24), axis.title.y=element_text(size=30, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=24))
+# }
 
-meanInsetPlot() #export at 1200x1000
+print(meanPlot) #export at 1200x1000
 
 
 
