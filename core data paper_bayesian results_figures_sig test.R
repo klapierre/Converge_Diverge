@@ -109,18 +109,6 @@ mean <- read.csv('mean change_experiment_coefs.csv')%>%
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, Intercepts, curve2, Slopes, curve3, Quads, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
-# #temporary solution until we get the model output for each plot mani
-# mean2 <- mean%>%
-#   group_by(plot_mani)%>%
-#   summarise(mean_intercept=mean(Intercepts), mean_linear=mean(Slopes), mean_quadratic=mean(Quads), alt_length=max(alt_length))%>%
-#   mutate(curve1='stat_function(fun=function(x){',
-#          curve2=' + ',
-#          curve3='*x + ',
-#          curve4='*x^2}, size=3, xlim=c(0,',
-#          curve5='), colour=',
-#          curve6=') +',
-#          color=ifelse(plot_mani==1, '#1400E5', ifelse(plot_mani==2, '#4A06AC', ifelse(plot_mani==3, '#800C74', ifelse(plot_mani==4, '#B6123C', '#EC1804')))),
-#          curve=paste(curve1, mean_intercept, curve2, mean_linear, curve3, mean_quadratic, curve4, alt_length, curve5, color, curve6, sep='')) #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 
 # #change in mean at 10 years vs. gamma diversity
 # ggplot(data=mean, aes(x=rrich, y=yr10)) +
