@@ -164,7 +164,8 @@ meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
   ylim(-1,2) +
   xlab('Standardized Year') +
-  ylab('Mean Change')
+  ylab('Mean Change') +
+  annotate('text', x=0, y=1, label='(a)', size=10, hjust='left')
 
 meanPlot <- meanPlot + 
 #below are the individual treatment lines
@@ -561,7 +562,8 @@ dispersionPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
-  ylab('Dispersion Change')
+  ylab('Dispersion Change') +
+  annotate('text', x=0, y=0.35, label='(b)', size=10, hjust='left')
 
 dispersionPlot <- dispersionPlot + 
   #below are the individual treatment lines
@@ -949,7 +951,8 @@ richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.2)) +
   xlab('Standardized Year') +
-  ylab('Proportion Richness Change')
+  ylab('Proportion Richness Change') +
+  annotate('text', x=0, y=0.65, label='(c)', size=10, hjust='left')
 
 richnessPlot <- richnessPlot + 
   #below are the individual treatment lines
@@ -1346,7 +1349,8 @@ evennessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
-  ylab('Evenness Change')
+  ylab('Evenness Change') +
+  annotate('text', x=0, y=0.55, label='(d)', size=10, hjust='left')
 
 evennessPlot <- evennessPlot + 
   #below are the individual treatment lines
@@ -1669,8 +1673,13 @@ evennessPlot <- evennessPlot +
 print(evennessPlot) #export at 1200x1000
 
 
-
-
+#print all plots together
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+print(dispersionPlot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+print(richnessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+#export at 2400 x 2000
 
 
 
