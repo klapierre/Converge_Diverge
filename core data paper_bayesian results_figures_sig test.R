@@ -125,9 +125,9 @@ mean4 <- left_join(mean3, expInfo, by=c('site_code', 'project_name', 'community_
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at various time points
-  mutate(yr10=intercept + 10*slope + (10^2)*quad,
-         yr20=intercept + 20*slope + (20^2)*quad,
-         final_year_estimate=intercept + alt_length*slope + (alt_length^2)*quad)%>%
+  mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.1701297+0.3140121,
+         yr20=(intercept + 20*slope + (20^2)*quad)*0.1701297+0.3140121,
+         final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.1701297+0.3140121)%>%
   mutate(curve1='stat_function(fun=function(x){(',
          curve2=' + ',
          curve3='*x + ',
@@ -534,9 +534,9 @@ dispersion4 <- left_join(dispersion3, expInfo, by=c('site_code', 'project_name',
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at various time points
-  mutate(yr10=intercept + 10*slope + (10^2)*quad,
-         yr20=intercept + 20*slope + (20^2)*quad,
-         final_year_estimate=intercept + alt_length*slope + (alt_length^2)*quad)%>%
+  mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.09064568-0.00235573,
+         yr20=(intercept + 20*slope + (20^2)*quad)*0.09064568-0.00235573,
+         final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.09064568-0.00235573)%>%
   mutate(curve1='stat_function(fun=function(x){(',
          curve2=' + ',
          curve3='*x + ',
@@ -922,9 +922,9 @@ richness4 <- left_join(richness3, expInfo, by=c('site_code', 'project_name', 'co
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at various time points
-  mutate(yr10=intercept + 10*slope + (10^2)*quad,
-         yr20=intercept + 20*slope + (20^2)*quad,
-         final_year_estimate=intercept + alt_length*slope + (alt_length^2)*quad)%>%
+  mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.2287037-0.07758351,
+         yr20=(intercept + 20*slope + (20^2)*quad)*0.2287037-0.07758351,
+         final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.2287037-0.07758351)%>%
   mutate(curve1='stat_function(fun=function(x){(',
          curve2=' + ',
          curve3='*x + ',
@@ -1319,9 +1319,9 @@ evenness4 <- left_join(evenness3, expInfo, by=c('site_code', 'project_name', 'co
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
   #get estimates at various time points
-  mutate(yr10=intercept + 10*slope + (10^2)*quad,
-         yr20=intercept + 20*slope + (20^2)*quad,
-         final_year_estimate=intercept + alt_length*slope + (alt_length^2)*quad)%>%
+  mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.1034254+0.019179,
+         yr20=(intercept + 20*slope + (20^2)*quad)*0.1034254+0.019179,
+         final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.1034254+0.019179)%>%
   mutate(curve1='stat_function(fun=function(x){(',
          curve2=' + ',
          curve3='*x + ',
@@ -1680,6 +1680,82 @@ print(dispersionPlot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
 print(richnessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=1))
 print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 #export at 2400 x 2000
+
+
+
+
+# ###density plots of all raw data
+# meanDensity <- ggplot(data=rawData, aes(x=mean_change)) +
+#   geom_density() +
+#   xlab('Mean Change') +
+#   ylab('Density') +
+#   xlim(0,1) +
+#   ylim(0,6.3)
+# dispersionDensity <- ggplot(data=rawData, aes(x=dispersion_change)) +
+#   geom_density() +
+#   xlab('Dispersion Change') +
+#   ylab('') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,6.3)
+# richnessDensity <- ggplot(data=rawData, aes(x=S_PC)) +
+#   geom_density() +
+#   xlab('Proportion Richness Change') +
+#   ylab('Density') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,6.3)
+# evennessDensity <- ggplot(data=rawData, aes(x=SimpEven_change)) +
+#   geom_density() +
+#   xlab('Evenness Change') +
+#   ylab('') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,6.3)
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+# print(dispersionDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+# print(richnessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+# print(evennessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+# #export at 1200 x 1000
+# 
+# 
+# ###density plots of final year estimates
+# meanFinalDensity <- ggplot(data=mean4, aes(x=final_year_estimate)) +
+#   geom_density() +
+#   xlab('Mean Change') +
+#   ylab('Density') +
+#   xlim(0,1) +
+#   ylim(0,10)
+# dispersionFinalDensity <- ggplot(data=dispersion4, aes(x=final_year_estimate)) +
+#   geom_density() +
+#   xlab('Dispersion Change') +
+#   ylab('') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,10)
+# richnessFinalDensity <- ggplot(data=richness4, aes(x=final_year_estimate)) +
+#   geom_density() +
+#   xlab('Proportion Richness Change') +
+#   ylab('Density') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,10)
+# evennessFinalDensity <- ggplot(data=evenness4, aes(x=final_year_estimate)) +
+#   geom_density() +
+#   xlab('Evenness Change') +
+#   ylab('') +
+#   geom_vline(xintercept=0, lty=2) +
+#   xlim(-1,1.25) +
+#   ylim(0,10)
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
+# print(dispersionFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
+# print(richnessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
+# print(evennessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
+# #export at 1200 x 1000
 
 
 
