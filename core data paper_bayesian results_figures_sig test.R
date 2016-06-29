@@ -2030,9 +2030,11 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean ch
   scale_y_continuous(limits=c(-0.8, 0.2), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('quad', 'slope', 'int'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
-  coord_flip()
+  coord_flip() +
+  ggtitle('\nMean Change') +
+  annotate('text', x=3.45, y=-0.8, label='(a)', size=10, hjust='left')
 
 dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
   geom_point(size=4) +
@@ -2040,9 +2042,11 @@ dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='d
   scale_y_continuous(limits=c(-0.2, 0.15), breaks=seq(-0.2, 0.2, 0.2)) +
   scale_x_discrete(limits=c('quad', 'slope', 'int'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
-  coord_flip()
+  coord_flip() +
+  ggtitle('Dispersion\nChange') +
+  annotate('text', x=3.45, y=-0.2, label='(b)', size=10, hjust='left')
 
 richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='richness' & predictor=='overall'), aes(x=parameter, y=median)) +
   geom_point(size=4) +
@@ -2050,9 +2054,11 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='ric
   scale_y_continuous(limits=c(-0.12, 0.5), breaks=seq(-0.4, 0.4, 0.4)) +
   scale_x_discrete(limits=c('quad', 'slope', 'int'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
-  coord_flip()
+  coord_flip() +
+  ggtitle('Proportion\nRichness Change') +
+  annotate('text', x=3.45, y=-0.12, label='(c)', size=10, hjust='left')
 
 evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
   geom_point(size=4) +
@@ -2060,9 +2066,11 @@ evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='eve
   scale_y_continuous(limits=c(-0.31, 0.1), breaks=seq(-0.3, 0.3, 0.3)) +
   scale_x_discrete(limits=c('quad', 'slope', 'int'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
-  coord_flip()
+  coord_flip() +
+  ggtitle('Evenness\nChange') +
+  annotate('text', x=3.45, y=-0.31, label='(d)', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,4)))
 print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
