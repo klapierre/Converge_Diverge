@@ -1675,6 +1675,7 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 ###by resource mani
+#still need to calculate the proportion of chains where x resource response was greater than y resource response
 
 #mean change
 meanResourceDrought <- mean4%>%
@@ -1831,51 +1832,6 @@ print(evennessResourcePlot10, vp=viewport(layout.pos.row = 2, layout.pos.col = 2
 #export at 1800 x 1600
 
 
-
-#by resource mani boxplot
-meanResourceBoxFinal <- ggplot(data=meanResource, aes(x=resource, y=final_year_estimate)) +
-  geom_boxplot() +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(0, 1.0)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.98, label='(a)', size=10, hjust='left') + 
-  geom_hline(aes(yintercept=0))
-dispersionResourceBoxFinal <- ggplot(data=dispersionResource, aes(x=resource, y=final_year_estimate)) +
-  geom_boxplot() +
-  scale_y_continuous(breaks=seq(-0.4, 0.4, 0.1), name='Dispersion Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(-0.4, 0.4)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.39, label='(b)', size=10, hjust='left') + 
-  geom_hline(aes(yintercept=0))
-richnessResourceBoxFinal <- ggplot(data=richnessResource, aes(x=resource, y=final_year_estimate)) +
-  geom_boxplot() +
-  scale_y_continuous(breaks=seq(-1, 0.6, 0.3), name='Proportion Richness Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(-1, 0.6)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.58, label='(c)', size=10, hjust='left') + 
-  geom_hline(aes(yintercept=0))
-evennessResourceBoxFinal <- ggplot(data=evennessResource, aes(x=resource, y=final_year_estimate)) +
-  geom_boxplot() +
-  scale_y_continuous(breaks=seq(-0.4, 0.6, 0.2), name='Evenness Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(-0.4, 0.6)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.58, label='(d)', size=10, hjust='left') + 
-  geom_hline(aes(yintercept=0))
-
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanResourceBoxFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionResourceBoxFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessResourceBoxFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessResourceBoxFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 
 
