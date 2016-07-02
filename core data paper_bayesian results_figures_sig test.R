@@ -1,6 +1,7 @@
 library(ggplot2)
 library(grid)
 library(mgcv)
+library(codyn)
 library(plyr)
 library(dplyr)
 library(tidyr)
@@ -38,7 +39,9 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ##################################################################################
 ##################################################################################
 #experiment information
-expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
+expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
+
+expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), precip=mean(precip))
@@ -60,6 +63,9 @@ expInfo2 <- rawData%>%
 expInfoSummary <- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
   filter(treatment_year!=0)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
+  ungroup()%>%
   summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
             plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
             rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
@@ -1742,49 +1748,49 @@ evennessResource <- evenness4%>%
   rbind(evennessResourceDrought)
 
 
-# #by resource at final year
-# meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-#   coord_cartesian(ylim=c(0, 0.5)) +
-#   xlab('')+
-#   annotate('text', x=0.5, y=0.49, label='(a)', size=10, hjust='left')
-# dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-0.08, 0.15, 0.04), name='Change in Dispersion') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-#   coord_cartesian(ylim=c(-0.08, 0.15)) +
-#   xlab('')+
-#   annotate('text', x=0.5, y=0.14, label='(b)', size=10, hjust='left')
-# richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-#   coord_cartesian(ylim=c(-0.22, 0.16)) +
-#   xlab('Resource Manipulated')+
-#   annotate('text', x=0.5, y=0.145, label='(c)', size=10, hjust='left')
-# evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-#   coord_cartesian(ylim=c(0, 0.06)) +
-#   xlab('Resource Manipulated')+
-#   annotate('text', x=0.5, y=0.058, label='(d)', size=10, hjust='left')
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#by resource at final year
+meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
+  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+  coord_cartesian(ylim=c(0, 0.5)) +
+  xlab('')+
+  annotate('text', x=0.5, y=0.49, label='(a)', size=10, hjust='left')
+dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-0.08, 0.15, 0.04), name='Change in Dispersion') +
+  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+  coord_cartesian(ylim=c(-0.08, 0.15)) +
+  xlab('')+
+  annotate('text', x=0.5, y=0.14, label='(b)', size=10, hjust='left')
+richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
+  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+  coord_cartesian(ylim=c(-0.22, 0.16)) +
+  xlab('Resource Manipulated')+
+  annotate('text', x=0.5, y=0.145, label='(c)', size=10, hjust='left')
+evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
+  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+  coord_cartesian(ylim=c(0, 0.06)) +
+  xlab('Resource Manipulated')+
+  annotate('text', x=0.5, y=0.058, label='(d)', size=10, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 #10 year estimate - 10 years is the median experiment length
 meanResourcePlot10 <- ggplot(data=barGraphStats(data=meanResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
@@ -2078,3 +2084,341 @@ print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2)
 print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
 #export at 2400x500
+
+
+
+
+
+###look for patterns of spp appearance/disappearance
+relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
+  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
+  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
+  #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
+  group_by(exp_trt, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
+  summarise(relcov=mean(relcov))%>%
+  filter(exp_trt!='NIN::herbdiv::0::5F' & site_code!='GVN')
+
+expinfo<-read.csv('ExperimentInformation_Mar2016.csv')%>%
+  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
+  select(exp_trt, plot_mani, calendar_year)
+
+relAbundYear<-merge(relAbund, expinfo, by=c("exp_trt","calendar_year"), all=F)
+
+#make a new dataframe with just the label
+exp_trt=relAbundYear%>%
+  select(exp_trt)%>%
+  unique()
+
+#make a new dataframe to collect the turnover metrics
+turnoverAll=data.frame(row.names=1) 
+
+for(i in 1:length(relAbundYear$exp_trt)) {
+  
+  #creates a dataset for each unique year, trt, exp combo
+  subset=relAbundYear[relAbundYear$exp_trt==as.character(exp_trt$exp_trt[i]),]%>%
+    select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
+    #get just first and last year of study
+    filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))
+  
+  #need this to keep track of plot mani
+  labels=subset%>%
+    select(exp_trt, plot_mani, calendar_year)%>%
+    unique()
+  
+  #calculate disappearance
+  disappearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='disappearance')%>%
+    group_by(calendar_year)%>%
+    summarise(disappearance=mean(disappearance))
+  
+  #calculate appearance
+  appearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='appearance')%>%
+    group_by(calendar_year)%>%
+    summarise(appearance=mean(appearance))
+  
+  #merging back with labels to get back plot_mani
+  turnover=labels%>%
+    left_join(disappearance, by='calendar_year')%>%
+    left_join(appearance, by='calendar_year')%>%
+    filter(calendar_year==max(calendar_year))%>%
+    select(exp_trt, plot_mani, appearance, disappearance)
+
+  #pasting variables into the dataframe made for this analysis
+  turnoverAll=rbind(turnover, turnoverAll)  
+}
+
+turnoverCtl <- turnoverAll%>%
+  filter(plot_mani==0)%>%
+  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
+  select(site_code, project_name, community_type, appearance, disappearance)
+names(turnoverCtl)[names(turnoverCtl)=='appearance'] <- 'appearance_ctl'
+names(turnoverCtl)[names(turnoverCtl)=='disappearance'] <- 'disappearance_ctl'
+
+turnoverDiff <- turnoverAll%>%
+  mutate(trt=ifelse(plot_mani==0, 'ctl', 'trt'))%>%
+  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
+  filter(trt!='ctl')%>%
+  left_join(turnoverCtl, by=c('site_code', 'project_name', 'community_type'))%>%
+  mutate(appearance_diff=appearance-appearance_ctl, disappearance_diff=disappearance-disappearance_ctl)
+
+# plot(turnoverDiff$plot_mani, turnoverDiff$appearance_diff)
+# plot(turnoverDiff$plot_mani, turnoverDiff$disappearance_diff)
+
+turnoverRichness <- richness4%>%
+  left_join(turnoverDiff, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
+  select(site_code, project_name, community_type, treatment, experiment_length, plot_mani, intercept, slope, quad, min_year, nutrients, water, carbon, precip, alt_length, final_year_estimate, appearance_diff, disappearance_diff)%>%
+  filter(slope<0, quad>0)
+  
+plot(turnoverRichness$quad, turnoverRichness$appearance_diff)
+plot(turnoverRichness$quad, turnoverRichness$disappearance_diff)
+plot(turnoverRichness$final_year_estimate, turnoverRichness$appearance_diff)
+plot(turnoverRichness$final_year_estimate, turnoverRichness$disappearance_diff)
+
+
+###look at spp comp of five factor manipulations
+relAbundFive <- relAbundYear
+
+#make a new dataframe with just the label
+expTrtYear=relAbundFive%>%
+  select(exp_trt)%>%
+  unique()
+
+#make a new dataframe to collect the turnover metrics
+relAbundFiveYear=data.frame(row.names=1)
+
+for(i in 1:length(expTrtYear$exp_trt)) {
+
+  #creates a dataset for each unique year, trt, exp combo
+  subset=relAbundFive[relAbundFive$exp_trt==as.character(expTrtYear$exp_trt[i]),]%>%
+    select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
+    group_by(exp_trt, calendar_year, treatment, plot_mani, genus_species)%>%
+    summarise(relcov=mean(relcov))%>%
+    ungroup()%>%
+    #get just first and last year of study
+    filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))%>%
+    mutate(time=ifelse(calendar_year==min(calendar_year), 'first', 'last'))%>%
+    select(-calendar_year, -treatment)%>%
+    spread(key=time, value=relcov, fill=0)
+
+  #pasting variables into the dataframe made for this analysis
+  relAbundFiveYear=rbind(subset, relAbundFiveYear)
+}
+
+relAbundFiveYear <- relAbundFiveYear%>%
+  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)
+
+relAbundFiveYearRich <- richness4%>%
+  left_join(relAbundFiveYear, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
+  select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr10, final_year_estimate)%>%
+  filter(plot_mani>4)
+
+ggplot(data=relAbundFiveYearRich, aes(x=first, y=last, colour=quad)) +
+  geom_point() +
+  scale_colour_gradientn(colours=rainbow(4))
+
+
+
+
+
+#look at number replicates for dispersion results -- doesn't make a difference
+reps <- relAbund%>%
+  group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
+  summarise(mean=mean(relcov))%>%
+  ungroup()%>%
+  group_by(site_code, project_name, community_type, treatment, calendar_year)%>%
+  summarise(rep_num=n())%>%
+  ungroup()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(rep_num=mean(rep_num))
+
+dispersionReps <- dispersion4%>%
+  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'), all=F)
+
+ggplot(data=dispersionReps, aes(x=rep_num, y=intercept, colour=plot_mani)) +
+  geom_point()
+ggplot(data=dispersionReps, aes(x=rep_num, y=slope, colour=plot_mani)) +
+  geom_point()
+ggplot(data=dispersionReps, aes(x=rep_num, y=quad, colour=plot_mani)) +
+  geom_point()
+ggplot(data=dispersionReps, aes(x=rep_num, y=yr10, colour=plot_mani)) +
+  geom_point()
+ggplot(data=dispersionReps, aes(x=rep_num, y=final_year_estimate, colour=plot_mani)) +
+  geom_point()
+
+
+
+
+
+
+###look at five factor manipulations for mean change
+# #just for the four experiments with five factors, compare to their four factor treatments
+# meanFive <- mean4%>%
+#   filter(treatment=='1_y_n'|treatment=='8_y_n'|treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='2F'|treatment=='3F'|treatment=='4F'|treatment=='ghn'|treatment=='gsn'|treatment=='ncn'|treatment=='nhn'|treatment=='nsn')
+# 
+# cdr1APlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
+#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#                      labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(a) CDR e001 A', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr1BPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(b) CDR e001 A', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr1CPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='C'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(c) CDR e001 A', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr1DPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(d) CDR e001 D', size=10, hjust='left') +
+#   theme(legend.position='none')
+# ninPlot <- ggplot(data=subset(meanFive, site_code=='NIN'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('2F', '3F', '4F'),
+#                    labels=c('4a', '4b', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(e) NIN herbdiv', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr2APlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
+#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(f) CDR e002 A', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr2BPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(g) CDR e002 B', size=10, hjust='left') +
+#   theme(legend.position='none')
+# cdr2CPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='C'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
+#                    labels=c('4', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(h) CDR e002 C', size=10, hjust='left') +
+#   theme(legend.position='none')
+# traPlot <- ggplot(data=subset(meanFive, site_code=='TRA'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
+#   geom_bar(stat="identity", colour='black') +
+#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+#   scale_x_discrete(limits=c('ghn', 'gsn', 'ncn', 'nhn', 'nsn'),
+#                    labels=c('4', '4', '4', '5', '5')) +
+#   coord_cartesian(ylim=c(0,1)) +
+#   scale_fill_manual(values=c('white', 'white', 'white', 'black', 'black')) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=1, label='(i) TRA lovegrass', size=10, hjust='left') +
+#   theme(legend.position='none')
+# 
+# pushViewport(viewport(layout=grid.layout(2,5)))
+# print(cdr1APlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(cdr1BPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(cdr1CPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+# print(cdr1DPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
+# print(ninPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 5))
+# print(cdr2APlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# print(cdr2BPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# print(cdr2CPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
+# print(traPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 4))
+# #export at 2400x1200
+
+
+#compare any four factor without N to five factor with N
+expRawMean <- expRaw%>%
+  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
+  summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
+
+meanCompare <- mean4%>%
+  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)
+
+
+#plot without N at four factors, with N at five factors
+compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&n>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+  geom_bar(stat="identity", colour='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
+  scale_x_continuous(breaks=seq(3,6,1)) +
+  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_fill_manual(values=c('white', 'grey')) +
+  xlab('') +
+  annotate('text', x=3.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
+  theme(legend.position='none')
+compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+  geom_bar(stat="identity", colour='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+  scale_x_continuous(breaks=seq(3,6,1)) +
+  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_fill_manual(values=c('white', 'grey')) +
+  xlab('Number of Factors Manipulated') +
+  annotate('text', x=3.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
+  theme(legend.position='none')
+comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+  geom_bar(stat="identity", colour='black') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
+  scale_x_continuous(breaks=seq(3,6,1)) +
+  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_fill_manual(values=c('white', 'grey')) +
+  xlab('') +
+  annotate('text', x=3.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
+  theme(legend.position='none')
+
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+#export at 2400x1200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
