@@ -2174,48 +2174,47 @@ print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
 # plot(turnoverRichness$final_year_estimate, turnoverRichness$disappearance_diff)
 # plot(turnoverRichness$yr20, turnoverRichness$appearance_diff)
 # plot(turnoverRichness$yr20, turnoverRichness$disappearance_diff)
-
-
-###look at spp comp of five factor manipulations
-relAbundFive <- relAbundYear
-
-#make a new dataframe with just the label
-expTrtYear=relAbundFive%>%
-  select(exp_trt)%>%
-  unique()
-
-#make a new dataframe to collect the turnover metrics
-relAbundFiveYear=data.frame(row.names=1)
-
-for(i in 1:length(expTrtYear$exp_trt)) {
-
-  #creates a dataset for each unique year, trt, exp combo
-  subset=relAbundFive[relAbundFive$exp_trt==as.character(expTrtYear$exp_trt[i]),]%>%
-    select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
-    group_by(exp_trt, calendar_year, treatment, plot_mani, genus_species)%>%
-    summarise(relcov=mean(relcov))%>%
-    ungroup()%>%
-    #get just first and last year of study
-    filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))%>%
-    mutate(time=ifelse(calendar_year==min(calendar_year), 'first', 'last'))%>%
-    select(-calendar_year, -treatment)%>%
-    spread(key=time, value=relcov, fill=0)
-
-  #pasting variables into the dataframe made for this analysis
-  relAbundFiveYear=rbind(subset, relAbundFiveYear)
-}
-
-relAbundFiveYear <- relAbundFiveYear%>%
-  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)
-
-relAbundFiveYearRich <- richness4%>%
-  left_join(relAbundFiveYear, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-  select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr10, final_year_estimate)%>%
-  filter(plot_mani>4)
-
-ggplot(data=relAbundFiveYearRich, aes(x=first, y=last, colour=quad)) +
-  geom_point() +
-  scale_colour_gradientn(colours=rainbow(4))
+# 
+# ###look at spp comp of five factor manipulations to find patterns of immigration or loss of dominant spp
+# relAbundFive <- relAbundYear
+# 
+# #make a new dataframe with just the label
+# expTrtYear=relAbundFive%>%
+#   select(exp_trt)%>%
+#   unique()
+# 
+# #make a new dataframe to collect the turnover metrics
+# relAbundFiveYear=data.frame(row.names=1)
+# 
+# for(i in 1:length(expTrtYear$exp_trt)) {
+# 
+#   #creates a dataset for each unique year, trt, exp combo
+#   subset=relAbundFive[relAbundFive$exp_trt==as.character(expTrtYear$exp_trt[i]),]%>%
+#     select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
+#     group_by(exp_trt, calendar_year, treatment, plot_mani, genus_species)%>%
+#     summarise(relcov=mean(relcov))%>%
+#     ungroup()%>%
+#     #get just first and last year of study
+#     filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))%>%
+#     mutate(time=ifelse(calendar_year==min(calendar_year), 'first', 'last'))%>%
+#     select(-calendar_year, -treatment)%>%
+#     spread(key=time, value=relcov, fill=0)
+# 
+#   #pasting variables into the dataframe made for this analysis
+#   relAbundFiveYear=rbind(subset, relAbundFiveYear)
+# }
+# 
+# relAbundFiveYear <- relAbundFiveYear%>%
+#   separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)
+# 
+# relAbundFiveYearRich <- richness4%>%
+#   left_join(relAbundFiveYear, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
+#   select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr10, final_year_estimate)%>%
+#   filter(plot_mani>4)
+# 
+# ggplot(data=relAbundFiveYearRich, aes(x=first, y=last, colour=quad)) +
+#   geom_point() +
+#   scale_colour_gradientn(colours=rainbow(4))
 
 
 
