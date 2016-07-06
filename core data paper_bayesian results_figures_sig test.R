@@ -2232,7 +2232,9 @@ reps <- relAbund%>%
   summarise(rep_num=mean(rep_num))
 
 dispersionReps <- dispersion4%>%
-  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'), all=F)
+  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'), all=F)%>%
+  #filter out lovegrass mistake trt code until fixed in main dataset
+  filter(rep_num>1)
 
 ggplot(data=dispersionReps, aes(x=rep_num, y=intercept, colour=plot_mani)) +
   geom_point()
@@ -2240,12 +2242,17 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=slope, colour=plot_mani)) +
   geom_point()
 ggplot(data=dispersionReps, aes(x=rep_num, y=quad, colour=plot_mani)) +
   geom_point()
-ggplot(data=dispersionReps, aes(x=rep_num, y=yr10, colour=plot_mani)) +
-  geom_point()
 ggplot(data=dispersionReps, aes(x=rep_num, y=final_year_estimate, colour=plot_mani)) +
   geom_point()
 
-
+ggplot(data=dispersionReps, aes(x=rep_num, y=yr10)) +
+  geom_point() +
+  xlab('Number of Relicates') +
+  ylab('Dispersion Change') +
+  scale_x_continuous(breaks=seq(0,50,10)) +
+  coord_cartesian(xlim=c(0,45))
+#export at 900x900
+  
 
 
 
