@@ -2391,7 +2391,7 @@ compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n-exclosure', '4 factor\n+exclosure', '5 factor\n+exclosure')) +
+  scale_x_discrete(labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
   coord_cartesian(ylim=c(0,1)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('Number of Factors Manipulated') +
@@ -2401,7 +2401,7 @@ comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n+plant manipulation', '5 factor\n+plant manipulation')) +
+  scale_x_discrete(labels=c('4 factor\n+manip.', '5 factor\n+manip.')) +
   coord_cartesian(ylim=c(0,1)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('') +
