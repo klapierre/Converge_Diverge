@@ -2372,39 +2372,40 @@ expRawMean <- expRaw%>%
   summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
 
 meanCompare <- mean4%>%
-  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)
+  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
+  mutate(n_mani=ifelse(n>0, 1, 0))
 
 
 #plot without N at four factors, with N at five factors
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&n>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3), variable='yr10', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_continuous(breaks=seq(3,6,1)) +
-  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
+  coord_cartesian(ylim=c(0,1)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('') +
-  annotate('text', x=3.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
+  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
   theme(legend.position='none')
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0), variable='yr10', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_continuous(breaks=seq(3,6,1)) +
-  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_x_discrete(labels=c('4 factor\n-exclosure', '4 factor\n+exclosure', '5 factor\n+exclosure')) +
+  coord_cartesian(ylim=c(0,1)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('Number of Factors Manipulated') +
-  annotate('text', x=3.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
+  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
   theme(legend.position='none')
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0), variable='final_year_estimate', byFactorNames=c('plot_mani')), aes(x=plot_mani, y=mean, fill=as.factor(plot_mani))) +
+comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0), variable='yr10', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_continuous(breaks=seq(3,6,1)) +
-  coord_cartesian(ylim=c(0,1), xlim=c(3.5,5.5)) +
+  scale_x_discrete(labels=c('4 factor\n+plant manipulation', '5 factor\n+plant manipulation')) +
+  coord_cartesian(ylim=c(0,1)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('') +
-  annotate('text', x=3.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
+  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
   theme(legend.position='none')
 
 pushViewport(viewport(layout=grid.layout(1,3)))
@@ -2412,13 +2413,6 @@ print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 #export at 2400x1200
-
-
-
-
-
-
-
 
 
 
