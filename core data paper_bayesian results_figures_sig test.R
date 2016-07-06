@@ -454,7 +454,7 @@ meanPlot <- meanPlot +
   #mani1
   stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,23), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){((-0.5441655 + 0.18185) + (0.132175+0.03107995)*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){((-0.5441655 + 0.18185) + (0.132175)*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#4A06AC') +
   #mani3
   stat_function(fun=function(x){(-0.5441655 + 0.132175*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,21), colour='#800C74') +
   #mani4
@@ -1748,49 +1748,49 @@ evennessResource <- evenness4%>%
   rbind(evennessResourceDrought)
 
 
-#by resource at final year
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(0, 0.5)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.49, label='(a)', size=10, hjust='left')
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.08, 0.15, 0.04), name='Change in Dispersion') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(-0.08, 0.15)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.14, label='(b)', size=10, hjust='left')
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(-0.22, 0.16)) +
-  xlab('Resource Manipulated')+
-  annotate('text', x=0.5, y=0.145, label='(c)', size=10, hjust='left')
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+CO2', '+nuts', '+rain', '-rain')) +
-  coord_cartesian(ylim=c(0, 0.06)) +
-  xlab('Resource Manipulated')+
-  annotate('text', x=0.5, y=0.058, label='(d)', size=10, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# #by resource at final year
+# meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
+#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+#   coord_cartesian(ylim=c(0, 0.5)) +
+#   xlab('')+
+#   annotate('text', x=0.5, y=0.49, label='(a)', size=10, hjust='left')
+# dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-0.08, 0.15, 0.04), name='Change in Dispersion') +
+#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+#   coord_cartesian(ylim=c(-0.08, 0.15)) +
+#   xlab('')+
+#   annotate('text', x=0.5, y=0.14, label='(b)', size=10, hjust='left')
+# richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
+#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+#   coord_cartesian(ylim=c(-0.22, 0.16)) +
+#   xlab('Resource Manipulated')+
+#   annotate('text', x=0.5, y=0.145, label='(c)', size=10, hjust='left')
+# evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
+#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
+#                    labels=c('+CO2', '+nuts', '+rain', '-rain')) +
+#   coord_cartesian(ylim=c(0, 0.06)) +
+#   xlab('Resource Manipulated')+
+#   annotate('text', x=0.5, y=0.058, label='(d)', size=10, hjust='left')
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 #10 year estimate - 10 years is the median experiment length
 meanResourcePlot10 <- ggplot(data=barGraphStats(data=meanResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
