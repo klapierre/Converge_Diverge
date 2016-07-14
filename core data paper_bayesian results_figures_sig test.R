@@ -79,7 +79,7 @@ expInfoSummary <- rawData%>%
 ################################################################################
 
 #raw chains data
-chainsCommunity <- read.csv('fullChains.csv')
+chainsCommunity <- expRaw
 
 #get values for overall (mean) lines across levels of plot mani
 #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
@@ -96,7 +96,7 @@ chainsMeanIntercept <- chainsCommunity[,7:296]%>%
   gather(key=parameter, value=value, B.1.1.1:B.290.1.1)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), intercept=median(value))%>%
-  mutate(lower=intercept-sd, upper=intercept+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
+  mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
   select(parameter, intercept)
 names(chainsMeanIntercept)[1] <- 'parameter1'
 
@@ -104,7 +104,7 @@ chainsMeanSlope <- chainsCommunity[,1167:1456]%>%
   gather(key=parameter, value=value, B.1.1.2:B.290.1.2)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), slope=median(value))%>%
-  mutate(lower=slope-sd, upper=slope+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
+  mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
   select(parameter, slope)
 names(chainsMeanSlope)[1] <- 'parameter2'
 
@@ -112,7 +112,7 @@ chainsMeanQuad <- chainsCommunity[,2327:2616]%>%
   gather(key=parameter, value=value, B.1.1.3:B.290.1.3)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), quad=median(value))%>%
-  mutate(lower=quad-sd, upper=quad+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
+  mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
   select(parameter, quad)
 names(chainsMeanQuad)[1] <- 'parameter3'
 
@@ -462,7 +462,7 @@ meanPlot <- meanPlot +
   #mani5
   stat_function(fun=function(x){((-0.5441655 + 0.731963) + (0.132175 + 0.212783)*x + -0.00629647*x^2)*0.1701297 + 0.3140121}, size=3, xlim=c(0,22), colour='#EC1804')
 
-print(meanPlot) #export at 1200x1000
+# print(meanPlot) #export at 1200x1000
 
 
 
@@ -474,7 +474,7 @@ chainsDispersionIntercept <- chainsCommunity[,297:586]%>%
   gather(key=parameter, value=value, B.1.2.1:B.290.2.1)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), intercept=median(value))%>%
-  mutate(lower=intercept-sd, upper=intercept+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
+  mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
   select(parameter, intercept)
 names(chainsDispersionIntercept)[1] <- 'parameter1'
 
@@ -482,7 +482,7 @@ chainsDispersionSlope <- chainsCommunity[,1457:1746]%>%
   gather(key=parameter, value=value, B.1.2.2:B.290.2.2)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), slope=median(value))%>%
-  mutate(lower=slope-sd, upper=slope+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
+  mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
   select(parameter, slope)
 names(chainsDispersionSlope)[1] <- 'parameter2'
 
@@ -490,7 +490,7 @@ chainsDispersionQuad <- chainsCommunity[,2617:2906]%>%
   gather(key=parameter, value=value, B.1.2.3:B.290.2.3)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), quad=median(value))%>%
-  mutate(lower=quad-sd, upper=quad+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
+  mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
   select(parameter, quad)
 names(chainsDispersionQuad)[1] <- 'parameter3'
 
@@ -844,7 +844,7 @@ chainsRichnessIntercept <- chainsCommunity[,877:1166]%>%
   gather(key=parameter, value=value, B.1.4.1:B.290.4.1)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), intercept=median(value))%>%
-  mutate(lower=intercept-sd, upper=intercept+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
+  mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
   select(parameter, intercept)
 names(chainsRichnessIntercept)[1] <- 'parameter1'
 
@@ -852,7 +852,7 @@ chainsRichnessSlope <- chainsCommunity[,2037:2326]%>%
   gather(key=parameter, value=value, B.1.4.2:B.290.4.2)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), slope=median(value))%>%
-  mutate(lower=slope-sd, upper=slope+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
+  mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
   select(parameter, slope)
 names(chainsRichnessSlope)[1] <- 'parameter2'
 
@@ -860,7 +860,7 @@ chainsRichnessQuad <- chainsCommunity[,3197:3486]%>%
   gather(key=parameter, value=value, B.1.4.3:B.290.4.3)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), quad=median(value))%>%
-  mutate(lower=quad-sd, upper=quad+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
+  mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
   select(parameter, quad)
 names(chainsRichnessQuad)[1] <- 'parameter3'
 
@@ -1222,7 +1222,7 @@ chainsEvennessIntercept <- chainsCommunity[,587:876]%>%
   gather(key=parameter, value=value, B.1.3.1:B.290.3.1)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), intercept=median(value))%>%
-  mutate(lower=intercept-sd, upper=intercept+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
+  mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
   select(parameter, intercept)
 names(chainsEvennessIntercept)[1] <- 'parameter1'
 
@@ -1230,7 +1230,7 @@ chainsEvennessSlope <- chainsCommunity[,1747:2036]%>%
   gather(key=parameter, value=value, B.1.3.2:B.290.3.2)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), slope=median(value))%>%
-  mutate(lower=slope-sd, upper=slope+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
+  mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
   select(parameter, slope)
 names(chainsEvennessSlope)[1] <- 'parameter2'
 
@@ -1238,7 +1238,7 @@ chainsEvennessQuad <- chainsCommunity[,2907:3196]%>%
   gather(key=parameter, value=value, B.1.3.3:B.290.3.3)%>%
   group_by(parameter)%>%
   summarise(sd=sd(value), quad=median(value))%>%
-  mutate(lower=quad-sd, upper=quad+sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
+  mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
   select(parameter, quad)
 names(chainsEvennessQuad)[1] <- 'parameter3'
 
