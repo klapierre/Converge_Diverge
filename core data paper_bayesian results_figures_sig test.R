@@ -39,7 +39,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ##################################################################################
 ##################################################################################
 #experiment information
-expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
+expRaw <- read.csv('fullChains.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
