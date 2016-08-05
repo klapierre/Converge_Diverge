@@ -2040,14 +2040,14 @@ print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 
 
-# ###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
-relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
-  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
-  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
-  group_by(exp_trt, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
-  summarise(relcov=mean(relcov))%>%
-  filter(exp_trt!='NIN::herbdiv::0::5F' & site_code!='GVN')
+# # ###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
+# relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
+#   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
+#   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
+#   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
+#   group_by(exp_trt, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
+#   summarise(relcov=mean(relcov))%>%
+#   filter(exp_trt!='NIN::herbdiv::0::5F' & site_code!='GVN')
 # 
 # expinfo<-read.csv('ExperimentInformation_Mar2016.csv')%>%
 #   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
@@ -2061,31 +2061,31 @@ relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
 #   unique()
 # 
 # #make a new dataframe to collect the turnover metrics
-# turnoverAll=data.frame(row.names=1) 
+# turnoverAll=data.frame(row.names=1)
 # 
 # for(i in 1:length(relAbundYear$exp_trt)) {
-#   
+# 
 #   #creates a dataset for each unique year, trt, exp combo
 #   subset=relAbundYear[relAbundYear$exp_trt==as.character(exp_trt$exp_trt[i]),]%>%
 #     select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
 #     #get just first and last year of study
 #     filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))
-#   
+# 
 #   #need this to keep track of plot mani
 #   labels=subset%>%
 #     select(exp_trt, plot_mani, calendar_year)%>%
 #     unique()
-#   
+# 
 #   #calculate disappearance
 #   disappearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='disappearance')%>%
 #     group_by(calendar_year)%>%
 #     summarise(disappearance=mean(disappearance))
-#   
+# 
 #   #calculate appearance
 #   appearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='appearance')%>%
 #     group_by(calendar_year)%>%
 #     summarise(appearance=mean(appearance))
-#   
+# 
 #   #merging back with labels to get back plot_mani
 #   turnover=labels%>%
 #     left_join(disappearance, by='calendar_year')%>%
@@ -2094,7 +2094,7 @@ relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
 #     select(exp_trt, plot_mani, appearance, disappearance)
 # 
 #   #pasting variables into the dataframe made for this analysis
-#   turnoverAll=rbind(turnover, turnoverAll)  
+#   turnoverAll=rbind(turnover, turnoverAll)
 # }
 # 
 # turnoverCtl <- turnoverAll%>%
@@ -2111,21 +2111,23 @@ relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
 #   left_join(turnoverCtl, by=c('site_code', 'project_name', 'community_type'))%>%
 #   mutate(appearance_diff=appearance-appearance_ctl, disappearance_diff=disappearance-disappearance_ctl)
 # 
-# # plot(turnoverDiff$plot_mani, turnoverDiff$appearance_diff)
-# # plot(turnoverDiff$plot_mani, turnoverDiff$disappearance_diff)
+# plot(turnoverDiff$plot_mani, turnoverDiff$appearance_diff)
+# plot(turnoverDiff$plot_mani, turnoverDiff$disappearance_diff)
 # 
 # turnoverRichness <- richness4%>%
 #   left_join(turnoverDiff, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-#   select(site_code, project_name, community_type, treatment, experiment_length, plot_mani, intercept, slope, quad, min_year, nutrients, water, carbon, precip, alt_length, final_year_estimate, yr20, appearance_diff, disappearance_diff)%>%
+#   select(site_code, project_name, community_type, treatment, experiment_length, plot_mani, intercept, slope, quad, min_year, nutrients, water, carbon, precip, alt_length, yr9, yr20, appearance, disappearance, appearance_diff, disappearance_diff)%>%
 #   filter(slope<0, quad>0)
 # 
 # plot(turnoverRichness$quad, turnoverRichness$appearance_diff)
 # plot(turnoverRichness$quad, turnoverRichness$disappearance_diff)
-# plot(turnoverRichness$final_year_estimate, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$final_year_estimate, turnoverRichness$disappearance_diff)
-# plot(turnoverRichness$yr20, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$yr20, turnoverRichness$disappearance_diff)
-# 
+# plot(turnoverRichness$quad, turnoverRichness$appearance)
+# plot(turnoverRichness$quad, turnoverRichness$disappearance)
+# plot(turnoverRichness$yr9, turnoverRichness$appearance_diff)
+# plot(turnoverRichness$yr9, turnoverRichness$disappearance_diff)
+
+
+
 # ###look at spp comp of five factor manipulations to find patterns of immigration or loss of dominant spp
 # relAbundFive <- relAbundYear
 # 
@@ -2160,7 +2162,7 @@ relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
 # 
 # relAbundFiveYearRich <- richness4%>%
 #   left_join(relAbundFiveYear, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-#   select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr10, final_year_estimate)%>%
+#   select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr9)%>%
 #   filter(plot_mani>4)
 # 
 # ggplot(data=relAbundFiveYearRich, aes(x=first, y=last, colour=quad)) +
