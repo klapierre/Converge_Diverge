@@ -2370,10 +2370,3 @@ print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 
 
 
-
-
-
-
-
-
-
