@@ -144,6 +144,8 @@ mean3 <- cbind(expInfo2, mean2)%>%
 mean4 <- left_join(mean3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
   #get standardized experiment length
   mutate(alt_length=experiment_length - min_year)%>%
+  
+  mutate(alt_length=ifelse(alt_length>=9, 8, alt_length))%>%
   #get estimates at various time points
   mutate(yr9=(intercept + 8*slope + (10^2)*quad)*0.1467006+0.2945762,
          yr20=(intercept + 20*slope + (20^2)*quad)*0.1467006+0.2945762,
@@ -180,10 +182,10 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.4608355 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0.262779*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0.268465*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.4608355 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.262779*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.268465*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0.6839465 + 0.304835*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(1.417785 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
@@ -205,10 +207,10 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(-0.896618 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(-0.7948745 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(-1.136515 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.842226 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.615325 + 0.306639*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.898885 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.9184725 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.842226 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.615325 + 0.306639*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.898885 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.9184725 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(-1.705895 + 0.320535*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(-1.8787 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(-1.830485 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
@@ -235,23 +237,23 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0.3506*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.6515585 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.819825 + 0.3696245*x + -0.04884075*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.8221565 + 0.381263*x + -0.0426214*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.35235 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0.5310735 + 0.637189*x + -0.0503678*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(-1.07008 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(-0.500106 + 0.6688475*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(-0.601428 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.7568625*x + -0.0546293*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,20), colour='#B6123C44') +
-  stat_function(fun=function(x){(1.10891 + 0.7460085*x + -0.04506775*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,20), colour='#EC180444') +
-  stat_function(fun=function(x){(-0.5886435 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.4778975*x + -0.03700415*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(1.015045 + 0.8836565*x + -0.05745245*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(-0.5972225 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.731278*x + -0.04109165*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.819825 + 0.3696245*x + -0.04884075*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.8221565 + 0.381263*x + -0.0426214*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.35235 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.5310735 + 0.637189*x + -0.0503678*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(-1.07008 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.500106 + 0.6688475*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.601428 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.7568625*x + -0.0546293*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(1.10891 + 0.7460085*x + -0.04506775*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.5886435 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.4778975*x + -0.03700415*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(1.015045 + 0.8836565*x + -0.05745245*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.5972225 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.731278*x + -0.04109165*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
   stat_function(fun=function(x){(-0.7967945 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
   stat_function(fun=function(x){(-0.60624 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.8183435 + 0.3585765*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
@@ -276,20 +278,20 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(-1.105115 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-1.14704 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-0.9870105 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.5791375 + 0.25823*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.4383955 + 0.2390025*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.497657 + 0.327566*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(-0.470957 + 0.261182*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
-  stat_function(fun=function(x){(-0.5032405 + 0.327268*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.5194505 + 0.2882635*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0.373941*x + -0.03088135*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(-0.5044105 + 0.239516*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.5140035 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.4269215 + 0.2968065*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(-0.6334475 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.5986235 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.6884565 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.5791375 + 0.25823*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.4383955 + 0.2390025*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.497657 + 0.327566*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.470957 + 0.261182*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.5032405 + 0.327268*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.5194505 + 0.2882635*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.373941*x + -0.03088135*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.5044105 + 0.239516*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.5140035 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.4269215 + 0.2968065*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.6334475 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.5986235 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.6884565 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0.551025 + 0.2791055*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
@@ -298,45 +300,45 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0.526847 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
-  stat_function(fun=function(x){(2.100915 + 0.351319*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.8365345 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(2.100915 + 0.351319*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.8365345 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(-0.698142 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.921241 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0.3892825*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0.3562725*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0.3484035*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0.829622 + 0.306261*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0.7713635 + 0.383259*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.3892825*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.3562725*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.3484035*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0.829622 + 0.306261*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.7713635 + 0.383259*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(-0.754456 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.798626 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-0.6594935 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.840213 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-1.055115 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-1.14343 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.00193 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.916156 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.8668245 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.6920445 + 0.403295*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.506316 + 0.442664*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.9017265 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.089005 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.00193 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.916156 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.8668245 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.6920445 + 0.403295*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.506316 + 0.442664*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.9017265 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.089005 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.932829 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(-1.057795 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-0.6079395 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0.251449*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0.5088685 + 0.2684395*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.6079395 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.251449*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5088685 + 0.2684395*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0.4123305*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0.435804*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0.2735075*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -391,10 +393,10 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0.3866605*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0.357521*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0.424607*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#EC180444') +
-  stat_function(fun=function(x){(-0.834602 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.23529 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.729561 + 0.3994485*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(-1.21894 + 0.259638*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.834602 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.23529 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.729561 + 0.3994485*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.21894 + 0.259638*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(-1.44082 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(-1.180855 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(-1.246335 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
@@ -418,9 +420,9 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.7121945 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.7142395 + 0.380947*x + -0.05612305*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.484405 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(-1.40595 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.7142395 + 0.380947*x + -0.05612305*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.484405 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.40595 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(-1.08429 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(-1.07238 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(-1.1046 + 0*x + 0*x^2)*(0.1467006)+(0.2945762)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -461,15 +463,15 @@ meanPlot <- meanPlot +
 #last five are the main plot_mani effect lines
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,23), colour='#1400E5') +
+  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){((-0.51288850+0.16444100) + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){((-0.51288850+0.16444100) + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,21), colour='#800C74') +
+  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,22), colour='#B6123C') +
+  stat_function(fun=function(x){(-0.51288850 + 0.18689450*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){((-0.51288850+0.62378000) + (0.18689450+0.41136250)*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,22), colour='#EC1804')
+  stat_function(fun=function(x){((-0.51288850+0.62378000) + (0.18689450+0.41136250)*x + 0*x^2)*0.1467006 + 0.2945762}, size=3, xlim=c(0,8), colour='#EC1804')
 
 # print(meanPlot) #export at 1200x1000
 
@@ -554,10 +556,10 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0.646359 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,11), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,11), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
@@ -579,10 +581,10 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,4), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,4), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,4), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,15), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,15), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,15), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
@@ -609,23 +611,23 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0 + 0*x + 0.0529491*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,13), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,13), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,13), colour='grey') +
-  stat_function(fun=function(x){(-0.762412 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(-2.01068 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.4450005*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.503992*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.354346*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,20), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.332514*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,20), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(-1.63161 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + -0.333575*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.4242495*x + -0.04899575*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(-0.762412 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(-2.01068 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.4450005*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.503992*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.354346*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.332514*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(-1.63161 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.333575*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.4242495*x + -0.04899575*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,3), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,3), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,3), colour='grey') +
@@ -650,20 +652,20 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-0.6446805 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.03273815*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.03239575*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.04045715*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.03714*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.03282775*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.26028*x + -0.0400182*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.03273815*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.03239575*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.04045715*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.03714*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.03282775*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.26028*x + -0.0400182*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(-2.41455 + 0.8363315*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-2.33911 + 0.723073*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-1.80573 + 0.604775*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
@@ -672,45 +674,45 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(-2.32393 + 0.679369*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-1.24024 + 0.865218*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-1.64644 + 0.817315*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
-  stat_function(fun=function(x){(-0.7183055 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,23), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,22), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(-0.7183055 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
-  stat_function(fun=function(x){(1.049055 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0.726168 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0.7145155 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0.848956 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0.834945 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0.80645 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(1.049055 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.726168 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.7145155 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.848956 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.834945 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.80645 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(-0.794913 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(-1.278835 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,18), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,18), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,11), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,11), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,11), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.04864775*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0.936478 + 0.598514*x + -0.07231415*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0.801448 + 0.52668*x + -0.07019735*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.04556425*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + -0.0467771*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0.4181375*x + -0.0797539*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.04864775*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.936478 + 0.598514*x + -0.07231415*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0.801448 + 0.52668*x + -0.07019735*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.04556425*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + -0.0467771*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.4181375*x + -0.0797539*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
@@ -765,10 +767,10 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0.671217 + 0.4156465*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
   stat_function(fun=function(x){(0.9686245 + 0.4474155*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + -0.0503415*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
@@ -792,9 +794,9 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,5), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,3), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,3), colour='grey') +
-  stat_function(fun=function(x){(0.9227695 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0.9227695 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,8), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,6), colour='grey') +
@@ -834,7 +836,7 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(-0.886816 + 0*x + 0*x^2)*(0.08810367)+(-0.000327455)}, size=0.5, xlim=c(0,2), colour='grey') +
 #estimated as mean across treatment lines
   #overall line (because plot mani not significant)
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0 - 0}, size=3, xlim=c(0,23), colour='black')
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0 - 0}, size=3, xlim=c(0,8), colour='black')
 
 
 # print(dispersionPlot) #export at 1200x1000
@@ -921,10 +923,10 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
@@ -946,10 +948,10 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){(0.5399525 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + -0.3523535*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0.5490425 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0.923374 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5399525 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.3523535*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.5490425 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.923374 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
@@ -976,23 +978,23 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(0.5902645 + -0.398915*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -1.1023*x + 0.0915164*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0.9938925 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -0.913884*x + 0.0726331*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -0.9307525*x + 0.081473*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,20), colour='#B6123C44') +
-  stat_function(fun=function(x){(-0.803972 + -0.6712745*x + 0.0787298*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,20), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + -0.3443705*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -1.157755*x + 0.102515*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -1.13361*x + 0.0972988*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + -0.942401*x + 0.089146*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5902645 + -0.398915*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -1.1023*x + 0.0915164*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0.9938925 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.913884*x + 0.0726331*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.9307525*x + 0.081473*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.803972 + -0.6712745*x + 0.0787298*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + -0.3443705*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -1.157755*x + 0.102515*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -1.13361*x + 0.0972988*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.942401*x + 0.089146*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
   stat_function(fun=function(x){(0.7596585 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
@@ -1017,20 +1019,20 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0.549832 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + -0.03477885*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0.3277205*x + -0.0402905*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.266333*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0.260388*x + -0.0331967*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0.308783*x + -0.0370216*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + -0.03477885*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.3277205*x + -0.0402905*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.266333*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.260388*x + -0.0331967*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.308783*x + -0.0370216*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0.5921705 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
@@ -1039,45 +1041,45 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0.5960885 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + -0.4049965*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0.4455545*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.5579015 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0.7988 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0.682074 + 0*x + -0.050763*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0.73344 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + -0.05297675*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.682074 + 0*x + -0.050763*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0.73344 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + -0.05297675*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -1132,10 +1134,10 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0.981171 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0.981171 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0.720884 + 0*x + -0.0469464*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
@@ -1159,9 +1161,9 @@ richnessPlot <- richnessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + -0.4382435*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){(0.8440905 + 0.383769*x + -0.0479365*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(0.6544465 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.8440905 + 0.383769*x + -0.0479365*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0.6544465 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2160529)+(-0.05773279)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -1202,15 +1204,15 @@ richnessPlot <- richnessPlot +
 #mean lines by plot mani
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,23), colour='#1400E5') +
+  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + -0.01907205*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + -0.01907205*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,21), colour='#800C74') +
+  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,22), colour='#B6123C') +
+  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){(0.23707350 + (-0.09856190-0.77843500)*x + (0.0126042580+0.06362400)*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,22), colour='#EC1804')
+  stat_function(fun=function(x){(0.23707350 + (-0.09856190-0.77843500)*x + (0.0126042580+0.06362400)*x^2)*0.2160529 - 0.05773279}, size=3, xlim=c(0,8), colour='#EC1804')
 
 # print(richnessPlot) #export at 1200x1000
 
@@ -1294,10 +1296,10 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + -0.418989*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.418989*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
@@ -1319,10 +1321,10 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0*x + -0.04888465*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,4), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
-  stat_function(fun=function(x){(-0.6167815 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + -0.0365131*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.6167815 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + -0.0365131*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
@@ -1349,23 +1351,23 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0.4113055*x + -0.056961*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + -0.049717*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0.403136*x + -0.0428713*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0.475638*x + -0.05203435*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 1.484005*x + -0.114774*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.7611505*x + -0.0529416*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.5681935*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,20), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.631419*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,20), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 1.75109*x + -0.150164*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(-0.803356 + 1.063595*x + -0.07795585*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0.78682*x + -0.06287555*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.403136*x + -0.0428713*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.475638*x + -0.05203435*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 1.484005*x + -0.114774*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.7611505*x + -0.0529416*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.5681935*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.631419*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 1.75109*x + -0.150164*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.803356 + 1.063595*x + -0.07795585*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.78682*x + -0.06287555*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#EC180444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
@@ -1390,20 +1392,20 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(-0.784603 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-0.763337 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(-0.747204 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#800C7444') +
@@ -1412,45 +1414,45 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(-0.636035 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(-0.617139 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#800C7444') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -1505,10 +1507,10 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0.3449805*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0.444089*x + -0.0434693*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#B6123C44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#EC180444') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0.722594*x + -0.05868105*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.722594*x + -0.05868105*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + -0.391688*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
@@ -1532,9 +1534,9 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,3), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,3), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,8), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1005463)+(0.01731845)}, size=0.5, xlim=c(0,6), colour='#4A06AC44') +
@@ -1575,15 +1577,15 @@ evennessPlot <- evennessPlot +
 #mean lines by plot mani
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,23), colour='#1400E5') +
+  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,21), colour='#800C74') +
+  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,22), colour='#B6123C') +
+  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){(-0.21478250 + (0.10652350+0.84695100)*x + (-0.01704330-0.05836085)*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,22), colour='#EC1804')
+  stat_function(fun=function(x){(-0.21478250 + (0.10652350+0.84695100)*x + (-0.01704330-0.05836085)*x^2)*0.1005463 + 0.01731845}, size=3, xlim=c(0,8), colour='#EC1804')
 
 # print(evennessPlot) #export at 1200x1000
 
