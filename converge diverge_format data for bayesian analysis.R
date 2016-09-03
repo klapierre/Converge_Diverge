@@ -18,7 +18,7 @@ expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
   filter(treatment_year!=0)
 
 #diversity data
-div <- merge(read.csv('DiversityMetrics_March2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+div <- merge(read.csv('DiversityMetrics_Sept2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -118,7 +118,30 @@ SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
 
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
-write.csv(ForAnalysis, "ForBayesianAnalysis_March2016b.csv")
+#full dataset
+write.csv(ForAnalysis, "ForBayesianAnalysis_Sept2016.csv")
+
+#9 yr or less
+ForAnalysis9yr <- ForAnalysis%>%
+  mutate(treatment_year=ifelse(project_name=='TMECE'&treatment_year==11, 1, ifelse(project_name=='TMECE'&treatment_year==12, 2, ifelse(project_name=='TMECE'&treatment_year==13, 3, ifelse(project_name=='TMECE'&treatment_year==14, 4, ifelse(project_name=='TMECE'&treatment_year==15, 5, ifelse(project_name=='TMECE'&treatment_year==16, 6, ifelse(project_name=='TMECE'&treatment_year==17, 7, ifelse(project_name=='TMECE'&treatment_year==18, 8, ifelse(project_name=='TMECE'&treatment_year==19, 9, ifelse(project_name=='TMECE'&treatment_year==20, 10, ifelse(project_name=='TMECE'&treatment_year==21, 11, ifelse(project_name=='TMECE'&treatment_year==22, 12, ifelse(project_name=='TMECE'&treatment_year==23, 13, ifelse(project_name=='TMECE'&treatment_year==24, 14, ifelse(project_name=='TMECE'&treatment_year==25, 15, ifelse(project_name=='TMECE'&treatment_year==26, 16, ifelse(project_name=='TMECE'&treatment_year==27, 17, treatment_year))))))))))))))))))%>%
+  filter(treatment_year<10)
+write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Sept2016.csv")
+
+#10+ year datasets (all years)
+ForAnalysis10yr <- ForAnalysis%>%
+  filter(experiment_length>9)
+write.csv(ForAnalysis10yr, "ForBayesianAnalysis_10yr_Sept2016.csv")
+
+#absolute value
+ForAnalysisAbsValue <- ForAnalysis%>%
+  mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
+write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Sept2016.csv")
+
+
+
+
+
+
 
 
 ##doing the same thing for anpp
