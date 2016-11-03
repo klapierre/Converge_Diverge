@@ -29,6 +29,7 @@ mat2<-read.delim("ARC_mat2.txt")%>%
 mat2_names<-read.delim("ARC_mat2_specieslist.txt")
 mat22<-merge(mat2, mat2_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
+  filter(genus_species!="Caribou feces")%>%
   select(-species_code)
 
 mnt<-read.delim("ARC_mnt.txt")%>%
@@ -38,6 +39,7 @@ mnt<-read.delim("ARC_mnt.txt")%>%
 mnt_names<-read.delim("ARC_mnt_specieslist.txt")
 mnt2<-merge(mnt, mnt_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
+  filter(genus_species!="Nostoc sp.")%>%
   select(-species_code)
 
 clonal<-read.delim("ASGA_Clonal.txt")%>%
@@ -53,7 +55,7 @@ clonal2<-merge(clonal, clonal_names, by="species_code", all=T)%>%
          genus_species!="unknown dicot",
          genus_species!="Standing Dead biomass from current year production",
          genus_species!="unknown Asteraceae",
-         genus_species!="unknonw Polygonaceae")
+         genus_species!="unknown Polygonaceae")
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -burn, -clip, -precip, -p, -dist, -patchiness, -plant_mani, -plot_id1, -plot_mani, -data_type, -species_num)%>%
@@ -215,6 +217,7 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
 warmnut_names<-read.delim("Finse_WarmNut_specieslist.txt")
 warmnut2<-merge(warmnut, warmnut_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
+  #filter(genus_species!="Ochrolechia frigida")%>%
   select(-species_code)
 
 face<-read.delim("GVN_FACE.txt")%>%
@@ -485,7 +488,7 @@ lucero<-read.csv("SCL_Lucero.csv")%>%
   select(-data_type)%>%
   mutate(community_type=0)%>%
   filter(abundance!=0)%>%
-  filter(genus_species!="Standing.dead")
+  filter(genus_species!="Standing dead")
 
 ter<-read.csv("SCL_TER.csv")%>%
   select(-data_type)%>%
@@ -538,11 +541,17 @@ uk2<-merge(uk, uk_names, by="species_code", all=T)%>%
 
 nitrogen<-read.csv("SR_Nitrogen.csv")%>%
   select(-data_type)%>%
-  filter(abundance!=0, genus_species!="UNKNOWN SPECIES", genus_species!="GRASS SPECIES", genus_species!="FORB SPECIES")
+  filter(abundance!=0, 
+         genus_species!="UNKNOWN SPECIES", 
+         genus_species!="GRASS SPECIES", 
+         genus_species!="FORB SPECIES")
 
 water<-read.csv("SR_WATER.csv")%>%
   select(-data_type)%>%
-  filter(abundance!=0, genus_species!="UNKNOWN SPECIES", genus_species!="GRASS SPECIES", genus_species!="FORB SPECIES")
+  filter(abundance!=0, 
+         genus_species!="UNKNOWN SPECIES", 
+         genus_species!="GRASS SPECIES", 
+         genus_species!="FORB SPECIES")
 
 gane<-read.delim("SVA_GANE.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulations, -num_manipulations, -experiment_year, -n, -p, -data_type, -plot_mani, -species_num)%>%
@@ -575,14 +584,14 @@ combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_Sept2016.csv")
+write.csv(combine, "SpeciesRawAbundance_Nov2016.csv")
 
-###get species list
-species_list<-combine%>%
-  select(site_code, project_name, genus_species)%>%
-  unique()
+###get species list# dont' do this anymore. We have a cleaned species list
+#species_list<-combine%>%
+#  select(site_code, project_name, genus_species)%>%
+#  unique()
 
-write.csv(species_list, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesList_Sept2016.csv")
+#write.csv(species_list, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesList_Sept2016.csv")
 
 ###Getting Relative Cover
 totcov<-combine%>%
@@ -594,7 +603,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Sept2016.csv")
+write.csv(relcov, "SpeciesRelativeAbundance_Nov2016.csv")
 
 ##for Codyn dataset
 expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
