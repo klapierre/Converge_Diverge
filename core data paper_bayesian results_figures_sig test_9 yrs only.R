@@ -7,7 +7,7 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 
-setwd('C:\\Users\\Kim\\Desktop\\bayesian output\\final_09032016\\9 yr subset')
+setwd('C:\\Users\\Kim\\Desktop\\bayesian output\\9 yr subset')
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
@@ -47,7 +47,7 @@ expInfo <- expRaw%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), precip=mean(precip))
 
-rawData <- read.csv('ForBayesianAnalysis_9yr_Sept2016.csv')
+rawData <- read.csv('ForBayesianAnalysis_9yr_Aug2016.csv')
 
 rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
@@ -80,13 +80,13 @@ expInfoSummary <- rawData%>%
 ################################################################################
 
 #raw chains data
-chains1 <- read.csv('results_comm_9yr_Sept2016_0.csv', comment.char='#')
+chains1 <- read.csv('diversity_MV_rdisp_9yr_0.csv', comment.char='#')
 chains1 <- chains1[-1:-5000,]
-chains2 <- read.csv('results_comm_9yr_Sept2016_1.csv', comment.char='#')
+chains2 <- read.csv('diversity_MV_rdisp_9yr_1.csv', comment.char='#')
 chains2 <- chains2[-1:-5000,]
-chains3 <- read.csv('results_comm_9yr_Sept2016_2.csv', comment.char='#')
+chains3 <- read.csv('diversity_MV_rdisp_9yr_2.csv', comment.char='#')
 chains3 <- chains3[-1:-5000,]
-chains4 <- read.csv('results_comm_9yr_Sept2016_3.csv', comment.char='#')
+chains4 <- read.csv('diversity_MV_rdisp_9yr_3.csv', comment.char='#')
 chains4 <- chains4[-1:-5000,]
 
 chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
@@ -472,13 +472,13 @@ meanPlot <- meanPlot +
 #last five are the main plot_mani effect lines
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#1400E5') +
+  stat_function(fun=function(x){(0.1 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#4A06AC') +
+  stat_function(fun=function(x){(0.2 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#800C74') +
+  stat_function(fun=function(x){(0.3 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#B6123C') +
+  stat_function(fun=function(x){(0.4 + 0*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
   stat_function(fun=function(x){((-0.440143+0.600146) + (0.1769195+0.340408)*x + 0*x^2)*0.1466626 + 0.2924564}, size=3, xlim=c(0,8), colour='#EC1804')
 
@@ -920,7 +920,7 @@ write.csv(richness4,'richness_equations.csv', row.names=F)
 
 #main figure
 richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(ylim=c(-1,0.8))  +
+  coord_cartesian(ylim=c(-0.6,0.05))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.2)) +
   xlab('Standardized Year') +
@@ -1221,15 +1221,15 @@ richnessPlot <- richnessPlot +
   #mean lines by plot mani
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.2156538 + -0.05498613}, size=3, xlim=c(0,8), colour='#1400E5') +
+  stat_function(fun=function(x){(0.23707350 + -0.09856190*x + 0*x^2)*0.2157865 + -0.05306615}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.2156538 + -0.05498613}, size=3, xlim=c(0,8), colour='#4A06AC') +
+  stat_function(fun=function(x){(0.25707350 + -0.09856190*x + 0*x^2)*0.2157865 + -0.05306615}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.2156538 + -0.05498613}, size=3, xlim=c(0,8), colour='#800C74') +
+  stat_function(fun=function(x){(0.27707350 + -0.09856190*x + 0*x^2)*0.2157865 + -0.05306615}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.2156538 + -0.05498613}, size=3, xlim=c(0,8), colour='#B6123C') +
+  stat_function(fun=function(x){(0.29707350 + -0.09856190*x + 0*x^2)*0.2157865 + -0.05306615}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){(0 + -0.118516-0.740671*x + 0*x^2)*0.2156538 + -0.05498613}, size=3, xlim=c(0,8), colour='#EC1804')
+  stat_function(fun=function(x){(0.23707350 + (-0.09856190-0.77843500)*x + (0.01260426+0.06362400)*x^2)*0.2157865 + -0.05306615}, size=3, xlim=c(0,8), colour='#EC1804')
 
 # print(richnessPlot) #export at 1200x1000
 
@@ -1297,7 +1297,7 @@ write.csv(evenness4,'evenness_equations.csv', row.names=F)
 
 #main figure
 evennessPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(ylim=c(-0.35,0.6))  +
+  coord_cartesian(ylim=c(-0.05,0.35))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
@@ -1598,15 +1598,15 @@ evennessPlot <- evennessPlot +
 #mean lines by plot mani
   #estimated as mean across treatment lines
   #mani1
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1008871 + 0.01812434}, size=3, xlim=c(0,8), colour='#1400E5') +
+  stat_function(fun=function(x){(-0.21478250 + 0.10652350*x + -0.01704330*x^2)*0.1007294 + 0.01897847}, size=3, xlim=c(0,8), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1008871 + 0.01812434}, size=3, xlim=c(0,8), colour='#4A06AC') +
+  stat_function(fun=function(x){(-0.23478250 + 0.10652350*x + -0.01704330*x^2)*0.1007294 + 0.01897847}, size=3, xlim=c(0,8), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(-0.2736745+0.400242 + 0*x + 0*x^2)*0.1008871 + 0.01812434}, size=3, xlim=c(0,8), colour='#800C74') +
+  stat_function(fun=function(x){(-0.25478250 + 0.10652350*x + -0.01704330*x^2)*0.1007294 + 0.01897847}, size=3, xlim=c(0,8), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1008871 + 0.01812434}, size=3, xlim=c(0,8), colour='#B6123C') +
+  stat_function(fun=function(x){(-0.26478250 + 0.10652350*x + -0.01704330*x^2)*0.1007294 + 0.01897847}, size=3, xlim=c(0,8), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0.1008871 + 0.01812434}, size=3, xlim=c(0,8), colour='#EC1804')
+  stat_function(fun=function(x){(-0.21478250 + (0.10652350+0.84695100)*x + (-0.01704330-0.05836085)*x^2)*0.1007294 + 0.01897847}, size=3, xlim=c(0,8), colour='#EC1804')
 
 # print(evennessPlot) #export at 1200x1000
 
