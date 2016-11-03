@@ -8,7 +8,7 @@ library(tidyr)
 library(dplyr)
 library(taxize)
 
-splist_raw<-read.csv("SpeciesList_April2016.csv")
+splist_raw<-read.csv("SpeciesList_Sept2016.csv")
 
 splist<-splist_raw%>%
   select(genus_species)%>%
@@ -62,7 +62,11 @@ write.csv(cn, "correct_names_toFIX.csv")
 
 
 clean<-read.csv("correct_names_Corrected_April2016.csv")%>%
-  select(acceptedname, type)%>%
+  mutate(genus_species=submittedname)%>%
+  select(genus_species, acceptedname, type)%>%
+  filter(genus_species!="caribou feces")%>%#this drops 1 line of code in MAT2
+  filter(genus_species!="standing dead")%>%
+  filter(genus_species!="nostoc sp.")%>%
   unique()
 
-write.csv(clean, "cleanspecieslist_April2016.csv")
+write.csv(clean, "cleanspecieslist_April2016_submitted_accepted.csv")
