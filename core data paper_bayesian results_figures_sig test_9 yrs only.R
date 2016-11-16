@@ -7,7 +7,7 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 
-setwd('C:\\Users\\Kim\\Desktop\\bayesian output\\9 yr subset')
+setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
@@ -45,9 +45,10 @@ expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), precip=mean(precip))
+  mutate(irrigation=ifelse(precip>0, 1, 0), drought=ifelse(precip<0, 1, 0))%>%
+  summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), irrigation=mean(irrigation), drought=mean(drought))
 
-rawData <- read.csv('ForBayesianAnalysis_9yr_Aug2016.csv')
+rawData <- read.csv('ForBayesianAnalysis_9yr_Nov2016.csv')
 
 rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
@@ -65,16 +66,27 @@ expInfoSummary <- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp),
+            MAT=mean(MAT), MAP=mean(MAP))%>%
   ungroup()%>%
   summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
             plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
             rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
             anpp_median=median(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
             MAP_median=median(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
-            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT)
-            )%>%
+            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
   gather(variable, estimate)
+
+#treatment info
+trtInfo <- rawData%>%
+  filter(plot_mani<6, anpp!='NA')%>%
+  filter(treatment_year!=0)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich),
+            anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
+  ungroup()%>%
+  left_join(expInfo)%>%
+  mutate(resource_mani=(nutrients+carbon+irrigation+drought))
 
 ################################################################################
 ################################################################################
@@ -1622,88 +1634,13 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 
-# ###density plots of all raw data
-# meanDensity <- ggplot(data=rawData, aes(x=mean_change)) +
-#   geom_density() +
-#   xlab('Mean Change') +
-#   ylab('Density') +
-#   xlim(0,1) +
-#   ylim(0,6.3)
-# dispersionDensity <- ggplot(data=rawData, aes(x=dispersion_change)) +
-#   geom_density() +
-#   xlab('Dispersion Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
-# richnessDensity <- ggplot(data=rawData, aes(x=S_PC)) +
-#   geom_density() +
-#   xlab('Proportion Richness Change') +
-#   ylab('Density') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
-# evennessDensity <- ggplot(data=rawData, aes(x=SimpEven_change)) +
-#   geom_density() +
-#   xlab('Evenness Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(dispersionDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# print(richnessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-# print(evennessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-# #export at 1200 x 1000
-# 
-# 
-# ###density plots of final year estimates
-# meanFinalDensity <- ggplot(data=mean4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Mean Change') +
-#   ylab('Density') +
-#   xlim(0,1) +
-#   ylim(0,10)
-# dispersionFinalDensity <- ggplot(data=dispersion4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Dispersion Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# richnessFinalDensity <- ggplot(data=richness4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Proportion Richness Change') +
-#   ylab('Density') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# evennessFinalDensity <- ggplot(data=evenness4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Evenness Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(dispersionFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# print(richnessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-# print(evennessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-# #export at 1200 x 1000
-
-
-
 
 
 
 
 ###by resource mani
 #still need to calculate the proportion of chains where x resource response was greater than y resource response
-
+#KIM:::make sure that the nutrients and carbon columns are not the exp level indicators
 #mean change
 meanResourceDrought <- mean4%>%
   mutate(multi_resource=nutrients+water+carbon)%>%
@@ -1782,7 +1719,7 @@ meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='
 dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='yr9', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.08, 0.08, 0.04), name='Change in Dispersion') +
+  scale_y_continuous(breaks=seq(-0.08, 0.08, 0.04), name='Dispersion Change') +
   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
   coord_cartesian(ylim=c(-0.08, 0.08)) +
@@ -1800,7 +1737,7 @@ richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, va
 evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='yr9', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.05, 0.05, 0.02), name='Change in Evenness') +
+  scale_y_continuous(breaks=seq(-0.05, 0.05, 0.02), name='Evenness Change') +
   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
   # coord_cartesian(ylim=c(0, 0.045)) +
@@ -2064,7 +2001,7 @@ print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 
 
-# ###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
+###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
 relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
