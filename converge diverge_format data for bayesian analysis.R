@@ -18,7 +18,7 @@ expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
   filter(treatment_year!=0)
 
 #diversity data
-div <- merge(read.csv('DiversityMetrics_Sept2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+div <- merge(read.csv('DiversityMetrics_Nov2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -119,13 +119,45 @@ SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
 #full dataset
-write.csv(ForAnalysis, "ForBayesianAnalysis_Sept2016.csv")
+write.csv(ForAnalysis, "ForBayesianAnalysis_Nov2016.csv")
 
 #9 yr or less
 ForAnalysis9yr <- ForAnalysis%>%
   mutate(treatment_year=ifelse(project_name=='TMECE'&treatment_year==11, 1, ifelse(project_name=='TMECE'&treatment_year==12, 2, ifelse(project_name=='TMECE'&treatment_year==13, 3, ifelse(project_name=='TMECE'&treatment_year==14, 4, ifelse(project_name=='TMECE'&treatment_year==15, 5, ifelse(project_name=='TMECE'&treatment_year==16, 6, ifelse(project_name=='TMECE'&treatment_year==17, 7, ifelse(project_name=='TMECE'&treatment_year==18, 8, ifelse(project_name=='TMECE'&treatment_year==19, 9, ifelse(project_name=='TMECE'&treatment_year==20, 10, ifelse(project_name=='TMECE'&treatment_year==21, 11, ifelse(project_name=='TMECE'&treatment_year==22, 12, ifelse(project_name=='TMECE'&treatment_year==23, 13, ifelse(project_name=='TMECE'&treatment_year==24, 14, ifelse(project_name=='TMECE'&treatment_year==25, 15, ifelse(project_name=='TMECE'&treatment_year==26, 16, ifelse(project_name=='TMECE'&treatment_year==27, 17, treatment_year))))))))))))))))))%>%
   filter(treatment_year<10)
-write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Sept2016.csv")
+write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Nov2016.csv")
+
+
+#Plot of 9 year data used in paper.
+theme_set(theme_bw(16))
+d2<-qplot(dispersion_change, data=ForAnalysis9yr, geom="histogram")+
+  ggtitle("Within Treatment Change")+
+  xlab("Trt Disp - Cont Disp")+
+  geom_vline(xintercept = 0, size=2)
+
+m<-qplot(mean_change, data=ForAnalysis9yr, geom="histogram")+
+  ggtitle("Among Treatment Change")+
+  xlab(" Distance between Centriods")+
+  geom_vline(xintercept = 0, size=2)
+
+s1<-qplot(S_PC, data=ForAnalysis9yr, geom="histogram")+
+  ggtitle("Richness Percent Change")+
+  xlab("Percent Change in Richness")+
+  geom_vline(xintercept = 0, size=2)
+# s2<-qplot(S_change, data=divCompare, geom="histogram")+
+#   ggtitle("richness change")
+
+# e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
+#   ggtitle("even percent change")
+e2<-qplot(SimpEven_change, data=ForAnalysis9yr, geom="histogram")+
+  ggtitle("Evenness Change")+
+  xlab("Trt Evenness - Cont Evenness")+
+  geom_vline(xintercept = 0, size=2)
+
+grid.arrange( m, d2,s1, e2, ncol=2)
+
+
+
 
 #10+ year datasets (all years)
 ForAnalysis10yr <- ForAnalysis%>%
@@ -186,3 +218,10 @@ test<-ForANPPAnalysis%>%
   unique()
 
 write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_March2016b.csv")
+
+###ANPP to MAP
+test<-ForAnalysis%>%
+  select(site_code, MAP, anpp)%>%
+  unique()
+
+plot(MAP, anpp, data=test)
