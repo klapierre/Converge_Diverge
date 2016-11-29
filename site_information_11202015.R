@@ -19,7 +19,7 @@ ExpList<-ExpInfo%>%
 #Getting ANPP
 ANPP<-read.csv("ANPP_March2016.csv")
 
-Experiment_Info<-read.csv("ExperimentInformation_March2016.csv")%>%
+Experiment_Info<-read.csv("ExperimentInformation_Mar2016.csv")%>%
   select(site_code, project_name, community_type, treatment, plot_mani, public)%>%
   unique()
 
@@ -131,4 +131,111 @@ pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
 with(SiteExpDetails,plot(MAP, anpp))
 with(SiteExpDetails,cor.test(rrich, experiment_length))
+
+
+#####subsetting the data
+
+Experiment_Info<-read.csv("ExperimentInformation_Mar2016.csv")
+###Look at experiments that do N only
+pplots<-Experiment_Info%>%
+  filter(project_name=="pplots")%>%
+  filter(p==0)%>%
+  select(site_code, project_name, community_type, treatment, n)%>%
+  unique()
+
+Nitrogenonly<-Experiment_Info%>%
+  filter(nutrients==1)%>%
+  filter(p==0&
+        k==0&
+        CO2==0&
+        precip==0&
+        temp==0&
+        mow_clip==0&
+        burn==0&
+        herb_removal==0&
+        trt_details==0&
+        other_trt==0&
+        successional==0&
+        plant_mani==0&
+        pulse==0)%>%
+  select(site_code, project_name, community_type, treatment, n)%>%
+  unique()
+
+# Nitrogenonly2<-rbind(Nitrogenonly, pplots)%>%
+#   select(site_code,project_name, community_type)%>%
+#   unique()
+
+Nitrogenonly2<-rbind(Nitrogenonly, pplots)
+write.csv(Nitrogenonly2, "nitrogen.csv")
+
+
+
+###Look at experiments that do N&P only
+pplots_np<-Experiment_Info%>%
+  filter(project_name=="pplots")%>%
+  select(site_code, project_name, community_type, treatment, n, p)%>%
+  unique()
+
+NitPhos<-Experiment_Info%>%
+  filter(nutrients==1)%>%
+  filter(p>0&
+           k==0&
+           CO2==0&
+           precip==0&
+           temp==0&
+           mow_clip==0&
+           burn==0&
+           herb_removal==0&
+           trt_details==0&
+           other_trt==0&
+           successional==0&
+           plant_mani==0&
+           pulse==0)%>%
+  select(site_code, project_name, community_type, treatment, n, p)%>%
+  unique()
+
+Nitphos2<-rbind(NitPhos, pplots_np)
+
+write.csv(Nitphos2, "nitrogen_phosphorus.csv")
+
+###Drought
+
+drought<-Experiment_Info%>%
+  filter(water==1)%>%
+  filter(n==0&
+        p==0&
+           k==0&
+           CO2==0&
+           precip<0&
+           temp==0&
+           mow_clip==0&
+           burn==0&
+           herb_removal==0&
+           trt_details==0&
+           other_trt==0&
+           successional==0&
+           plant_mani==0&
+           pulse==0)%>%
+  select(site_code, project_name, community_type, treatment, precip)%>%
+  unique()
+
+##Irrigation
+irrigation<-Experiment_Info%>%
+  filter(water==1)%>%
+  filter(n==0&
+           p==0&
+           k==0&
+           CO2==0&
+           precip>0&
+           temp==0&
+           mow_clip==0&
+           burn==0&
+           herb_removal==0&
+           trt_details==0&
+           other_trt==0&
+           successional==0&
+           plant_mani==0&
+           pulse==0)%>%
+  select(site_code, project_name, community_type, treatment, precip)%>%
+  unique()
 
