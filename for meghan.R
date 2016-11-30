@@ -1,18 +1,27 @@
 library(dplyr)
 library(tidyr)
 library(plyr)
+library(tidyr)
+library(dplyr)
+
 
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\to yang')
+
+#meghan's
+setwd("~/Dropbox/converge_diverge/datasets/LongForm/to yang")
 
 test <- read.csv('CORRE_raw_abundance.csv')
 trt <- read.csv('CORRE_treatment_summary.csv')%>%
   select(-X)
 
 cdrOnly <- test%>%
-  subset(project_name=='e001'&community_type=='D')
+  subset(project_name=='e001'&community_type=='C')
 
 irrOnly <- test%>%
   subset(project_name=='IRG'&community_type=='l')
+
+pplotsONly<-test%>%
+  subset(project_name="pplots")
 
 bothOnly <- cdrOnly%>%
   rbind(irrOnly)%>%
