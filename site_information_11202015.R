@@ -136,6 +136,20 @@ with(SiteExpDetails,cor.test(rrich, experiment_length))
 #####subsetting the data
 
 Experiment_Info<-read.csv("ExperimentInformation_Mar2016.csv")
+
+fix<-Experiment_Info%>%
+  tbl_df()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(burn_m=mean(burn), mow_clip=mean(mow_clip), herb_removal=mean(herb_removal))%>%
+  filter(burn_m==0|burn_m==1)%>%
+  filter()
+  
+Exp_Info<-
+
+read.csv()
+cdrIrrOnly <- Experiment_Info%>%
+  filter(project_name=='IRG'&)
+
 ###Look at experiments that do N only
 pplots<-Experiment_Info%>%
   filter(project_name=="pplots")%>%
