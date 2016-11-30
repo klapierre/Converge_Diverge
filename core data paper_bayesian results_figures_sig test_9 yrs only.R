@@ -125,7 +125,7 @@ chainsCommunity2 <- chainsCommunity%>%
 chainsIntercept <- chainsCommunity[,8:1159]%>%
   gather(key=parameter, value=value, B.1.1.1:B.4.288.1)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), intercept=median(value))%>%
+  summarise(sd_intercept=sd(value), intercept=median(value))%>%
   mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
   select(parameter, intercept)
 names(chainsIntercept)[1] <- 'parameter'
@@ -137,7 +137,7 @@ chainsIntercept <- chainsIntercept%>%
 chainsSlope <- chainsCommunity[,1160:2311]%>%
   gather(key=parameter, value=value, B.1.1.2:B.4.288.2)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), slope=median(value))%>%
+  summarise(sd_slope=sd(value), slope=median(value))%>%
   mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
   select(parameter, slope)
 names(chainsSlope)[1] <- 'parameter'
@@ -149,7 +149,7 @@ chainsSlope <- chainsSlope%>%
 chainsQuad <- chainsCommunity[,2312:3463]%>%
   gather(key=parameter, value=value, B.1.1.3:B.4.288.3)%>%
   group_by(parameter)%>%
-  summarise(sd=sd(value), quad=median(value))%>%
+  summarise(sd_quad=sd(value), quad=median(value))%>%
   mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
   select(parameter, quad)
 names(chainsQuad)[1] <- 'parameter'
@@ -183,7 +183,7 @@ chainsEquations <- chainsExperiment%>%
          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
          curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
 #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-#write.csv(chainsEquations,'plot mani_equations.csv', row.names=F)
+# write.csv(chainsEquations,'plot mani_equations.csv', row.names=F)
 
 
 
@@ -1487,7 +1487,11 @@ meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, var
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
   coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
   xlab('')+
-  annotate('text', x=0.5, y=0.60, label='(a)', size=10, hjust='left')
+  annotate('text', x=0.5, y=0.60, label='(a)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.5, label='a*', size=10) +
+  annotate('text', x=2, y=0.41, label='b*', size=10) +
+  annotate('text', x=3, y=0.34, label='b*', size=10) +
+  annotate('text', x=4, y=0.36, label='b*', size=10)
 
 dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='dispersion'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
@@ -1496,8 +1500,8 @@ dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMan
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
   coord_cartesian(ylim=c(0, 0.15), xlim=c(1,4)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.15, label='(b)', size=10, hjust='left')
+  xlab('') +
+  annotate('text', x=0.5, y=0.15, label='(b)', size=12, hjust='left')
 
 richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='richness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
@@ -1506,8 +1510,9 @@ richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani,
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
   coord_cartesian(ylim=c(-0.25, 0.2), xlim=c(1,4)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.2, label='(c)', size=10, hjust='left')
+  xlab('') +
+  annotate('text', x=0.5, y=0.2, label='(c)', size=12, hjust='left') +
+  annotate('text', x=1, y=-0.19, label='*', size=10)
 
 evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='evenness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
@@ -1516,8 +1521,9 @@ evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani,
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
   coord_cartesian(ylim=c(-0.06, 0.06), xlim=c(1,4)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.06, label='(d)', size=10, hjust='left')
+  xlab('') +
+  annotate('text', x=0.5, y=0.06, label='(d)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.06, label='*', size=10)
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
