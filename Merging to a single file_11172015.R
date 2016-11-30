@@ -40,6 +40,7 @@ mnt_names<-read.delim("ARC_mnt_specieslist.txt")
 mnt2<-merge(mnt, mnt_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
   filter(genus_species!="Nostoc sp.")%>%
+  filter(genus_species!="Caribou feces")%>%
   select(-species_code)
 
 clonal<-read.delim("ASGA_Clonal.txt")%>%
@@ -217,7 +218,6 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
 warmnut_names<-read.delim("Finse_WarmNut_specieslist.txt")
 warmnut2<-merge(warmnut, warmnut_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
-  #filter(genus_species!="Ochrolechia frigida")%>%
   select(-species_code)
 
 face<-read.delim("GVN_FACE.txt")%>%
@@ -584,7 +584,7 @@ combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "SpeciesRawAbundance_Nov2016.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRawAbundance_Nov2016.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -603,7 +603,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "SpeciesRelativeAbundance_Nov2016.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRelativeAbundance_Nov2016.csv")
 
 ##for Codyn dataset
 expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
