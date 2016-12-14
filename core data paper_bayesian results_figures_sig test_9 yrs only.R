@@ -39,7 +39,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 
 ##################################################################################
 ##################################################################################
-#experiment information
+#experiment information --------------------------------------------------------
 expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
 
 expInfo <- expRaw%>%
@@ -91,7 +91,7 @@ trtInfo <- rawData%>%
 ################################################################################
 ################################################################################
 
-#raw chains data
+#raw chains data --------------------------------------------------------
 chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_0.csv', comment.char='#')
 chains1 <- chains1[-1:-334,]
 chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_1.csv', comment.char='#')
@@ -103,13 +103,15 @@ chains4 <- chains4[-1:-334,]
 
 chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
 
-#density plot of chains
+
+#density plot of chains --------------------------------------------------------
 plot(density(chainsCommunity$mu_int.1))
 plot(density(chainsCommunity$mu_slope.1))
 plot(density(chainsCommunity$mu_quad.1))
 plot(density(chainsCommunity$U_int.2.1))
 
-#get values for overall (mean) lines across levels of plot mani
+
+#get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
 #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
 chainsCommunity2 <- chainsCommunity%>%
   select(lp__, U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4)%>%
@@ -119,7 +121,8 @@ chainsCommunity2 <- chainsCommunity%>%
   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
 
 
-#gather the intercepts, linear slopes, and quadratic slopes for all treatments
+
+#gather the intercepts, linear slopes, and quadratic slopes for all treatments --------------------------------------------------------
 #numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
 #set any that are not significant (CI overlaps 0) as 0
 chainsIntercept <- chainsCommunity[,8:1159]%>%
@@ -189,8 +192,8 @@ chainsEquations <- chainsExperiment%>%
 
 ###main figure
 
-#mean change panel
-meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
+# mean change panel --------------------------------------------------------
+meanPlot <- ggplot(data=data.frame(x=c(0,0))) + 
   coord_cartesian(ylim=c(0,1))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
   ylim(-10,10) +
@@ -504,7 +507,7 @@ meanPlot <- meanPlot +
 # print(meanPlot) #export at 1200x1000
 
 
-#dispersion panel
+#dispersion panel --------------------------------------------------------
 dispersionPlot <- ggplot(data=data.frame(x=c(0,0))) +
   coord_cartesian(ylim=c(-0.3,0.4))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
@@ -810,7 +813,7 @@ dispersionPlot <- dispersionPlot +
 # print(dispersionPlot) #export at 1200x1000
 
 
-#richness panel
+#richness panel --------------------------------------------------------
 richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   coord_cartesian(ylim=c(-1.0,0.8))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
@@ -1126,7 +1129,7 @@ richnessPlot <- richnessPlot +
 # print(richnessPlot) #export at 1200x1000
 
 
-#evenness panel
+#evenness panel --------------------------------------------------------
 evennessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   # coord_cartesian(ylim=c(-0.05,0.35))  +
   scale_x_continuous(limits=c(0,8), breaks=seq(0,8,1), labels=seq(1,9,1)) +
@@ -1442,7 +1445,7 @@ evennessPlot <- evennessPlot +
 # print(evennessPlot) #export at 1200x1000
 
 
-#print all plots together
+#print all plots together --------------------------------------------------------
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(dispersionPlot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
@@ -1453,7 +1456,7 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 
-###by resource mani
+###by resource mani --------------------------------------------------------
 #still need to calculate the proportion of chains where x resource response was greater than y resource response
 trtDetail <- expRaw%>%
   select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
@@ -1478,7 +1481,7 @@ resourceMani <- chainsTrt%>%
                                                                                       ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
                                                                                              ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
 
-#plot by resource manipulated at year 9
+#plot by resource manipulated at year 9 --------------------------------------------------------
 meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='mean'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
@@ -1534,7 +1537,7 @@ print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col 
 
 
       
-###summary stats from bayesian output
+###summary stats from bayesian output --------------------------------------------------------
 #gather summary stats needed and relabel them
 chainsCommunitySummary <- chainsCommunity%>%
   select(U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4, E_int.1.1, E_int.2.1, E_int.3.1, E_int.4.1, E_slope.1.1, E_slope.2.1, E_slope.3.1, E_slope.4.1, E_quad.1.1, E_quad.2.1, E_quad.3.1, E_quad.4.1, E_int.1.2, E_int.2.2, E_int.3.2, E_int.4.2, E_slope.1.2, E_slope.2.2, E_slope.3.2, E_slope.4.2, E_quad.1.2, E_quad.2.2, E_quad.3.2, E_quad.4.2, D_int.1.1, D_int.2.1, D_int.3.1, D_int.4.1, D_slope.1.1, D_slope.2.1, D_slope.3.1, D_slope.4.1, D_quad.1.1, D_quad.2.1, D_quad.3.1, D_quad.4.1, D_int.1.2, D_int.2.2, D_int.3.2, D_int.4.2, D_slope.1.2, D_slope.2.2, D_slope.3.2, D_slope.4.2, D_quad.1.2, D_quad.2.2, D_quad.3.2, D_quad.4.2)%>%
@@ -1558,7 +1561,7 @@ chainsCommunityOverall <- chainsCommunitySummary%>%
   mutate(median_corrected=median+overall)
 
 
-#mean plots
+#mean plots --------------------------------------------------------
 meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='mean change'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
@@ -1595,7 +1598,7 @@ meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'&var
   ylim(-0.1, 0.1) +
   coord_flip()
 
-#dispersion plots
+#dispersion plots --------------------------------------------------------
 dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
@@ -1632,7 +1635,7 @@ dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='qua
   ylim(-0.1, 0.1) +
   coord_flip()
 
-#richness plots
+#richness plots --------------------------------------------------------
 richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
@@ -1669,7 +1672,7 @@ richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'
   ylim(-0.1, 0.1) +
   coord_flip()
 
-#evenness plots
+#evenness plots --------------------------------------------------------
 evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
@@ -1706,7 +1709,8 @@ evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'
   ylim(-0.1, 0.1) +
   coord_flip()
 
-pushViewport(viewport(layout=grid.layout(4,3)))
+#plot all together --------------------------------------------------------
+pushViewport(viewport(layout=grid.layout(4,3))) 
 print(meanIntPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(meanSlopePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(meanQuadPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
@@ -1722,7 +1726,7 @@ print(evennessQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
 #export at 2400x2000
 
 
-#overall responses
+#overall responses --------------------------------------------------------
 meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean change' & predictor=='overall'), aes(x=parameter, y=median)) +
   geom_point(size=4) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
@@ -1782,7 +1786,8 @@ print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 
 
-###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
+
+###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern--------------------------------------------------------
 relAbund <- read.csv('SpeciesRelativeAbundance_Nov2016.csv')%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
@@ -1870,10 +1875,27 @@ plot(turnoverDiff$plot_mani, turnoverDiff$turnover)
 summary(glm(turnover~as.factor(plot_mani), data=turnoverDiff))
 lsmeans(glm(turnover~as.factor(plot_mani), data=turnoverDiff), 'plot_mani')
 
-ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=turnover)) +
+turnoverPlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=turnover)) +
+  geom_boxplot() +
+  xlab('') +
+  ylab('Species Turnover')
+
+appearancePlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=appearance)) +
+  geom_boxplot() +
+  xlab('') +
+  ylab('Species Appearance')
+
+disappearancePlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=disappearance)) +
   geom_boxplot() +
   xlab('Number of Factors Manipulated') +
-  ylab('Species Turnover')
+  ylab('Species Disappearance')
+
+pushViewport(viewport(layout=grid.layout(3,1)))
+print(turnoverPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(appearancePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(disappearancePlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
+#export at 1400x3000
+
 #export at 1400x1000
 
 # #compares richness change to turnover metrics
@@ -1937,7 +1959,7 @@ ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=turnover)) +
 
 
 
-#look at number replicates for dispersion results -- doesn't make a difference
+#look at number replicates for dispersion results -- doesn't make a difference --------------------------------------------------------
 reps <- relAbund%>%
   group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
   summarise(mean=mean(relcov))%>%
@@ -1974,7 +1996,7 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
 
 
 
-###look at five factor manipulations for mean change
+###look at five factor manipulations for mean change --------------------------------------------------------
 # #just for the four experiments with five factors, compare to their four factor treatments
 # meanFive <- mean4%>%
 #   filter(treatment=='1_y_n'|treatment=='8_y_n'|treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='2F'|treatment=='3F'|treatment=='4F'|treatment=='ghn'|treatment=='gsn'|treatment=='ncn'|treatment=='nhn'|treatment=='nsn')
