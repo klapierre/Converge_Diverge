@@ -133,8 +133,10 @@ biocon2<-merge(biocon, biocon_names, by="species_code", all=T)%>%
 
 e001<-read.csv("CDR_e001.csv")%>%
   mutate(block=0)%>%
-  select(-data_type)%>%
-  filter(abundance!=0)
+  select(-data_type, -X)%>%
+  filter(abundance!=0)%>%
+  mutate(spcode=genus_species, treatment=as.factor(treatment))%>%
+  select(-genus_species)
 e001_names<-read.csv("CDR_e001_e002_specieslist.csv")
 e0012<-merge(e001, e001_names, by="spcode")%>%
   filter(abundance!=0)%>%
@@ -264,7 +266,7 @@ study2782<-merge(study278, study278_names,by="species_code", all=T)%>%
 gce<-read.delim("JSP_GCE2.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -precip, -temp, -c, -data_type,-plot_mani, -species_num, -plot_id1)%>%
   gather(species_code, abundance, sp1:sp92)%>%
-  mutate(community_type=0, block=0)
+  mutate(community_type=0)
 gce_names<-read.delim("JSP_GCE2_specieslist.txt")
 gce2<-merge(gce, gce_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
@@ -419,7 +421,8 @@ gb2<-merge(gb, gb_names, by="species_code", all=T)%>%
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
   select(-data_type)%>%
   mutate(community_type=0, block=0)%>%
-  filter(abundance!=0)
+  filter(abundance!=0)%>%
+  filter(genus_species!="Unknown Forb")
 
 ccd<-read.delim("NTG_CCD.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -clip,-precip, -temp, -data_type, -plot_mani, -species_num)%>%
@@ -584,7 +587,7 @@ combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRawAbundance_Nov2016.csv")
+write.csv(combine, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRawAbundance_Dec2016.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -603,7 +606,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRelativeAbundance_Nov2016.csv")
+write.csv(relcov, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRelativeAbundance_Dec2016.csv")
 
 ##for Codyn dataset
 expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
