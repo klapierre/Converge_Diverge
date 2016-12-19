@@ -213,10 +213,19 @@ anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
 # grid.arrange(d1, d2, s1, s2, e1, e2, a1, a2, ncol=2)
 
 ###merging with experiment (treatment) information
-anppCompareExp <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+anppCompareExp1 <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
-  filter(pulse==0, resource_mani==1, max_trt==1, treatment_year>0)%>%
+  filter(pulse==0, treatment_year>0, site_code!="CDR")%>%
   select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+
+anppcdre001<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  filter(site_code=="CDR"&treatment==1|treatment==6|treatment==8|treatment==9,plot_mani>0)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+anppcdre002<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  filter(site_code=="CDR"&treatment=='1_f_u_n'|treatment=='6_f_u_n'|treatment=='8_f_u_n'|treatment=='9_f_u_n',plot_mani>0)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+
+anppCompareExp<-rbind(anppCompareExp1, anppcdre002, anppcdre001)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
   write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Dec2016.csv")
