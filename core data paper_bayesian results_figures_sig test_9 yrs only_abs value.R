@@ -40,7 +40,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ##################################################################################
 ##################################################################################
 #experiment information --------------------------------------------------------
-expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
+expRaw <- read.csv('ExperimentInformation_Dec2016.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
@@ -48,7 +48,7 @@ expInfo <- expRaw%>%
   mutate(irrigation=ifelse(precip>0, 1, 0), drought=ifelse(precip<0, 1, 0))%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), irrigation=mean(irrigation), drought=mean(drought))
 
-rawData <- read.csv('ForBayesianAnalysis_9yr_Nov2016.csv')
+rawData <- read.csv('ForBayesianAnalysis_9yr_Dec2016.csv')
 
 rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
@@ -93,18 +93,16 @@ trtInfo <- rawData%>%
 ################################################################################
 
 #raw chains data --------------------------------------------------------
-chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_0.csv', comment.char='#')
-chains1 <- chains1[-1:-334,]
-chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_1.csv', comment.char='#')
-chains2 <- chains2[-1:-334,]
-chains3 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_2.csv', comment.char='#')
-chains3 <- chains3[-1:-334,]
-chains4 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_3.csv', comment.char='#')
-chains4 <- chains4[-1:-334,]
-chains5 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_4.csv', comment.char='#')
-chains5 <- chains5[-1:-334,]
+chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_cholesky_0.csv', comment.char='#')
+chains1 <- chains1[-1:-5000,]
+chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_cholesky_1.csv', comment.char='#')
+chains2 <- chains2[-1:-5000,]
+chains3 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_cholesky_2.csv', comment.char='#')
+chains3 <- chains3[-1:-5000,]
+chains4 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_abs_disp\\mv_abs_disp_cholesky_3.csv', comment.char='#')
+chains4 <- chains4[-1:-5000,]
 
-chainsCommunity <- rbind(chains1, chains2, chains3, chains4, chains5)
+chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
 
 
 #density plot of chains --------------------------------------------------------

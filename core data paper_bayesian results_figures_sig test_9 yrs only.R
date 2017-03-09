@@ -40,7 +40,7 @@ barGraphStats <- function(data, variable, byFactorNames) {
 ##################################################################################
 ##################################################################################
 #experiment information --------------------------------------------------------
-expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
+expRaw <- read.csv('ExperimentInformation_Dec2016.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
@@ -48,7 +48,7 @@ expInfo <- expRaw%>%
   mutate(irrigation=ifelse(precip>0, 1, 0), drought=ifelse(precip<0, 1, 0))%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), irrigation=mean(irrigation), drought=mean(drought))
 
-rawData <- read.csv('ForBayesianAnalysis_9yr_Nov2016.csv')
+rawData <- read.csv('ForBayesianAnalysis_9yr_Dec2016.csv')
 
 rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
@@ -92,32 +92,64 @@ trtInfo <- rawData%>%
 ################################################################################
 
 #raw chains data --------------------------------------------------------
-chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_0.csv', comment.char='#')
-chains1 <- chains1[-1:-334,]
-chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_1.csv', comment.char='#')
-chains2 <- chains2[-1:-334,]
-chains3 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_2.csv', comment.char='#')
-chains3 <- chains3[-1:-334,]
-chains4 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_3.csv', comment.char='#')
-chains4 <- chains4[-1:-334,]
-chains5 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_4.csv', comment.char='#')
-chains5 <- chains5[-1:-334,]
+chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_0.csv', comment.char='#')
+chains1 <- chains1[-1:-5000,]
+chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_1.csv', comment.char='#')
+chains2 <- chains2[-1:-5000,]
+chains3 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_2.csv', comment.char='#')
+chains3 <- chains3[-1:-5000,]
+chains4 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_3.csv', comment.char='#')
+chains4 <- chains4[-1:-5000,]
 
-chainsCommunity <- rbind(chains1, chains2, chains3, chains4, chains5)
+chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
 
 
 #density plot of chains --------------------------------------------------------
-plot(density(chainsCommunity$mu_int.1))
-plot(density(chainsCommunity$mu_slope.1))
-plot(density(chainsCommunity$mu_quad.1))
-plot(density(chainsCommunity$U_int.2.1))
+plot(density(chainsCommunity$mu.1.1))
+plot(density(chainsCommunity$mu.1.2))
+plot(density(chainsCommunity$mu.1.3))
 
 
 #get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
 #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
 chainsCommunity2 <- chainsCommunity%>%
-  select(lp__, U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4)%>%
-  gather(key=parameter, value=value, U_int.2.1:mu_quad.4)%>%
+  select(lp__, 
+         #plot_mani intercepts
+         U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+         U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+         U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+         U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+         #plot_mani linear slopes
+         U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+         U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+         U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+         U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+         #plot_mani quad slopes
+         U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+         U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+         U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+         U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+         #ANPP intercept, linear, and quad slopes
+         D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+         D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+         D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+         #richness intercept, linear, and quad slopes
+         D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+         D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+         D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+         #MAP intercept, linear, and quad slopes
+         E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+         E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+         E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+         #MAT intercept, linear, and quad slopes
+         E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+         E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+         E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+         #overall intercept, linear, and quad slopes
+         mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+         mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+         mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+  gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
   group_by(parameter)%>%
   summarise(median=median(value), sd=sd(value))%>%
   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
@@ -127,8 +159,8 @@ chainsCommunity2 <- chainsCommunity%>%
 #gather the intercepts, linear slopes, and quadratic slopes for all treatments --------------------------------------------------------
 #numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
 #set any that are not significant (CI overlaps 0) as 0
-chainsIntercept <- chainsCommunity[,8:1159]%>%
-  gather(key=parameter, value=value, B.1.1.1:B.4.288.1)%>%
+chainsIntercept <- chainsCommunity[,12172:17235]%>%
+  gather(key=parameter, value=value, B.1.1.1:B.4.422.3)%>%
   group_by(parameter)%>%
   summarise(sd_intercept=sd(value), intercept=median(value))%>%
   mutate(lower=intercept-2*sd_intercept, upper=intercept+2*sd_intercept, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
