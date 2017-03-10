@@ -32,8 +32,8 @@ biocon<-read.delim("CDR_biocon_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp, block)%>%
   mutate(community_type=0)
 e001<-read.csv("CDR_e001_anpp.csv")%>%
-  select(-data_type)%>%
-  mutate(block=0)
+  select(-data_type, -X)%>%
+  mutate(block=0, treatment=as.factor(treatment))
 e002<-read.delim("CDR_e002_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(block=0)%>%
@@ -130,6 +130,6 @@ nitadd<-read.csv("YMN_NitAdd_anpp.csv")%>%
 
 anpp <- rbind(bgp, biocon, bowman, clonal, cxn, e001, e002, events, exp1, gb, gfp, imagine, interaction, irg, kgfert, lind, megarich, nde, nfert, nitadd, nitphos, nitrogen, nsfc, oface, pme, pplots, ramps, rhps, rmapc, snfert, t7, tide,tmece, uk, wapaclip, water, watering, watfer, wenndex, wet, yu)
 
-write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
+#write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
 
-write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_March2016.csv")
+write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Dec2016.csv")

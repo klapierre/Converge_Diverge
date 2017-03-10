@@ -12,17 +12,17 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_Mar2016.csv')%>%
+expInfo <- read.csv('ExperimentInformation_Dec2016.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep='::'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
 #diversity data
-div <- merge(read.csv('DiversityMetrics_Nov2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+div <- merge(read.csv('DiversityMetrics_Dec2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
-anpp<-read.csv("ANPP_March2016.csv")%>%
+anpp<-read.csv("ANPP_Dec2016.csv")%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -35,11 +35,20 @@ divControls <- subset(div, subset=(plot_mani==0))%>%
   names(divControls)[names(divControls)=='H'] <- 'ctl_H'
   names(divControls)[names(divControls)=='S'] <- 'ctl_S'
   names(divControls)[names(divControls)=='SimpEven'] <- 'ctl_SimpEven'
-divTrt <- div%>%
+divTrt1 <- div%>%
   #removing treatments that were low levels of resource manipulation, not manipulating any resource, pulses
   #plus filtering to get only treatments
-  filter(max_trt==1, resource_mani==1, pulse==0, plot_mani>0)
+  filter(pulse==0, plot_mani>0, project_name!="e001"&project_name!="e002")
 
+divCDRe001<-div%>%
+  filter(site_code=="CDR"&treatment==1|treatment==6|treatment==8|treatment==9,plot_mani>0)
+divCDRe002<-div%>%
+  filter(site_code=="CDR"&treatment=='1_f_u_n'|treatment=='6_f_u_n'|treatment=='8_f_u_n'|treatment=='9_f_u_n',plot_mani>0)
+  
+
+divTrt<-rbind(divTrt1, divCDRe002, divCDRe001)
+
+##16% of our data is from CDR and 10% is from KNZ
 #merge controls and treatments
 divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
 #calculate change in disperion, H, S, and evenness
@@ -113,19 +122,21 @@ grid.arrange( m, d2,s1, e2, ncol=2)
 
 
 ###merging with experiment (treatment) information
-SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
+SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   select(-X)
 
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
 #full dataset
-write.csv(ForAnalysis, "ForBayesianAnalysis_Nov2016.csv")
+write.csv(ForAnalysis, "ForBayesianAnalysis_Dec2016.csv")
 
 #9 yr or less
 ForAnalysis9yr <- ForAnalysis%>%
-  mutate(treatment_year=ifelse(project_name=='TMECE'&treatment_year==11, 1, ifelse(project_name=='TMECE'&treatment_year==12, 2, ifelse(project_name=='TMECE'&treatment_year==13, 3, ifelse(project_name=='TMECE'&treatment_year==14, 4, ifelse(project_name=='TMECE'&treatment_year==15, 5, ifelse(project_name=='TMECE'&treatment_year==16, 6, ifelse(project_name=='TMECE'&treatment_year==17, 7, ifelse(project_name=='TMECE'&treatment_year==18, 8, ifelse(project_name=='TMECE'&treatment_year==19, 9, ifelse(project_name=='TMECE'&treatment_year==20, 10, ifelse(project_name=='TMECE'&treatment_year==21, 11, ifelse(project_name=='TMECE'&treatment_year==22, 12, ifelse(project_name=='TMECE'&treatment_year==23, 13, ifelse(project_name=='TMECE'&treatment_year==24, 14, ifelse(project_name=='TMECE'&treatment_year==25, 15, ifelse(project_name=='TMECE'&treatment_year==26, 16, ifelse(project_name=='TMECE'&treatment_year==27, 17, treatment_year))))))))))))))))))%>%
   filter(treatment_year<10)
-write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Nov2016.csv")
+
+##18% of our our data is from CDR and KNZ
+
+write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Dec2016.csv")
 
 
 #Plot of 9 year data used in paper.
@@ -162,12 +173,12 @@ grid.arrange( m, d2,s1, e2, ncol=2)
 #10+ year datasets (all years)
 ForAnalysis10yr <- ForAnalysis%>%
   filter(experiment_length>9)
-write.csv(ForAnalysis10yr, "ForBayesianAnalysis_10yr_Sept2016.csv")
+write.csv(ForAnalysis10yr, "ForBayesianAnalysis_10yr_Dec2016.csv")
 
 #absolute value
-ForAnalysisAbsValue <- ForAnalysis%>%
+ForAnalysisAbsValue <- ForAnalysis9yr%>%
   mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
-write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Sept2016.csv")
+write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
 
 
 
@@ -202,12 +213,26 @@ anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
 # grid.arrange(d1, d2, s1, s2, e1, e2, a1, a2, ncol=2)
 
 ###merging with experiment (treatment) information
-anppCompareExp <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+anppCompareExp1 <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
-  filter(pulse==0, resource_mani==1, max_trt==1, treatment_year>0)%>%
+  filter(pulse==0, treatment_year>0, site_code!="CDR")%>%
   select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
 
+anppcdre001<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  filter(site_code=="CDR"&treatment==1|treatment==6|treatment==8|treatment==9,plot_mani>0)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+anppcdre002<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+  filter(site_code=="CDR"&treatment=='1_f_u_n'|treatment=='6_f_u_n'|treatment=='8_f_u_n'|treatment=='9_f_u_n',plot_mani>0)%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+
+anppCompareExp<-rbind(anppCompareExp1, anppcdre002, anppcdre001)
+
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
+  write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Dec2016.csv")
+  
+ForANPPAnalysis9yr<-ForANPPAnalysis%>%
+  filter(treatment_year<10)
+write.csv(ForANPPAnalysis9yr, "ForBayesianAnalysisANPP_9yr_Dec2016.csv")
 
 qplot(anpp_PC, data=anppCompareExp, geom="histogram")+
   xlab("ANPP Percent Change")+
@@ -217,7 +242,7 @@ test<-ForANPPAnalysis%>%
   select(site_code, project_name, community_type)%>%
   unique()
 
-write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_March2016b.csv")
+
 
 ###ANPP to MAP
 test<-ForAnalysis%>%

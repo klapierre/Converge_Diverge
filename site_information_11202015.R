@@ -9,7 +9,7 @@ library(dplyr)
 library(vegan)
 
 #import the list of all experiments site information
-ExpInfo <- read.csv("SpeciesRelativeAbundance_March2016.csv")%>%
+ExpInfo <- read.csv("SpeciesRelativeAbundance_Dec2016.csv")%>%
   select(-X)
 
 ExpList<-ExpInfo%>%
@@ -17,9 +17,9 @@ ExpList<-ExpInfo%>%
   unique()
 
 #Getting ANPP
-ANPP<-read.csv("ANPP_March2016.csv")
+ANPP<-read.csv("ANPP_Dec2016.csv")
 
-Experiment_Info<-read.csv("ExperimentInformation_Mar2016.csv")%>%
+Experiment_Info<-read.csv("ExperimentInformation_Dec2016.csv")%>%
   select(site_code, project_name, community_type, treatment, plot_mani, public)%>%
   unique()
 
@@ -36,7 +36,8 @@ controlANPP<-merge(ANPP, Experiment_Info, by=c("site_code","project_name","commu
   summarize(anpp=mean(anpp))%>%
   tbl_df()%>%
   group_by(site_code, project_name, community_type)%>%
-  summarize(anpp=mean(anpp))
+  summarize(anpp=mean(anpp))%>%
+  tbl_df()
 
 ANPP_nocont<-read.csv("ANPP_noControls.csv")
 
@@ -62,14 +63,15 @@ ExpLength<-ExpInfo%>%
 
 ##calculate chao richness and rarefied richness for each site
 
-species <- read.csv("SpeciesRawAbundance_March2016.csv")%>%
+species <- read.csv("SpeciesRawAbundance_Dec2016.csv")%>%
   select(site_code, project_name, community_type, plot_id, calendar_year, genus_species, abundance)%>%
   mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
   tbl_df()%>%
   group_by(exp,site_code, project_name, community_type, calendar_year, plot_id, genus_species)%>%
   summarise(abundance=mean(abundance))%>%
-  filter(genus_species!="")
+  filter(genus_species!="")%>%
+  tbl_df()
 
 
 SampleIntensity<-species%>%
@@ -78,7 +80,8 @@ SampleIntensity<-species%>%
   summarize(SampleIntensity=length(abundance))%>%
   tbl_df()%>%
   group_by(exp)%>%
-  summarize(SampleIntensity=length(SampleIntensity))#how many plots were sampled over the course of the experiment
+  summarize(SampleIntensity=length(SampleIntensity))%>%#how many plots were sampled over the course of the experiment
+  tbl_df()
 
 exp<-SampleIntensity%>%
   select(exp)
@@ -125,131 +128,9 @@ ExpDetails<-merge(ExpDetails1, ExpANPP, by=c("site_code","project_name","communi
 
 SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
 
-write.csv(SiteExpDetails, "SiteExperimentDetails_March2016.csv")
+write.csv(SiteExpDetails, "SiteExperimentDetails_Dec2016.csv")
 
 pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
 with(SiteExpDetails,plot(MAP, anpp))
 with(SiteExpDetails,cor.test(rrich, experiment_length))
-
-
-#####subsetting the data
-
-Experiment_Info<-read.csv("ExperimentInformation_Mar2016.csv")
-
-fix<-Experiment_Info%>%
-  tbl_df()%>%
-  group_by(site_code, project_name, community_type)%>%
-  summarize(burn_m=mean(burn), mow_clip=mean(mow_clip), herb_removal=mean(herb_removal))%>%
-  filter(burn_m==0|burn_m==1)%>%
-  filter()
-  
-Exp_Info<-
-
-read.csv()
-cdrIrrOnly <- Experiment_Info%>%
-  filter(project_name=='IRG'&)
-
-###Look at experiments that do N only
-pplots<-Experiment_Info%>%
-  filter(project_name=="pplots")%>%
-  filter(p==0)%>%
-  select(site_code, project_name, community_type, treatment, n)%>%
-  unique()
-
-Nitrogenonly<-Experiment_Info%>%
-  filter(nutrients==1)%>%
-  filter(p==0&
-        k==0&
-        CO2==0&
-        precip==0&
-        temp==0&
-        mow_clip==0&
-        burn==0&
-        herb_removal==0&
-        trt_details==0&
-        other_trt==0&
-        successional==0&
-        plant_mani==0&
-        pulse==0)%>%
-  select(site_code, project_name, community_type, treatment, n)%>%
-  unique()
-
-# Nitrogenonly2<-rbind(Nitrogenonly, pplots)%>%
-#   select(site_code,project_name, community_type)%>%
-#   unique()
-
-Nitrogenonly2<-rbind(Nitrogenonly, pplots)
-write.csv(Nitrogenonly2, "nitrogen.csv")
-
-
-
-###Look at experiments that do N&P only
-pplots_np<-Experiment_Info%>%
-  filter(project_name=="pplots")%>%
-  select(site_code, project_name, community_type, treatment, n, p)%>%
-  unique()
-
-NitPhos<-Experiment_Info%>%
-  filter(nutrients==1)%>%
-  filter(p>0&
-           k==0&
-           CO2==0&
-           precip==0&
-           temp==0&
-           mow_clip==0&
-           burn==0&
-           herb_removal==0&
-           trt_details==0&
-           other_trt==0&
-           successional==0&
-           plant_mani==0&
-           pulse==0)%>%
-  select(site_code, project_name, community_type, treatment, n, p)%>%
-  unique()
-
-Nitphos2<-rbind(NitPhos, pplots_np)
-
-write.csv(Nitphos2, "nitrogen_phosphorus.csv")
-
-###Drought
-
-drought<-Experiment_Info%>%
-  filter(water==1)%>%
-  filter(n==0&
-        p==0&
-           k==0&
-           CO2==0&
-           precip<0&
-           temp==0&
-           mow_clip==0&
-           burn==0&
-           herb_removal==0&
-           trt_details==0&
-           other_trt==0&
-           successional==0&
-           plant_mani==0&
-           pulse==0)%>%
-  select(site_code, project_name, community_type, treatment, precip)%>%
-  unique()
-
-##Irrigation
-irrigation<-Experiment_Info%>%
-  filter(water==1)%>%
-  filter(n==0&
-           p==0&
-           k==0&
-           CO2==0&
-           precip>0&
-           temp==0&
-           mow_clip==0&
-           burn==0&
-           herb_removal==0&
-           trt_details==0&
-           other_trt==0&
-           successional==0&
-           plant_mani==0&
-           pulse==0)%>%
-  select(site_code, project_name, community_type, treatment, precip)%>%
-  unique()
-
