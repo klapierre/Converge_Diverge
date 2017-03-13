@@ -225,7 +225,7 @@ meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
   annotate('text', x=0, y=1, label='(a)', size=10, hjust='left')
 
 meanPlot <- meanPlot + 
-#below are the individual treatment lines
+  #below are the individual treatment lines
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
@@ -648,7 +648,7 @@ meanPlot <- meanPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1482058)+(0.298937)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-#last five are the main plot_mani effect lines
+  #last five are the main plot_mani effect lines
   #estimated as mean across treatment lines (plot mani 1-4 staggered by intercept so lines don't overlap)
   #mani1
   stat_function(fun=function(x){(-0.47095450 + 0.16878700*x + -0.01154170*x^2)*(0.1482058)+(0.298937)}, size=3, xlim=c(0,8), colour='#1400E5') +
@@ -1097,7 +1097,7 @@ dispersionPlot <- dispersionPlot +
   stat_function(fun=function(x){(-0.7092779445521 + 0*x + 0*x^2)*(0.08790049)+(-0.000407613)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0.4743388065892*x + 0*x^2)*(0.08790049)+(-0.000407613)}, size=0.5, xlim=c(0,2), colour='grey') +
   stat_function(fun=function(x){(0 + 0.361905479375355*x + 0*x^2)*(0.08790049)+(-0.000407613)}, size=0.5, xlim=c(0,2), colour='grey') +
-#estimated as mean across treatment lines
+  #estimated as mean across treatment lines
   #overall line (because plot mani not significant)
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)}, size=3, xlim=c(0,8), colour='black')
 
@@ -1114,7 +1114,7 @@ richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   annotate('text', x=0, y=0.8, label='(c)', size=10, hjust='left')
 
 richnessPlot <- richnessPlot + 
-#below are the individual treatment lines
+  #below are the individual treatment lines
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2154907)+(-0.0546117)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2154907)+(-0.0546117)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2154907)+(-0.0546117)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
@@ -1564,7 +1564,7 @@ evennessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   annotate('text', x=0, y=0.6, label='(d)', size=10, hjust='left')
 
 evennessPlot <- evennessPlot + 
-#below are the individual treatment lines
+  #below are the individual treatment lines
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#4A06AC44') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
@@ -1987,7 +1987,7 @@ evennessPlot <- evennessPlot +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
   stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.09597775)+(0.01730774)}, size=0.5, xlim=c(0,2), colour='#1400E544') +
-#mean lines by plot mani
+  #mean lines by plot mani
   #estimated as mean across treatment lines
   #plot mani 2 and 4 are staggered to prevent overlap
   #mani1
@@ -2050,20 +2050,21 @@ meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, var
   coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
   xlab('')+
   annotate('text', x=0.5, y=0.60, label='(a)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.5, label='a*', size=10) +
-  annotate('text', x=2, y=0.41, label='b*', size=10) +
-  annotate('text', x=3, y=0.34, label='b*', size=10) +
-  annotate('text', x=4, y=0.36, label='b*', size=10)
+  annotate('text', x=1, y=0.43, label='*', size=10) +
+  annotate('text', x=2, y=0.455, label='*', size=10) +
+  annotate('text', x=3, y=0.39, label='*', size=10) +
+  annotate('text', x=4, y=0.41, label='*', size=10)
 
 dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='dispersion'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Dispersion Change') +
+  scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Dispersion Change') +
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.15), xlim=c(1,4)) +
+  coord_cartesian(ylim=c(-0.05, 0.17), xlim=c(1,4)) +
   xlab('') +
-  annotate('text', x=0.5, y=0.15, label='(b)', size=12, hjust='left')
+  annotate('text', x=0.5, y=0.17, label='(b)', size=12, hjust='left') +
+  annotate('text', x=4, y=0.16, label='*', size=10)
 
 richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='richness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
@@ -2071,10 +2072,10 @@ richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani,
   scale_y_continuous(breaks=seq(-5, 5, 0.1), name='Proportion Richness Change') +
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.25, 0.2), xlim=c(1,4)) +
+  coord_cartesian(ylim=c(-0.2, 0.28), xlim=c(1,4)) +
   xlab('') +
-  annotate('text', x=0.5, y=0.2, label='(c)', size=12, hjust='left') +
-  annotate('text', x=1, y=-0.19, label='*', size=10)
+  annotate('text', x=0.5, y=0.28, label='(c)', size=12, hjust='left') +
+  annotate('text', x=2, y=-0.195, label='*', size=10)
 
 evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='evenness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr9', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
@@ -2082,10 +2083,11 @@ evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani,
   scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Evenness Change') +
   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.06, 0.06), xlim=c(1,4)) +
+  coord_cartesian(ylim=c(-0.04, 0.07), xlim=c(1,4)) +
   xlab('') +
-  annotate('text', x=0.5, y=0.06, label='(d)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.06, label='*', size=10)
+  annotate('text', x=0.5, y=0.07, label='(d)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.06, label='*', size=10) +
+  annotate('text', x=3, y=0.055, label='*', size=10)
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -2095,47 +2097,48 @@ print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col 
 #export at 1800 x 1600
 
 
-      
+
+
 
 
 ###summary stats from bayesian output --------------------------------------------------------
 #gather summary stats needed and relabel them
 chainsCommunitySummary <- chainsCommunity%>%
   select(#plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
-         U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
-         U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
-         U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
-         #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
-         U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
-         U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
-         U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
-         #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
-         U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
-         U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
-         U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
-         #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
-         D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
-         D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
-         D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
-         #richness intercept, linear, and quad slopes (center digit): 2=richness
-         D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
-         D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
-         D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
-         #MAP intercept, linear, and quad slopes (center digit): 1=MAP
-         E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
-         E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
-         E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
-         #MAT intercept, linear, and quad slopes (center digit): 2=MAT
-         E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
-         E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
-         E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
-         #overall intercept, linear, and quad slopes
-         mu.1.1, mu.2.1, mu.3.1, mu.4.1,
-         mu.1.2, mu.2.2, mu.3.2, mu.4.2,
-         mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+    U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+    U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+    U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+    U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+    #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+    U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+    U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+    U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+    U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+    #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+    U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+    U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+    U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+    U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+    #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+    D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+    D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+    D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+    #richness intercept, linear, and quad slopes (center digit): 2=richness
+    D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+    D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+    D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+    #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+    E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+    E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+    E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+    #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+    E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+    E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+    E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+    #overall intercept, linear, and quad slopes
+    mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+    mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+    mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
   gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
   group_by(parameter)%>%
   summarise(median=median(value), sd=sd(value))%>%
@@ -2173,7 +2176,7 @@ meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'
 meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2185,20 +2188,20 @@ meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&
 meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.1, 0.1) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
 #dispersion plots --------------------------------------------------------
 dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2210,7 +2213,7 @@ dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='inte
 dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2222,20 +2225,20 @@ dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='li
 dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.1, 0.1) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
 #richness plots --------------------------------------------------------
 richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2247,7 +2250,7 @@ richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='interc
 richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2259,20 +2262,20 @@ richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='line
 richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.1, 0.1) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
 #evenness plots --------------------------------------------------------
 evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2284,7 +2287,7 @@ evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='interc
 evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
@@ -2296,13 +2299,13 @@ evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='line
 evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.1, 0.1) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
 #plot all together --------------------------------------------------------
@@ -2338,7 +2341,7 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
 dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
   geom_point(size=4) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.3, 0.15), breaks=seq(-0.2, 0.2, 0.2)) +
+  scale_y_continuous(limits=c(-0.3, 0.18), breaks=seq(-0.2, 0.2, 0.2)) +
   scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
@@ -2372,19 +2375,16 @@ evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='eve
   annotate('text', x=3.45, y=-0.4, label='(d)', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,4)))
-print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
 print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 #export at 2400x500
 
 
 
-
-
-
 ###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern--------------------------------------------------------
-relAbund <- read.csv('SpeciesRelativeAbundance_Nov2016.csv')%>%
+relAbund <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
@@ -2407,23 +2407,23 @@ exp_trt=relAbundYear%>%
 turnoverAll=data.frame(row.names=1)
 
 for(i in 1:length(relAbundYear$exp_trt)) {
-
+  
   #creates a dataset for each unique year, trt, exp combo
   subset=relAbundYear[relAbundYear$exp_trt==as.character(exp_trt$exp_trt[i]),]%>%
     select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
     #get just first and last year of study
     filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))
-
+  
   #need this to keep track of plot mani
   labels=subset%>%
     select(exp_trt, plot_mani, calendar_year)%>%
     unique()
-
+  
   #calculate disappearance
   disappearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='disappearance')%>%
     group_by(calendar_year)%>%
     summarise(disappearance=mean(disappearance))
-
+  
   #calculate appearance
   appearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='appearance')%>%
     group_by(calendar_year)%>%
@@ -2433,7 +2433,7 @@ for(i in 1:length(relAbundYear$exp_trt)) {
   total=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='total')%>%
     group_by(calendar_year)%>%
     summarise(turnover=mean(total))
-
+  
   #merging back with labels to get back plot_mani
   turnover=labels%>%
     left_join(disappearance, by='calendar_year')%>%
@@ -2441,7 +2441,7 @@ for(i in 1:length(relAbundYear$exp_trt)) {
     left_join(total, by='calendar_year')%>%
     filter(calendar_year==max(calendar_year))%>%
     select(exp_trt, plot_mani, appearance, disappearance, turnover)
-
+  
   #pasting variables into the dataframe made for this analysis
   turnoverAll=rbind(turnover, turnoverAll)
 }
@@ -2587,57 +2587,59 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
   scale_x_continuous(breaks=seq(0,50,10)) +
   coord_cartesian(xlim=c(0,45))
 #export at 900x900
-  
+
+
 
 
 
 
 ###look at five factor manipulations for mean change --------------------------------------------------------
-# #just for the four experiments with five factors, compare to their four factor treatments
-# meanFive <- mean4%>%
-#   filter(treatment=='1_y_n'|treatment=='8_y_n'|treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='2F'|treatment=='3F'|treatment=='4F'|treatment=='ghn'|treatment=='gsn'|treatment=='ncn'|treatment=='nhn'|treatment=='nsn')
+#just for the four experiments with five factors, compare to their four factor treatments
+# meanFive <- chainsEquations%>%
+#   filter(project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')
+#   # filter(treatment=='1_y_n'|treatment=='8_y_n'|treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='2F'|treatment=='3F'|treatment=='4F'|treatment=='ghn'|treatment=='gsn'|treatment=='ncn'|treatment=='nhn'|treatment=='nsn')
 # 
-# cdr1APlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr1APlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'&variable=='mean'), aes(x=as.factor(treatment), y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                      labels=c('4', '5')) +
+#   # scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#   #                    labels=c('4', '5')) +
 #   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
+#   # scale_fill_manual(values=c('white', 'black')) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(a) CDR e001 A', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr1BPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr1BPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='B'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
+#   # scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#   #                  labels=c('4', '5')) +
 #   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
+#   # scale_fill_manual(values=c('white', 'black')) +
 #   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(b) CDR e001 A', size=10, hjust='left') +
+#   annotate('text', x=0.5, y=1, label='(b) CDR e001 B', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr1CPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='C'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr1CPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='C'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
+#   # scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#   #                  labels=c('4', '5')) +
 #   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
+#   # scale_fill_manual(values=c('white', 'black')) +
 #   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(c) CDR e001 A', size=10, hjust='left') +
+#   annotate('text', x=0.5, y=1, label='(c) CDR e001 C', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr1DPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr1DPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
+#   # scale_x_discrete(limits=c('1_y_n', '8_y_n'),
+#   #                  labels=c('4', '5')) +
 #   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
+#   # scale_fill_manual(values=c('white', 'black')) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(d) CDR e001 D', size=10, hjust='left') +
 #   theme(legend.position='none')
-# ninPlot <- ggplot(data=subset(meanFive, site_code=='NIN'), aes(x=treatment, y=yr10, fill=treatment)) +
+# ninPlot <- ggplot(data=subset(meanFive, site_code=='NIN'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
 #   scale_x_discrete(limits=c('2F', '3F', '4F'),
@@ -2647,7 +2649,7 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(e) NIN herbdiv', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr2APlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr2APlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='A'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
 #   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
@@ -2657,7 +2659,7 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(f) CDR e002 A', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr2BPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
+# cdr2BPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='B'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
 #   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
@@ -2667,7 +2669,7 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(g) CDR e002 B', size=10, hjust='left') +
 #   theme(legend.position='none')
-# cdr2CPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='C'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
+# cdr2CPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='C'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
 #   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
@@ -2677,7 +2679,7 @@ ggplot(data=dispersionReps, aes(x=rep_num, y=yr9)) +
 #   xlab('') +
 #   annotate('text', x=0.5, y=1, label='(h) CDR e002 C', size=10, hjust='left') +
 #   theme(legend.position='none')
-# traPlot <- ggplot(data=subset(meanFive, site_code=='TRA'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
+# traPlot <- ggplot(data=subset(meanFive, site_code=='TRA'&variable=='mean'), aes(x=treatment, y=yr9, fill=treatment)) +
 #   geom_bar(stat="identity", colour='black') +
 #   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
 #   scale_x_discrete(limits=c('ghn', 'gsn', 'ncn', 'nhn', 'nsn'),
@@ -2706,14 +2708,14 @@ expRawMean <- expRaw%>%
   group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
   summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
 
-meanCompare <- subset(resourceMani, variable=='mean')%>%
+meanCompare <- subset(chainsEquations, project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')%>%
   select(variable, site_code, project_name, community_type, treatment, plot_mani, yr9)%>%
   left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
   mutate(n_mani=ifelse(n>0, 1, 0))
 
 
 #plot without N at four factors, with N at five factors
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
+compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
@@ -2723,7 +2725,7 @@ compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3),
   xlab('') +
   annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
   theme(legend.position='none')
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
+compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
@@ -2733,7 +2735,7 @@ compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>
   xlab('Number of Factors Manipulated') +
   annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
   theme(legend.position='none')
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
+comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
