@@ -22,9 +22,41 @@ div <- merge(read.csv('DiversityMetrics_Dec2016.csv'), expInfo, by=c('exp_year',
   select(-X)%>%
   filter(treatment_year!=0)
 
+#anpp data
 anpp<-read.csv("ANPP_Dec2016.csv")%>%
   select(-X)%>%
   filter(treatment_year!=0)
+
+#appearance/disappearance data
+SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
+  select(-X)
+
+turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
+  separate(col=exp_code, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::')%>%
+  left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment', 'calendar_year'), all=T)%>%
+  filter(pulse==0&project_name!='e001'&project_name!='e002')
+turnoverCDRe001 <- turnover%>%filter(project_name=='e001'&treatment!=2&treatment!=3&treatment!=4&treatment!=5&treatment!=7)
+turnoverCDRe002 <- turnover%>%filter(project_name=='e002'&treatment!='2_f_u_n'&treatment=='3_f_u_n'&treatment=='4_f_u_n'&treatment=='5_f_u_n'&treatment=='7_f_u_n')
+turnoverAll<-rbind(turnover, turnoverCDRe001, turnoverCDRe002)%>%
+  left_join(SiteExp, by=c('site_code', 'project_name', 'community_type'))
+
+#full dataset
+write.csv(turnoverAll, "turnover_all years_Mar2017.csv")
+
+#9 yr or less
+turnover9yr <- turnoverAll%>%
+  filter(treatment_year<10)
+
+##18% of our our data is from CDR and KNZ
+
+write.csv(turnover9yr, "turnover_9yr_Mar2017.csv")
+
+ggplot(turnover9yr, aes(x=treatment_year, y=appearance/total, color=plot_mani)) +
+  geom_point()
+ggplot(turnover9yr, aes(x=treatment_year, y=disappearance/total, color=plot_mani)) +
+  geom_point()
+
+
 
 ###calculate change in dispersion, H, S, and evenness
 

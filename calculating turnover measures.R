@@ -25,11 +25,15 @@ alldata<-read.csv("SpeciesRelativeAbundance_Dec2016.csv")%>%
 
 expinfo<-read.csv("ExperimentInformation_Dec2016.csv")%>%
   mutate(exp_code=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  select(exp_code, plot_mani, calendar_year)
+  select(exp_code, plot_mani, calendar_year, treatment_year)
 
-alldata2<-merge(alldata, expinfo, by=c("exp_code","calendar_year"), all=F)
+alldata2<-merge(alldata, expinfo, by=c("exp_code","calendar_year"), all=F)%>%
+  filter(treatment_year>0)%>%
+  select(-treatment_year)%>%
+  filter(exp_code!='GVN::FACE::0::A'&exp_code!='GVN::FACE::0::E')
 
 
+# codyn function modification ---------------------------------------------
 #modifying codyn functions to output integer numbers of species appearing and disappearing, plus total spp number over two year periods, rather than ratios
 turnover_allyears <- function(df, 
                               time.var, 
@@ -47,8 +51,8 @@ turnover_allyears <- function(df,
   ## split data by year
   templist <- split(df, df[[time.var]])
   
-  ## create consecutive pairs of time points
-  t1 <- templist[-length(templist)]
+  ## create two time points (first year and each other year)
+  t1 <- templist[1]
   t2 <- templist[-1]
   
   ## calculate turnover for across all time points
@@ -110,6 +114,7 @@ turnover_twoyears <- function(d1, d2,
 
 
 
+# generating appearances and disappearances for each experiment ---------------------------------------------
 #make a new dataframe with just the label;
 exp_code=alldata2%>%
   select(exp_code)%>%
@@ -148,5 +153,4 @@ for(i in 1:length(exp_code$exp_code)) {
 
 
 #write csv
-
-write.csv(for.analysis, 'DiversityMetrics_Dec2016.csv')
+write.csv(for.analysis, 'appear_disappear_Mar2017.csv')
