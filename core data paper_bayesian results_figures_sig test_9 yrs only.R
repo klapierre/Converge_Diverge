@@ -2151,25 +2151,25 @@ print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 meanPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&precip!=0), aes(x=precip, y=yr_final)) +
   geom_point(size=5) +
   # scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('N added (gm-2)') +
+  xlab('H2O added/removed (mm)') +
   annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
 
 dispersionPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&precip!=0), aes(x=precip, y=yr_final)) +
   geom_point(size=5) +
   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-  xlab('N added (gm-2)') +
+  xlab('H2O added/removed (mm)') +
   annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
 
 richnessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&precip!=0), aes(x=precip, y=yr_final)) +
   geom_point(size=5) +
   # scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-  xlab('N added (gm-2)') +
+  xlab('H2O added/removed (mm)') +
   annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
 
 evennessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&precip!=0), aes(x=precip, y=yr_final)) +
   geom_point(size=5) +
   # scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
-  xlab('N added (gm-2)') +
+  xlab('H2O added/removed (mm)') +
   annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(2,2)))
