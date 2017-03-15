@@ -156,7 +156,7 @@ chainsCommunity2 <- chainsCommunity%>%
   summarise(median=median(value), sd=sd(value))%>%
   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
 
-
+write.csv(chainsCommunity2, 'bayesian_output_summary_03132017.csv')
 
 #gather the intercepts, linear slopes, and quadratic slopes for all treatments --------------------------------------------------------
 #numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
@@ -185,6 +185,8 @@ chainsFinal <- cbind(chainsFinalMean, chainsFinalSD)%>%
   #spread by variable
   select(variable, id, parameter, mean)%>%
   spread(key=parameter, value=mean)
+
+write.csv(chainsFinal, 'bayesian_output_mean sd_03132017.csv')
 
 #merge together with experiment list
 chainsExperiment <- chainsFinal%>%
@@ -2150,6 +2152,8 @@ chainsCommunitySummary <- chainsCommunity%>%
          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
          predictor=ifelse(level=='D'&predictor==1, 'ANPP', ifelse(level=='D'&predictor==2, 'rrich', ifelse(level=='E'&predictor==1, 'MAP', ifelse(level=='E'&predictor==2, 'MAT', ifelse(level=='U'&predictor==1, 'plot mani 2', ifelse(level=='U'&predictor==2, 'plot mani 3', ifelse(level=='U'&predictor==3, 'plot mani 4', ifelse(level=='U'&predictor==4, 'plot mani 5', 'overall')))))))))%>%
   select(level, parameter, variable, predictor, predictor, median, sd, CI)
+
+write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_03132017.csv')
 
 chainsCommunityOverall <- chainsCommunitySummary%>%
   filter(predictor=='overall')%>%
