@@ -7,7 +7,7 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 
-setwd("C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
+setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
@@ -93,100 +93,105 @@ trtInfo <- rawData%>%
 ################################################################################
 ################################################################################
 
-#raw chains data --------------------------------------------------------
-chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_0.csv', comment.char='#')
-chains1 <- chains1[-1:-5000,]
-chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_1.csv', comment.char='#')
-chains2 <- chains2[-1:-5000,]
-chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_2.csv', comment.char='#')
-chains3 <- chains3[-1:-5000,]
-chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_3.csv', comment.char='#')
-chains4 <- chains4[-1:-5000,]
+# #only run to generate initial chains files
+# #raw chains data --------------------------------------------------------
+# chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_0.csv', comment.char='#')
+# chains1 <- chains1[-1:-5000,]
+# chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_1.csv', comment.char='#')
+# chains2 <- chains2[-1:-5000,]
+# chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_2.csv', comment.char='#')
+# chains3 <- chains3[-1:-5000,]
+# chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_3.csv', comment.char='#')
+# chains4 <- chains4[-1:-5000,]
+# 
+# chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+# 
+# 
+# #density plot of chains --------------------------------------------------------
+# plot(density(chainsCommunity$mu.1.1))
+# plot(density(chainsCommunity$mu.1.2))
+# plot(density(chainsCommunity$mu.1.3))
+# 
+# 
+# #get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
+# #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
+# chainsCommunity2 <- chainsCommunity%>%
+#   select(lp__, 
+#          #plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+#          U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+#          U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+#          U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+#          #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+#          U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+#          U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+#          U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+#          #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+#          U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+#          U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+#          U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+#          #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+#          D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+#          D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+#          D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+#          #richness intercept, linear, and quad slopes (center digit): 2=richness
+#          D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+#          D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+#          D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+#          #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+#          E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+#          E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+#          E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+#          #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+#          E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+#          E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+#          E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+#          #overall intercept, linear, and quad slopes
+#          mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+#          mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+#          mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+#   gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
+#   group_by(parameter)%>%
+#   summarise(median=median(value), sd=sd(value))%>%
+#   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
+# 
+# write.csv(chainsCommunity2, 'bayesian_output_summary_03132017.csv')
 
-chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+chainsCommunity2 <- read.csv('bayesian_output_summary_03132017.csv')
 
+# #gather the intercepts, linear slopes, and quadratic slopes for all treatments --------------------------------------------------------
+# #numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
+# #variable (second place): 1=mean change, 2=dispersion change, 3=evenness change, 4=richness change
+# #parameter (final digit): 1=intercept, 2=linear slope, 3=quad slope
+# #set any that are not significant (CI overlaps 0) as 0
+# 
+# #get mean parameter values across all runs for each experiment, treatment, etc
+# chainsFinalMean <- as.data.frame(colMeans(chainsCommunity[,12172:17235]))%>% #may need to delete original four chains dataframes to get this to work
+#   add_rownames('parameter')
+# names(chainsFinalMean)[names(chainsFinalMean) == 'colMeans(chainsCommunity[, 12172:17235])'] <- 'mean'
+# #get sd of parameter values across all runs for each experiment, treatment, etc
+# chainsFinalSD <- as.data.frame(colSd(chainsCommunity[,12172:17235]))
+# names(chainsFinalSD)[names(chainsFinalSD) == 'colSd(chainsCommunity[, 12172:17235])'] <- 'sd'
+# 
+# chainsFinal <- cbind(chainsFinalMean, chainsFinalSD)%>%
+#   #split names into parts
+#   separate(parameter, c('B', 'variable', 'id', 'parameter'))%>%
+#   select(-B)%>%
+#   #rename parts to be more clear
+#   mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
+#          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
+#          id=as.integer(id))%>%
+#   #if 95% confidence interval overlaps 0, then set mean to 0
+#   mutate(lower=mean-2*sd, upper=mean+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, mean=ifelse(diff==-2, 0, mean))%>%
+#   #spread by variable
+#   select(variable, id, parameter, mean)%>%
+#   spread(key=parameter, value=mean)
+# 
+# write.csv(chainsFinal, 'bayesian_output_mean sd_03132017.csv')
 
-#density plot of chains --------------------------------------------------------
-plot(density(chainsCommunity$mu.1.1))
-plot(density(chainsCommunity$mu.1.2))
-plot(density(chainsCommunity$mu.1.3))
-
-
-#get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
-#mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
-chainsCommunity2 <- chainsCommunity%>%
-  select(lp__, 
-         #plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
-         U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
-         U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
-         U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
-         #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
-         U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
-         U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
-         U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
-         #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-         U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
-         U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
-         U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
-         U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
-         #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
-         D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
-         D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
-         D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
-         #richness intercept, linear, and quad slopes (center digit): 2=richness
-         D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
-         D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
-         D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
-         #MAP intercept, linear, and quad slopes (center digit): 1=MAP
-         E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
-         E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
-         E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
-         #MAT intercept, linear, and quad slopes (center digit): 2=MAT
-         E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
-         E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
-         E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
-         #overall intercept, linear, and quad slopes
-         mu.1.1, mu.2.1, mu.3.1, mu.4.1,
-         mu.1.2, mu.2.2, mu.3.2, mu.4.2,
-         mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
-  gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
-  group_by(parameter)%>%
-  summarise(median=median(value), sd=sd(value))%>%
-  mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
-
-write.csv(chainsCommunity2, 'bayesian_output_summary_03132017.csv')
-
-#gather the intercepts, linear slopes, and quadratic slopes for all treatments --------------------------------------------------------
-#numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
-#variable (second place): 1=mean change, 2=dispersion change, 3=evenness change, 4=richness change
-#parameter (final digit): 1=intercept, 2=linear slope, 3=quad slope
-#set any that are not significant (CI overlaps 0) as 0
-
-#get mean parameter values across all runs for each experiment, treatment, etc
-chainsFinalMean <- as.data.frame(colMeans(chainsCommunity[,12172:17235]))%>% #may need to delete original four chains dataframes to get this to work
-  add_rownames('parameter')
-names(chainsFinalMean)[names(chainsFinalMean) == 'colMeans(chainsCommunity[, 12172:17235])'] <- 'mean'
-#get sd of parameter values across all runs for each experiment, treatment, etc
-chainsFinalSD <- as.data.frame(colSd(chainsCommunity[,12172:17235]))
-names(chainsFinalSD)[names(chainsFinalSD) == 'colSd(chainsCommunity[, 12172:17235])'] <- 'sd'
-
-chainsFinal <- cbind(chainsFinalMean, chainsFinalSD)%>%
-  #split names into parts
-  separate(parameter, c('B', 'variable', 'id', 'parameter'))%>%
-  select(-B)%>%
-  #rename parts to be more clear
-  mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
-         parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
-         id=as.integer(id))%>%
-  #if 95% confidence interval overlaps 0, then set mean to 0
-  mutate(lower=mean-2*sd, upper=mean+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, mean=ifelse(diff==-2, 0, mean))%>%
-  #spread by variable
-  select(variable, id, parameter, mean)%>%
-  spread(key=parameter, value=mean)
-
-write.csv(chainsFinal, 'bayesian_output_mean sd_03132017.csv')
+chainsFinal <- read.csv('bayesian_output_mean sd_03132017.csv')
 
 #merge together with experiment list
 chainsExperiment <- chainsFinal%>%
@@ -2384,133 +2389,6 @@ print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 #export at 2400x500
-
-
-
-###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern--------------------------------------------------------
-relAbund <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
-  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
-  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
-  group_by(exp_trt, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
-  summarise(relcov=mean(relcov))%>%
-  filter(exp_trt!='NIN::herbdiv::0::5F' & site_code!='GVN')
-
-expinfo<-read.csv('ExperimentInformation_Mar2016.csv')%>%
-  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  select(exp_trt, plot_mani, calendar_year)
-
-relAbundYear<-merge(relAbund, expinfo, by=c("exp_trt","calendar_year"), all=F)
-
-#make a new dataframe with just the label
-exp_trt=relAbundYear%>%
-  select(exp_trt)%>%
-  unique()
-
-#make a new dataframe to collect the turnover metrics
-turnoverAll=data.frame(row.names=1)
-
-for(i in 1:length(relAbundYear$exp_trt)) {
-  
-  #creates a dataset for each unique year, trt, exp combo
-  subset=relAbundYear[relAbundYear$exp_trt==as.character(exp_trt$exp_trt[i]),]%>%
-    select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
-    #get just first and last year of study
-    filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))
-  
-  #need this to keep track of plot mani
-  labels=subset%>%
-    select(exp_trt, plot_mani, calendar_year)%>%
-    unique()
-  
-  #calculate disappearance
-  disappearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='disappearance')%>%
-    group_by(calendar_year)%>%
-    summarise(disappearance=mean(disappearance))
-  
-  #calculate appearance
-  appearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='appearance')%>%
-    group_by(calendar_year)%>%
-    summarise(appearance=mean(appearance))
-  
-  #calculate turnover
-  total=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='total')%>%
-    group_by(calendar_year)%>%
-    summarise(turnover=mean(total))
-  
-  #merging back with labels to get back plot_mani
-  turnover=labels%>%
-    left_join(disappearance, by='calendar_year')%>%
-    left_join(appearance, by='calendar_year')%>%
-    left_join(total, by='calendar_year')%>%
-    filter(calendar_year==max(calendar_year))%>%
-    select(exp_trt, plot_mani, appearance, disappearance, turnover)
-  
-  #pasting variables into the dataframe made for this analysis
-  turnoverAll=rbind(turnover, turnoverAll)
-}
-
-turnoverCtl <- turnoverAll%>%
-  filter(plot_mani==0)%>%
-  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
-  select(site_code, project_name, community_type, appearance, disappearance, turnover)
-names(turnoverCtl)[names(turnoverCtl)=='appearance'] <- 'appearance_ctl'
-names(turnoverCtl)[names(turnoverCtl)=='disappearance'] <- 'disappearance_ctl'
-names(turnoverCtl)[names(turnoverCtl)=='turnover'] <- 'turnover_ctl'
-
-turnoverDiff <- turnoverAll%>%
-  mutate(trt=ifelse(plot_mani==0, 'ctl', 'trt'))%>%
-  separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
-  filter(trt!='ctl')%>%
-  left_join(turnoverCtl, by=c('site_code', 'project_name', 'community_type'))%>%
-  mutate(appearance_diff=appearance-appearance_ctl, disappearance_diff=disappearance-disappearance_ctl, turnover_diff=turnover-turnover_ctl)
-
-plot(turnoverDiff$plot_mani, turnoverDiff$appearance_diff)
-plot(turnoverDiff$plot_mani, turnoverDiff$disappearance_diff)
-plot(turnoverDiff$plot_mani, turnoverDiff$turnover_diff)
-plot(turnoverDiff$plot_mani, turnoverDiff$appearance)
-plot(turnoverDiff$plot_mani, turnoverDiff$disappearance)
-plot(turnoverDiff$plot_mani, turnoverDiff$turnover)
-
-summary(glm(turnover~as.factor(plot_mani), data=turnoverDiff))
-lsmeans(glm(turnover~as.factor(plot_mani), data=turnoverDiff), 'plot_mani')
-
-turnoverPlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=turnover)) +
-  geom_boxplot() +
-  xlab('') +
-  ylab('Species Turnover')
-
-appearancePlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=appearance)) +
-  geom_boxplot() +
-  xlab('') +
-  ylab('Species Appearance')
-
-disappearancePlot <- ggplot(data=turnoverDiff, aes(x=as.factor(plot_mani), y=disappearance)) +
-  geom_boxplot() +
-  xlab('Number of Factors Manipulated') +
-  ylab('Species Disappearance')
-
-pushViewport(viewport(layout=grid.layout(3,1)))
-print(turnoverPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(appearancePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(disappearancePlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
-#export at 1400x3000
-
-#export at 1400x1000
-
-# #compares richness change to turnover metrics
-# turnoverRichness <- richness4%>%
-#   left_join(turnoverDiff, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-#   select(site_code, project_name, community_type, treatment, experiment_length, plot_mani, intercept, slope, quad, min_year, nutrients, water, carbon, precip, alt_length, yr9, yr20, appearance, disappearance, appearance_diff, disappearance_diff)%>%
-#   filter(slope<0, quad>0)
-# 
-# plot(turnoverRichness$quad, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$quad, turnoverRichness$disappearance_diff)
-# plot(turnoverRichness$quad, turnoverRichness$appearance)
-# plot(turnoverRichness$quad, turnoverRichness$disappearance)
-# plot(turnoverRichness$yr9, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$yr9, turnoverRichness$disappearance_diff)
-
 
 
 
