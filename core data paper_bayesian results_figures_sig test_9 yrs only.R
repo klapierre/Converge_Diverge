@@ -7,6 +7,10 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 
+#kim's laptop
+setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
+
+#kim's desktop
 setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw())
