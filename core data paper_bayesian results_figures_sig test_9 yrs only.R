@@ -2026,68 +2026,6 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 #export at 2400 x 2000
 
 
-
-
-###overall responses from bayesian output --------------------------------------------------------
-meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.8, 0.3), breaks=seq(-0.5, 0.5, 0.5)) +
-  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('\nMean Change') +
-  annotate('text', x=3.45, y=-0.8, label='(a)', size=10, hjust='left')
-
-dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.3, 0.18), breaks=seq(-0.2, 0.2, 0.2)) +
-  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Dispersion\nChange') +
-  annotate('text', x=3.45, y=-0.3, label='(b)', size=10, hjust='left')
-
-richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='richness' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.3, 0.5), breaks=seq(-0.3, 0.5, 0.3)) +
-  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Richness Change') +
-  annotate('text', x=3.45, y=-0.3, label='(c)', size=10, hjust='left')
-
-evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.4, 0.25), breaks=seq(-0.3, 0.3, 0.3)) +
-  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Evenness\nChange') +
-  annotate('text', x=3.45, y=-0.4, label='(d)', size=10, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(1,4)))
-print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
-print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-#export at 2400x500
-
-
-
-
-
 ###summary stats from bayesian output --------------------------------------------------------
 #gather summary stats needed and relabel them
 # chainsCommunitySummary <- chainsCommunity%>%
@@ -2148,6 +2086,66 @@ chainsCommunityOverall <- chainsCommunitySummary%>%
   left_join(chainsCommunitySummary, by=c('parameter', 'variable'))%>%
   mutate(overall=ifelse(predictor=='overall', 0, overall))%>%
   mutate(median_corrected=median+overall)
+
+
+
+
+###overall responses from bayesian output --------------------------------------------------------
+meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.8, 0.3), breaks=seq(-0.5, 0.5, 0.5)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('\nMean Change') +
+  annotate('text', x=3.45, y=-0.8, label='(a)', size=10, hjust='left')
+
+dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.3, 0.18), breaks=seq(-0.2, 0.2, 0.2)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Dispersion\nChange') +
+  annotate('text', x=3.45, y=-0.3, label='(b)', size=10, hjust='left')
+
+richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='richness' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.3, 0.5), breaks=seq(-0.3, 0.5, 0.3)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Richness Change') +
+  annotate('text', x=3.45, y=-0.3, label='(c)', size=10, hjust='left')
+
+evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.4, 0.25), breaks=seq(-0.3, 0.3, 0.3)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Evenness\nChange') +
+  annotate('text', x=3.45, y=-0.4, label='(d)', size=10, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(1,4)))
+print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
+print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+#export at 2400x500
+
 
 
 #mean plots --------------------------------------------------------
