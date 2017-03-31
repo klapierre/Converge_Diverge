@@ -1,16 +1,21 @@
 library(ggplot2)
 library(grid)
 library(mgcv)
+library(lsmeans)
 library(codyn)
 library(plyr)
 library(dplyr)
 library(tidyr)
 
-setwd('C:\\Users\\Kim\\Desktop\\bayesian output\\10 yr plus subset')
+#kim's laptop
+setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
+
+#kim's desktop
+setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw())
-theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
-             axis.title.y=element_text(size=40, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=34),
+theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34, color='black'),
+             axis.title.y=element_text(size=40, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=34, color='black'),
              plot.title = element_text(size=24, vjust=2),
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
              legend.title=element_blank(), legend.text=element_text(size=20))
@@ -34,22 +39,25 @@ barGraphStats <- function(data, variable, byFactorNames) {
   finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
   finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
   return(finalSummaryStats)
-}  
+}
+
+colSd <- function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=sd, na.rm=na.rm)
 
 ##################################################################################
 ##################################################################################
-#experiment information
-expRaw <- read.csv('ExperimentInformation_Mar2016.csv')
+#experiment information --------------------------------------------------------
+expRaw <- read.csv('ExperimentInformation_Dec2016.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), precip=mean(precip))
+  mutate(irrigation=ifelse(precip>0, 1, 0), drought=ifelse(precip<0, 1, 0))%>%
+  summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), irrigation=mean(irrigation), drought=mean(drought))
 
-rawData <- read.csv('ForBayesianAnalysis_March2016b.csv')
+rawData <- read.csv('ForBayesianAnalysis_10yr_Dec2016.csv')
 
 rawData2<- rawData%>%
-  filter(plot_mani<6, anpp!='NA', experiment_length>9)%>%
+  filter(plot_mani<6, anpp!='NA')%>%
   summarise(mean_mean=mean(mean_change), std_mean=sd(mean_change), mean_disp=mean(dispersion_change), std_disp=sd(dispersion_change), mean_rich=mean(S_PC), std_rich=sd(S_PC), mean_even=mean(SimpEven_change), std_even=sd(SimpEven_change)) #to backtransform
 
 #select just data in this analysis
@@ -64,378 +72,727 @@ expInfoSummary <- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp),
+            MAT=mean(MAT), MAP=mean(MAP))%>%
   ungroup()%>%
   summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
             plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
             rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
             anpp_median=median(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
             MAP_median=median(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
-            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT)
-            )%>%
+            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
   gather(variable, estimate)
 
+#treatment info
+trtInfo <- rawData%>%
+  filter(plot_mani<6, anpp!='NA')%>%
+  filter(treatment_year!=0)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich),
+            anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
+  ungroup()%>%
+  left_join(expInfo)%>%
+  mutate(resource_mani=(nutrients+carbon+irrigation+drought), id=1:length(treatment))
+
 ################################################################################
 ################################################################################
 
-#raw chains data
-chains1 <- read.csv('diversity_MV_rdisp_10yr_0.csv', comment.char='#')
-chains1 <- chains1[-1:-5000,]
-chains2 <- read.csv('diversity_MV_rdisp_10yr_1.csv', comment.char='#')
-chains2 <- chains2[-1:-5000,]
-chains3 <- read.csv('diversity_MV_rdisp_10yr_2.csv', comment.char='#')
-chains3 <- chains3[-1:-5000,]
-chains4 <- read.csv('diversity_MV_rdisp_10yr_3.csv', comment.char='#')
-chains4 <- chains4[-1:-5000,]
+# #only run to generate initial chains files
+# #raw chains data --------------------------------------------------------
+# memory.limit(size=50000)
+# chains1 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp_10\\mv_raw_disp_10_cholesky_0.csv', comment.char='#')
+# chains1 <- chains1[-1:-5000,]
+# chains2 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp_10\\mv_raw_disp_10_cholesky_1.csv', comment.char='#')
+# chains2 <- chains2[-1:-5000,]
+# chains3 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp_10\\mv_raw_disp_10_cholesky_2.csv', comment.char='#')
+# chains3 <- chains3[-1:-5000,]
+# chains4 <- read.csv('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp_10\\mv_raw_disp_10_cholesky_3.csv', comment.char='#')
+# chains4 <- chains4[-1:-5000,]
+# 
+# chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+# 
+# 
+# #density plot of chains --------------------------------------------------------
+# plot(density(chainsCommunity$mu.1.1))
+# plot(density(chainsCommunity$mu.1.2))
+# plot(density(chainsCommunity$mu.1.3))
+# 
+# 
+# #get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
+# #mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
+# chainsCommunity2 <- chainsCommunity%>%
+#   select(lp__,
+#          #plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+#          U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+#          U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+#          U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+#          #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+#          U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+#          U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+#          U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+#          #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#          U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+#          U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+#          U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+#          U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+#          #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+#          D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+#          D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+#          D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+#          #richness intercept, linear, and quad slopes (center digit): 2=richness
+#          D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+#          D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+#          D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+#          #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+#          E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+#          E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+#          E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+#          #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+#          E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+#          E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+#          E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+#          #overall intercept, linear, and quad slopes
+#          mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+#          mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+#          mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+#   gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
+#   group_by(parameter)%>%
+#   summarise(median=median(value), sd=sd(value))%>%
+#   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
+# 
+# write.csv(chainsCommunity2, 'bayesian_output_summary_10 yr_03302017.csv')
 
-chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+chainsCommunity2 <- read.csv('bayesian_output_summary_10 yr_03302017.csv')
 
-#get values for overall (mean) lines across levels of plot mani
-#mean change are the 1's, dispersion are the 2's, richness are the 4's, evenness are the 3's
-chainsCommunity2 <- chainsCommunity%>%
-  select(lp__, U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4)%>%
-  gather(key=parameter, value=value, U_int.2.1:mu_quad.4)%>%
-  group_by(parameter)%>%
-  summarise(median=median(value), sd=sd(value))%>%
-  mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
-
-# ###mean change
-# #gather the intercepts, linear slopes, and quadratic slopes for all treatments
+# #gather the intercepts, linear slopes, and quadratic slopes for all treatments ---------------------------------------------
+# #numbers are B.variable.number.parameter (e.g., B.mean.87.slope)
+# #variable (second place): 1=mean change, 2=dispersion change, 3=evenness change, 4=richness change
+# #parameter (final digit): 1=intercept, 2=linear slope, 3=quad slope
 # #set any that are not significant (CI overlaps 0) as 0
-# chainsMeanIntercept <- chainsCommunity[,7:296]%>%
-#   gather(key=parameter, value=value, B.1.1.1:B.290.1.1)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), intercept=median(value))%>%
-#   mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
-#   select(parameter, intercept)
-# names(chainsMeanIntercept)[1] <- 'parameter1'
 # 
-# chainsMeanSlope <- chainsCommunity[,1167:1456]%>%
-#   gather(key=parameter, value=value, B.1.1.2:B.290.1.2)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), slope=median(value))%>%
-#   mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
-#   select(parameter, slope)
-# names(chainsMeanSlope)[1] <- 'parameter2'
+# #get mean parameter values across all runs for each experiment, treatment, etc
+# chainsFinalMean <- as.data.frame(colMeans(chainsCommunity[,3640:5031]))%>% #may need to delete original four chains dataframes to get this to work
+#   add_rownames('parameter')
+# names(chainsFinalMean)[names(chainsFinalMean) == 'colMeans(chainsCommunity[, 3640:5031])'] <- 'mean'
+# #get sd of parameter values across all runs for each experiment, treatment, etc
+# chainsFinalSD <- as.data.frame(colSd(chainsCommunity[,3640:5031]))
+# names(chainsFinalSD)[names(chainsFinalSD) == 'colSd(chainsCommunity[, 3640:5031])'] <- 'sd'
 # 
-# chainsMeanQuad <- chainsCommunity[,2327:2616]%>%
-#   gather(key=parameter, value=value, B.1.1.3:B.290.1.3)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), quad=median(value))%>%
-#   mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
-#   select(parameter, quad)
-# names(chainsMeanQuad)[1] <- 'parameter3'
+# chainsFinal <- cbind(chainsFinalMean, chainsFinalSD)%>%
+#   #split names into parts
+#   separate(parameter, c('B', 'variable', 'id', 'parameter'))%>%
+#   select(-B)%>%
+#   #rename parts to be more clear
+#   mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
+#          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
+#          id=as.integer(id))%>%
+#   #if 95% confidence interval overlaps 0, then set mean to 0
+#   mutate(lower=mean-2*sd, upper=mean+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, mean=ifelse(diff==-2, 0, mean))%>%
+#   #spread by variable
+#   select(variable, id, parameter, mean)%>%
+#   spread(key=parameter, value=mean)
 # 
-# 
-# #merge together with experiment list
-# mean <- cbind(chainsMeanIntercept, chainsMeanSlope, chainsMeanQuad)%>%
-#   select(-parameter2, -parameter3)%>%
-#   separate(parameter1, into=c('head', 'exp', 'type', 'variable'), sep='\\.', remove=F)%>%
-#   select(-head, -type)%>%
-#   mutate(exp2=as.integer(exp))
-# 
-# mean2 <- mean[order(mean$exp2),]
-# mean3 <- cbind(expInfo2, mean2)%>%
-#   select(-exp2, -exp)
-#   
-# mean4 <- left_join(mean3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
-#   #get standardized experiment length
-#   mutate(alt_length=experiment_length - min_year)%>%
-#   #get estimates at various time points
-#   mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.1701297+0.3140121,
-#          yr20=(intercept + 20*slope + (20^2)*quad)*0.1701297+0.3140121,
-#          final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.1701297+0.3140121)%>%
-#   mutate(curve1='stat_function(fun=function(x){(',
-#          curve2=' + ',
-#          curve3='*x + ',
-#          curve4='*x^2)*(0.1701297)+(0.3140121)}, size=0.5, xlim=c(0,',
-#          curve5='), colour=',
-#          curve6=') +',
-#          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
-#          curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
-# #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(mean4,'mean_equations.csv', row.names=F)
+# write.csv(chainsFinal, 'bayesian_output_mean sd_10 yr_03132017.csv')
+
+chainsFinal <- read.csv('bayesian_output_mean sd_10 yr_03132017.csv')
+
+#merge together with experiment list
+chainsExperiment <- chainsFinal%>%
+  arrange(id)%>%
+  left_join(trtInfo, by='id')
+
+chainsEquations <- chainsExperiment%>%
+  #get standardized experiment length
+  mutate(alt_length=experiment_length - min_year)%>%
+  mutate(yr9=ifelse(variable=='mean', (intercept+linear*9+quadratic*9^2)*(0.2057881)+(0.3846015),
+                    ifelse(variable=='dispersion', (intercept+linear*9+quadratic*9^2)*(0.102365)+(-0.008532193),
+                           ifelse(variable=='evenness', (intercept+linear*9+quadratic*9^2)*(0.1133359)+(0.03247852), (intercept+linear*9+quadratic*9^2)*(0.2572354)+(-0.141815)))))%>%
+  mutate(yr_final=ifelse(variable=='mean', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.2057881)+(0.3846015),
+                    ifelse(variable=='dispersion', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.102365)+(-0.008532193),
+                           ifelse(variable=='evenness', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.1133359)+(0.03247852), (intercept+linear*alt_length+quadratic*alt_length^2)*(0.2572354)+(-0.141815)))))%>%
+  mutate(curve1='stat_function(fun=function(x){(',
+         curve2=' + ',
+         curve3='*x + ',
+         curve4=ifelse(variable=='mean', '*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,',
+                       ifelse(variable=='dispersion', '*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,',
+                              ifelse(variable=='evenness', '*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,', '*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,'))),
+         curve5='), colour=',
+         curve6=') +',
+         color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
+         curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, color, curve6, sep='')) 
+#need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# write.csv(chainsEquations,'plot mani_equations_10 yr.csv', row.names=F)
 
 
-
-#main figure
-meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(xlim=c(0,24), ylim=c(0,1))  +
-  scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
-  ylim(-1,2) +
+###main figure
+# mean change panel --------------------------------------------------------
+meanPlot <- ggplot(data=data.frame(x=c(0,0))) + 
+  coord_cartesian(ylim=c(0,1))  +
+  scale_x_continuous(limits=c(0,31), breaks=seq(0,32,5), labels=seq(1,33,5)) +
+  ylim(-10,10) +
   xlab('Standardized Year') +
   ylab('Mean Change') +
   annotate('text', x=0, y=1, label='(a)', size=10, hjust='left')
 
 meanPlot <- meanPlot + 
-#below are the individual treatment lines
- 
-#last five are the main plot_mani effect lines
-  #estimated as mean across treatment lines
+  #below are the individual treatment lines
+  stat_function(fun=function(x){(-0.4908421992764 + 0.20181995626785*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.750291956005 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.8518752203 + 0.297409347564*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.01522138165 + 0.29310715573055*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.16509092053111*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0.6888899734575 + 0.20298956005215*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0.798510776725 + 0.2253241491793*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5844242377036 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.56152759687695 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.715746645421 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.0337314033 + 0.19202297259*x + -0.0114026560909*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.89136532205 + 0.1515411133901*x + -0.0110741105499*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.75879647041 + 0.188323053075*x + -0.01083990054825*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.0273422061 + 0.114871597940115*x + -0.00828826965158*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.1725787327 + 0.11851317969064*x + -0.00904815973439*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.85214521615 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.92621264645 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.4439100762 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.11620932525*x + -0.0019268554205592*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0.4149312584789 + 0.168785579325*x + -0.0038144733955*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.47015705998675 + 0.33562228525*x + -0.0079827955985*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(-1.10942363335 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.4107089902362 + 0.27307125575*x + -0.0065561864405*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.615923591265 + 0*x + 0.00193596974859045*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,29), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.643063550535 + 0.07760922355745*x + -0.0028576254986825*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(0.48771347633735 + 0.088764087239*x + -0.0019470628016205*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.0905507033283*x + -0.00463066030474*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,26), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.3974811189326 + 0.1781327048*x + -0.0077005176595*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + -0.0028796913196725*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.918611244545 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.439844810474655 + 0.177371681804604*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.66642233172 + 0.17552583931115*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.838861328365 + 0.1720236125108*x + -0.01738611015114*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.5015956388*x + -0.0265390328183*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0.48457446660015 + 0.49531179745*x + -0.0274724715265*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-1.03827742945 + 0.144637196255935*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.6261907132645 + 0.33323563977*x + -0.0142304402551695*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.40950605335*x + -0.0168679113256*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.747156127965 + 0.1375623822615*x + -0.0099507595998455*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.67263696637 + 0.128040647146*x + -0.008491321282235*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.7435588945 + 0.1653522067775*x + -0.0097977127750085*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.83654252175 + 0.1560642793025*x + -0.009079220584*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.7056204456 + 0.127213995523326*x + -0.00892182686461*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.632720709075 + 0.13152360731955*x + -0.0086736986510035*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.62554288201 + 0.11639822436255*x + -0.00828336966821*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.7970959188 + 0.1640276008275*x + -0.009271148878465*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.8309470484 + 0.1806523688895*x + -0.010877400555425*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.56323314140582 + 0.143330746506*x + -0.00932673336693*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.84216516905 + 0.1112827340688*x + -0.00754763216884*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.87676118275 + 0.10853069099508*x + -0.00777899655017*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(-0.82970204995 + 0.1590104887645*x + -0.0104240009223955*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.72512985225 + 0.173464983025*x + -0.0108329814943*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.85060427955 + 0.1041541556493*x + -0.0077086277604135*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
+  stat_function(fun=function(x){(1.379505524 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,22), colour='#1400E544') +
+  stat_function(fun=function(x){(1.5628925102 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.2360883103 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.6078045360055 + 0.30995200829*x + -0.016313491232867*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.281494822656*x + -0.0147351820874575*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.1304968177917*x + -0.00512550413098125*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.10315899983684*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.119062533283766*x + -0.005285041289252*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.13742229645675*x + -0.004524500069549*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.12424792667515*x + -0.004920566989038*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.10958260662308*x + -0.00627994569077*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.171976246675*x + -0.0079616737108*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.09757902994569*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.45167528584195 + 0*x + -0.005228455784154*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.133244920290425*x + -0.00846010680925*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.11187847101335*x + -0.0059004921755705*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.21719074195 + 0.123686410891105*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.00657519415 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.0711795326 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.14360617055 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.4595139019435 + 0.14770322052235*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.49797985395195 + 0.137266633183455*x + -0.0082129353077165*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.0503079193 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.8167313508 + 0.1730707615626*x + -0.008593963949661*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.6272967848035 + 0.2049414712905*x + -0.009753033677945*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.2190415073 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.01848607365 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.0517646741 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.69093262194 + -0.112896442702585*x + 0.0182891363734*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.41096822365728 + 0*x + 0.015088139836325*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.138752415393865*x + 0.019395718822*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.3864861205903 + 0*x + 0.017123835946815*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0.01660787539887*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.605456047247 + -0.13650302661256*x + 0.01861560303475*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.124234255142255*x + 0.01983735086*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.493537169763 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.262054806395*x + -0.0090756190144775*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.4652111984337 + 0.137049756800645*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.582182516235 + 0.120090699807133*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.16807270226575*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.34044412307365 + 0.21631478166985*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.12091624168163*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.2886400206 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.21644386225 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.2175558215 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.10809839105 + 0.40412509815*x + -0.0170539497810344*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.37724243225 + 0.2250126297865*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.4710675651 + 0.27528427403*x + -0.0132224269101945*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.5476199339684 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,7), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.58801385725 + 0*x + -0.0151399369432*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.48562640075 + 0*x + -0.0156726950181256*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.91117302275 + 0*x + -0.015500662049425*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-1.0205881237 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.45244530833715 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(-1.896516512 + 0.22871196834*x + -0.01241765277522*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.600236475753 + 0*x + 0*x^2)*(0.2057881)+(0.3846015)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  #last five are the main plot_mani effect lines
+  #estimated as mean across treatment lines (plot mani 1-4 staggered by intercept so lines don't overlap)
   #mani1
-  stat_function(fun=function(x){(-0.757026500 + 0.100128500*x + 0.000000000*x^2)*0.1973328 + 0.3532522}, size=3, xlim=c(0,23), colour='#1400E5') +
+  stat_function(fun=function(x){(-0.693549500 + 0.126992500*x + -0.006405045*x^2)*(0.2057881)+(0.3846015)}, size=3, xlim=c(0,31), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(-0.757026500 + (0.100128500+0.100941000)*x + (0.000000000-0.005947905)*x^2)*0.1973328 + 0.3532522}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){((-0.693549500+0.203583500) + 0.126992500*x + -0.006405045*x^2)*(0.2057881)+(0.3846015)}, size=3, xlim=c(0,31), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(-0.757026500 + 0.100128500*x + 0.000000000*x^2)*0.1973328 + 0.3532522}, size=3, xlim=c(0,21), colour='#800C74') +
+  stat_function(fun=function(x){(-0.66 + 0.126992500*x + -0.006405045*x^2)*(0.2057881)+(0.3846015)}, size=3, xlim=c(0,31), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(-0.757026500 + 0.100128500*x + 0.000000000*x^2)*0.1973328 + 0.3532522}, size=3, xlim=c(0,22), colour='#B6123C') +
+  stat_function(fun=function(x){(-0.63 + 0.126992500*x + -0.006405045*x^2)*(0.2057881)+(0.3846015)}, size=3, xlim=c(0,31), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){((-0.757026500+1.048735000) + (0.100128500+0.237750000)*x + (0.000000000-0.008934095)*x^2)*0.1973328 + 0.3532522}, size=3, xlim=c(0,22), colour='#EC1804')
+  stat_function(fun=function(x){((-0.693549500+0.574582000) + 0.126992500*x + -0.006405045*x^2)*(0.2057881)+(0.3846015)}, size=3, xlim=c(0,31), colour='#EC1804')
 
 # print(meanPlot) #export at 1200x1000
 
 
-
-
-# ###dispersion
-# #gather the intercepts, linear slopes, and quadratic slopes for all treatments
-# #set any that are not significant (CI overlaps 0) as 0
-# chainsDispersionIntercept <- chainsCommunity[,297:586]%>%
-#   gather(key=parameter, value=value, B.1.2.1:B.290.2.1)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), intercept=median(value))%>%
-#   mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
-#   select(parameter, intercept)
-# names(chainsDispersionIntercept)[1] <- 'parameter1'
-# 
-# chainsDispersionSlope <- chainsCommunity[,1457:1746]%>%
-#   gather(key=parameter, value=value, B.1.2.2:B.290.2.2)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), slope=median(value))%>%
-#   mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
-#   select(parameter, slope)
-# names(chainsDispersionSlope)[1] <- 'parameter2'
-# 
-# chainsDispersionQuad <- chainsCommunity[,2617:2906]%>%
-#   gather(key=parameter, value=value, B.1.2.3:B.290.2.3)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), quad=median(value))%>%
-#   mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
-#   select(parameter, quad)
-# names(chainsDispersionQuad)[1] <- 'parameter3'
-# 
-# 
-# #merge together with experiment list
-# dispersion <- cbind(chainsDispersionIntercept, chainsDispersionSlope, chainsDispersionQuad)%>%
-#   select(-parameter2, -parameter3)%>%
-#   separate(parameter1, into=c('head', 'exp', 'type', 'variable'), sep='\\.', remove=F)%>%
-#   select(-head, -type)%>%
-#   mutate(exp2=as.integer(exp))
-# 
-# dispersion2 <- dispersion[order(dispersion$exp2),]
-# dispersion3 <- cbind(expInfo2, dispersion2)%>%
-#   select(-exp2, -exp)
-# 
-# dispersion4 <- left_join(dispersion3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
-#   #get standardized experiment length
-#   mutate(alt_length=experiment_length - min_year)%>%
-#   #get estimates at various time points
-#   mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.09064568-0.00235573,
-#          yr20=(intercept + 20*slope + (20^2)*quad)*0.09064568-0.00235573,
-#          final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.09064568-0.00235573)%>%
-#   mutate(curve1='stat_function(fun=function(x){(',
-#          curve2=' + ',
-#          curve3='*x + ',
-#          curve4='*x^2)*(0.09064568)+(-0.00235573)}, size=0.5, xlim=c(0,',
-#          curve5='), colour=',
-#          curve6=') +',
-#          color=ifelse(plot_mani==1, 'grey', ifelse(plot_mani==2, 'grey', ifelse(plot_mani==3, 'grey', ifelse(plot_mani==4, 'grey', 'grey')))),
-#          curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
-# #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(dispersion4,'dispersion_equations.csv', row.names=F)
-
-
-
-#main figure
+#dispersion panel --------------------------------------------------------
 dispersionPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(xlim=c(0,24), ylim=c(-0.35,0.35))  +
-  scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
-  scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
+  coord_cartesian(ylim=c(-0.3,0.4))  +
+  scale_x_continuous(limits=c(0,31), breaks=seq(0,32,5), labels=seq(1,33,5)) +
+  scale_y_continuous(limits=c(-5,5), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
   ylab('Dispersion Change') +
-  annotate('text', x=0, y=0.35, label='(b)', size=10, hjust='left')
+  annotate('text', x=0, y=0.4, label='(b)', size=10, hjust='left')
 
 dispersionPlot <- dispersionPlot + 
   #below are the individual treatment lines
- 
-#estimated as mean across treatment lines
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,5), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,15), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,13), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,13), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,13), colour='grey') +
+  stat_function(fun=function(x){(-1.0227385438175 + 0.1048601278162*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(-1.76988482405 + 0.125339227320795*x + -0.00355597664131445*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(-2.142746722 + 0.1369520473526*x + -0.003825216924288*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(0.99973667419255 + -0.1472159280145*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,30), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,29), colour='grey') +
+  stat_function(fun=function(x){(-0.55785701193642 + 0.1786680046275*x + -0.0062924528258*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,29), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.270042260105*x + -0.014595911684*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,29), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.17836342140035*x + -0.00759385043143*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,26), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.13896153907506*x + -0.0059994521078965*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,26), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.124325962889565*x + -0.0058223291950165*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,26), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(-1.32032316345 + -0.23384101857245*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(-0.97386770801955 + -0.181521894470695*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.182153264337095*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.29570092276775*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.285477382252*x + -0.012926108423395*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,12), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,23), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.14136483258662*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,22), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.2564021315685*x + 0.008563905107391*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,22), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0.80591145288065 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.159003391307295*x + 0.00818796983059015*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.7713612198097 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.791480286515 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.8760410485065 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.639569397386935 + -0.161386510831565*x + 0.007517287843581*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.7815273329672 + -0.152947404980009*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.213173930111341*x + 0.009472614348514*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.7844044143418 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.267397573485*x + 0.0124898367598*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.7183089492562 + -0.19837153945075*x + 0.00855885622320145*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.7059874206941 + -0.18491114366655*x + 0.008591146762272*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0.83916829085922 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.19681492758675*x + 0.008696389707866*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,21), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0.0094302477990865*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,18), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,18), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.174842630119305*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,11), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0.7755375466195 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.43543366995 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.49753834895 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.201182274455 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.45901171525 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.43784563035 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(1.5700634078 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.25095043590295*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.165486912469075*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.2252198742292*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.1909247692295*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.2755329522795*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + -0.177226970358815*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,10), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,7), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0.852875064391984 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,9), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,16), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,16), colour='grey') +
+  stat_function(fun=function(x){(0 + 0.20064788097831*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,16), colour='grey') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.102365)+(-0.008532193)}, size=0.5, xlim=c(0,8), colour='grey') +
+  #estimated as mean across treatment lines
   #overall line (because plot mani not significant)
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*0 - 0}, size=3, xlim=c(0,23), colour='black')
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)}, size=3, xlim=c(0,31), colour='black')
 
 # print(dispersionPlot) #export at 1200x1000
 
 
-
-
-
-
-
-# ###richness
-# chainsRichnessIntercept <- chainsCommunity[,877:1166]%>%
-#   gather(key=parameter, value=value, B.1.4.1:B.290.4.1)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), intercept=median(value))%>%
-#   mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
-#   select(parameter, intercept)
-# names(chainsRichnessIntercept)[1] <- 'parameter1'
-# 
-# chainsRichnessSlope <- chainsCommunity[,2037:2326]%>%
-#   gather(key=parameter, value=value, B.1.4.2:B.290.4.2)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), slope=median(value))%>%
-#   mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
-#   select(parameter, slope)
-# names(chainsRichnessSlope)[1] <- 'parameter2'
-# 
-# chainsRichnessQuad <- chainsCommunity[,3197:3486]%>%
-#   gather(key=parameter, value=value, B.1.4.3:B.290.4.3)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), quad=median(value))%>%
-#   mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
-#   select(parameter, quad)
-# names(chainsRichnessQuad)[1] <- 'parameter3'
-# 
-# 
-# #merge together with experiment list
-# richness <- cbind(chainsRichnessIntercept, chainsRichnessSlope, chainsRichnessQuad)%>%
-#   select(-parameter2, -parameter3)%>%
-#   separate(parameter1, into=c('head', 'exp', 'type', 'variable'), sep='\\.', remove=F)%>%
-#   select(-head, -type)%>%
-#   mutate(exp2=as.integer(exp))
-# 
-# richness2 <- richness[order(richness$exp2),]
-# richness3 <- cbind(expInfo2, richness2)%>%
-#   select(-exp2, -exp)
-# 
-# richness4 <- left_join(richness3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
-#   #get standardized experiment length
-#   mutate(alt_length=experiment_length - min_year)%>%
-#   #get estimates at various time points
-#   mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.2287037-0.07758351,
-#          yr20=(intercept + 20*slope + (20^2)*quad)*0.2287037-0.07758351,
-#          final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.2287037-0.07758351)%>%
-#   mutate(curve1='stat_function(fun=function(x){(',
-#          curve2=' + ',
-#          curve3='*x + ',
-#          curve4='*x^2)*(0.2287037)+(-0.07758351)}, size=0.5, xlim=c(0,',
-#          curve5='), colour=',
-#          curve6=') +',
-#          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
-#          curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
-# #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(richness4,'richness_equations.csv', row.names=F)
-
-
-
-#main figure
+#richness panel --------------------------------------------------------
 richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(xlim=c(0,24), ylim=c(-1,0.65))  +
-  scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
+  coord_cartesian(ylim=c(-1.0,0.8))  +
+  scale_x_continuous(limits=c(0,31), breaks=seq(0,32,5), labels=seq(1,33,5)) +
   scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.2)) +
   xlab('Standardized Year') +
-  ylab('Proportion Richness Change') +
-  annotate('text', x=0, y=0.65, label='(c)', size=10, hjust='left')
+  ylab('Richness Change') +
+  annotate('text', x=0, y=0.8, label='(c)', size=10, hjust='left')
 
 richnessPlot <- richnessPlot + 
-#below are the individual treatment lines
- 
-#mean lines by plot mani
+  #below are the individual treatment lines
+  stat_function(fun=function(x){(0.904070399025 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(1.141762047545 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.9424828391365 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.19136259759875*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.226817187739935*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.2317981506799*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.22814622864205*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.2493060069023*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.2553606594289*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.7651286574865 + -0.13330278663625*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0.7072293988405 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0.58264169147545 + -0.205984464721*x + 0.01093571523446*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.86593406789 + -0.14475213239009*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(1.12055404945 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.88230663995 + -0.083548671907605*x + 0.0033646384206445*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(-1.0982859689 + -0.086660795873*x + 0.003496843888997*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + -0.25120350594*x + 0.00611707393983*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(1.17491924065 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + -0.2281158682*x + 0.00561191287*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0.5140719085576 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,29), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.7730281589915 + -0.1154215094425*x + 0.003639976592675*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.9199716254 + -0.1060765460057*x + 0.0028225482127635*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(0.576441101008 + -0.098510984009*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,26), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.15287865127*x + 0.0042217926226055*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(0.51503745975295 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(0.6081186761615 + -0.22231659519005*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.844531742675 + -0.386918479405*x + 0.019448374828893*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + -0.36758523383*x + 0.0184238093679093*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0.80340252484465 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.3021899219335*x + 0.01551586450246*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.48035590054455 + -0.357087597285*x + 0.017601211026567*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0.5152146894798 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + -0.2491667935175*x + 0.0156670827055845*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.8087868118995 + -0.287817421805*x + 0.017466514471745*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0.770884125345 + 0*x + -0.0092037605676655*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0.6396980654 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + -0.012332995140385*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0.137474418417945*x + -0.0126913217864265*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0.60635747892685 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.6294717880405 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.793117230705 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.49393793246515 + 0*x + -0.01175958112026*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0.42476432486825 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5304507547179 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.5416006695435 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.142152180949275*x + -0.012340766156514*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0.6716987350395 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0.50300826370405 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5796753155075 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.61043180001532 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
+  stat_function(fun=function(x){(0.4064317942097 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,22), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.14222582022985*x + 0.005707978776321*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.6211145296205 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0.55576984287379 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.2333009336465*x + 0.01195302101295*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.738858110691 + -0.12024883844692*x + 0.00850681677963*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + -0.1488763616535*x + 0.009165463554925*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0.466545478727938 + -0.17248122544196*x + 0.011509543374785*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.27399475557*x + 0.017921510932*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + -0.18650461806445*x + 0.0121933956855*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.1908930922385*x + 0.01161661468145*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.179797143699*x + 0.009465044274675*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.520434596970435 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.14297911104549*x + 0.0060817665894535*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(0.515320448395 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0.625976870182 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0.511036714164989 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0.39510489742145 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.48952214518965 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.9992604928 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.95237930815 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.6848826995505 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.185911182266949*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.706548568622 + -0.1667383994838*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.59927944507995 + -0.142838041780565*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.283454502355*x + 0.0135987533174749*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.610623271344 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.232389942283*x + 0.012906361165232*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.943266665765 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.43935111972025 + -0.147189626499065*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.7937216622525 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.830373752459 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.5182198287428 + -0.167451831317035*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.842105918475 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(1.05823318275 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.6563789114184 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.602814567748845 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.7204629731815 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(1.09267912635 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.977933183945 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.820067057435 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0.864254861862 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,7), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0.944993249925 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(1.2756902505 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0.6589411864895 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0.6376345197767 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0.47960377393075 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.2572354)+(-0.141815)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
+  #mean lines by plot mani
   #estimated as mean across treatment lines
+  #plot mani 1-4 staggered to prevent overlap
   #mani1
-  stat_function(fun=function(x){(0.503487500 + -0*x + 0*x^2)*0.250842 - 0.116443}, size=3, xlim=c(0,23), colour='#1400E5') +
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*0.2572354 + -0.141815}, size=3, xlim=c(0,31), colour='#1400E5') +
   #mani2
-  stat_function(fun=function(x){(0.503487500 + (-0.0270729500-0.101529500)*x + 0*x^2)*0.250842 - 0.116443}, size=3, xlim=c(0,22), colour='#4A06AC') +
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*0.2572354 + -0.141815}, size=3, xlim=c(0,31), colour='#4A06AC') +
   #mani3
-  stat_function(fun=function(x){(0.503487500 + -0*x + 0*x^2)*0.250842 - 0.116443}, size=3, xlim=c(0,21), colour='#800C74') +
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*0.2572354 + -0.141815}, size=3, xlim=c(0,31), colour='#800C74') +
   #mani4
-  stat_function(fun=function(x){(0.503487500 + (-0.0270729500-0.151622000)*x + (-0.0019515250+0.009279290)*x^2)*0.250842 - 0.116443}, size=3, xlim=c(0,22), colour='#B6123C') +
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*0.2572354 + -0.141815}, size=3, xlim=c(0,31), colour='#B6123C') +
   #mani5
-  stat_function(fun=function(x){((0.503487500-1.267840000) + (-0.0270729500-0.248416500)*x + 0*x^2)*0.250842 - 0.116443}, size=3, xlim=c(0,22), colour='#EC1804')
+  stat_function(fun=function(x){((-0.242734000-0.819001500) + (-0.02900746-0.156379000)*x + (-0.001114784+0.007414175)*x^2)*0.2572354 + -0.141815}, size=3, xlim=c(0,31), colour='#EC1804')
 
 # print(richnessPlot) #export at 1200x1000
 
 
-
-
-
-
-# ###evenness
-# chainsEvennessIntercept <- chainsCommunity[,587:876]%>%
-#   gather(key=parameter, value=value, B.1.3.1:B.290.3.1)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), intercept=median(value))%>%
-#   mutate(lower=intercept-2*sd, upper=intercept+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, intercept=ifelse(diff==-2, 0, intercept))%>%
-#   select(parameter, intercept)
-# names(chainsEvennessIntercept)[1] <- 'parameter1'
-# 
-# chainsEvennessSlope <- chainsCommunity[,1747:2036]%>%
-#   gather(key=parameter, value=value, B.1.3.2:B.290.3.2)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), slope=median(value))%>%
-#   mutate(lower=slope-2*sd, upper=slope+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, slope=ifelse(diff==-2, 0, slope))%>%
-#   select(parameter, slope)
-# names(chainsEvennessSlope)[1] <- 'parameter2'
-# 
-# chainsEvennessQuad <- chainsCommunity[,2907:3196]%>%
-#   gather(key=parameter, value=value, B.1.3.3:B.290.3.3)%>%
-#   group_by(parameter)%>%
-#   summarise(sd=sd(value), quad=median(value))%>%
-#   mutate(lower=quad-2*sd, upper=quad+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, quad=ifelse(diff==-2, 0, quad))%>%
-#   select(parameter, quad)
-# names(chainsEvennessQuad)[1] <- 'parameter3'
-# 
-# 
-# #merge together with experiment list
-# evenness <- cbind(chainsEvennessIntercept, chainsEvennessSlope, chainsEvennessQuad)%>%
-#   select(-parameter2, -parameter3)%>%
-#   separate(parameter1, into=c('head', 'exp', 'type', 'variable'), sep='\\.', remove=F)%>%
-#   select(-head, -type)%>%
-#   mutate(exp2=as.integer(exp))
-# 
-# evenness2 <- evenness[order(evenness$exp2),]
-# evenness3 <- cbind(expInfo2, evenness2)%>%
-#   select(-exp2, -exp)
-# 
-# evenness4 <- left_join(evenness3, expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
-#   #get standardized experiment length
-#   mutate(alt_length=experiment_length - min_year)%>%
-#   #get estimates at various time points
-#   mutate(yr10=(intercept + 10*slope + (10^2)*quad)*0.1034254+0.019179,
-#          yr20=(intercept + 20*slope + (20^2)*quad)*0.1034254+0.019179,
-#          final_year_estimate=(intercept + alt_length*slope + (alt_length^2)*quad)*0.1034254+0.019179)%>%
-#   mutate(curve1='stat_function(fun=function(x){(',
-#          curve2=' + ',
-#          curve3='*x + ',
-#          curve4='*x^2)*(0.1034254)+(0.019179)}, size=0.5, xlim=c(0,',
-#          curve5='), colour=',
-#          curve6=') +',
-#          color=ifelse(plot_mani==1, '#1400E544', ifelse(plot_mani==2, '#4A06AC44', ifelse(plot_mani==3, '#800C7444', ifelse(plot_mani==4, '#B6123C44', '#EC180444')))),
-#          curve=paste(curve1, intercept, curve2, slope, curve3, quad, curve4, alt_length, curve5, color, curve6, sep='')) 
-# #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(evenness4,'evenness_equations.csv', row.names=F)
-
-
-#main figure
+#evenness panel --------------------------------------------------------
 evennessPlot <- ggplot(data=data.frame(x=c(0,0))) +
-  coord_cartesian(xlim=c(0,24), ylim=c(-0.35,0.55))  +
-  scale_x_continuous(limits=c(0,24), breaks=seq(1,24,2)) +
-  scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
+  # coord_cartesian(ylim=c(-0.05,0.35))  +
+  scale_x_continuous(limits=c(0,31), breaks=seq(0,32,5), labels=seq(1,33,5)) +
+  # scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
   ylab('Evenness Change') +
-  annotate('text', x=0, y=0.55, label='(d)', size=10, hjust='left')
+  annotate('text', x=0, y=0.6, label='(d)', size=10, hjust='left')
 
 evennessPlot <- evennessPlot + 
-#below are the individual treatment lines
-
+  #below are the individual treatment lines
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.86834212636605 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,5), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.2088132728845*x + 0.01268623802172*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.1849716910602*x + 0.01243748134638*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.915700454578 + -0.239322126755*x + 0.01372176212865*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.188381965948*x + 0.012040131715885*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,15), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + -0.157201021238102*x + 0.011166982087465*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,15), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,13), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,13), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(0.5520020902329 + 0*x + -0.002953899220556*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0.9555735385785 + 0*x + -0.0034394107278565*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.17829799036*x + -0.003838238814585*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#B6123C44') +
+  stat_function(fun=function(x){(-0.718784896975 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.192110103865*x + -0.0053096370722*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,30), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,29), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.10746614787425*x + -0.00385421599687*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.11866831496245*x + -0.004272835675444*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,29), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,26), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,26), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(1.7369346066 + 0.4857808613*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.370879356905*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.796438265852 + 0.1768399274822*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.21637574243895*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.32639305532*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(-0.6030359416798 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0.169249411248275*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0.2462250984135*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#EC180444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,12), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0.004590938530526*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,23), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.10262474635277*x + 0.0047624894496081*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,22), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + -0.10610281889391*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,22), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.78183513215905 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.7859525279255 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#B6123C44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#800C7444') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,21), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,18), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,11), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.7163774221098 + 0.152680815219192*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.5536894554103 + 0.185932797711425*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.8024939799287 + 0.152371795217828*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.59692767408795 + 0.176586132136795*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.858685571455 + 0.144051499359404*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(-0.7037585754927 + 0.152008807833235*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.62018493885405 + 0.15805000502692*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.263177104562229*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0.218506288120975*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0.24699936080726*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,10), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.73360504880456 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,7), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(-0.63896718045102 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,9), colour='#4A06AC44') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0.7017074084306 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,16), colour='#1400E544') +
+  stat_function(fun=function(x){(0 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=0.5, xlim=c(0,8), colour='#1400E544') +
   #mean lines by plot mani
   #estimated as mean across treatment lines
-  stat_function(fun=function(x){(0 + 0*x + 0*x^2)}, size=3, xlim=c(0,23), colour='grey')
+  #plot mani 2 and 4 are staggered to prevent overlap
+  #mani1
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=3, xlim=c(0,31), colour='#1400E5') +
+  #mani2
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=3, xlim=c(0,31), colour='#4A06AC') +
+  #mani3
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=3, xlim=c(0,31), colour='#800C74') +
+  #mani4
+  stat_function(fun=function(x){(-0.242734000 + 0*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=3, xlim=c(0,31), colour='#B6123C') +
+  #mani5
+  stat_function(fun=function(x){(-0.242734000 + (-0.02900746+0.141524500)*x + 0*x^2)*(0.1133359)+(0.03247852)}, size=3, xlim=c(0,31), colour='#EC1804')
 
 # print(evennessPlot) #export at 1200x1000
 
 
-#print all plots together
+#print all plots together --------------------------------------------------------
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanPlot, vp=viewport(layout.pos.row=1, layout.pos.col=1))
 print(dispersionPlot, vp=viewport(layout.pos.row=1, layout.pos.col=2))
@@ -446,261 +803,60 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 
-# ###density plots of all raw data
-# meanDensity <- ggplot(data=rawData, aes(x=mean_change)) +
-#   geom_density() +
-#   xlab('Mean Change') +
-#   ylab('Density') +
-#   xlim(0,1) +
-#   ylim(0,6.3)
-# dispersionDensity <- ggplot(data=rawData, aes(x=dispersion_change)) +
-#   geom_density() +
-#   xlab('Dispersion Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
-# richnessDensity <- ggplot(data=rawData, aes(x=S_PC)) +
-#   geom_density() +
-#   xlab('Proportion Richness Change') +
-#   ylab('Density') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
-# evennessDensity <- ggplot(data=rawData, aes(x=SimpEven_change)) +
-#   geom_density() +
-#   xlab('Evenness Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,6.3)
+###overall responses from bayesian output --------------------------------------------------------
+###summary stats from bayesian output --------------------------------------------------------
+# #gather summary stats needed and relabel them
+# chainsCommunitySummary <- chainsCommunity%>%
+#   select(#plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+#     U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+#     U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+#     U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+#     #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+#     U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+#     U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+#     U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+#     #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+#     U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+#     U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+#     U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+#     #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+#     D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+#     D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+#     D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+#     #richness intercept, linear, and quad slopes (center digit): 2=richness
+#     D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+#     D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+#     D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+#     #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+#     E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+#     E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+#     E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+#     #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+#     E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+#     E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+#     E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+#     #overall intercept, linear, and quad slopes
+#     mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+#     mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+#     mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+#   gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
+#   group_by(parameter)%>%
+#   summarise(median=median(value), sd=sd(value))%>%
+#   mutate(CI=sd*2)%>%
+#   separate(parameter, c('level', 'variable', 'predictor', 'parameter'))%>%
+#   mutate(parameter=ifelse(level=='mu', predictor, parameter), predictor=ifelse(level=='mu', 'overall', predictor))%>%
+#   #rename parts to be more clear
+#   mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
+#          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
+#          predictor=ifelse(level=='D'&predictor==1, 'ANPP', ifelse(level=='D'&predictor==2, 'rrich', ifelse(level=='E'&predictor==1, 'MAP', ifelse(level=='E'&predictor==2, 'MAT', ifelse(level=='U'&predictor==1, 'plot mani 2', ifelse(level=='U'&predictor==2, 'plot mani 3', ifelse(level=='U'&predictor==3, 'plot mani 4', ifelse(level=='U'&predictor==4, 'plot mani 5', 'overall')))))))))%>%
+#   select(level, parameter, variable, predictor, predictor, median, sd, CI)
 # 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(dispersionDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# print(richnessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-# print(evennessDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-# #export at 1200 x 1000
-# 
-# 
-# ###density plots of final year estimates
-# meanFinalDensity <- ggplot(data=mean4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Mean Change') +
-#   ylab('Density') +
-#   xlim(0,1) +
-#   ylim(0,10)
-# dispersionFinalDensity <- ggplot(data=dispersion4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Dispersion Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# richnessFinalDensity <- ggplot(data=richness4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Proportion Richness Change') +
-#   ylab('Density') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# evennessFinalDensity <- ggplot(data=evenness4, aes(x=final_year_estimate)) +
-#   geom_density() +
-#   xlab('Evenness Change') +
-#   ylab('') +
-#   geom_vline(xintercept=0, lty=2) +
-#   xlim(-1,1.25) +
-#   ylim(0,10)
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=1))
-# print(dispersionFinalDensity, vp=viewport(layout.pos.row=1, layout.pos.col=2))
-# print(richnessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=1))
-# print(evennessFinalDensity, vp=viewport(layout.pos.row=2, layout.pos.col=2))
-# #export at 1200 x 1000
+# write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_10 yr_03302017.csv')
 
-
-
-
-
-
-
-###by resource mani
-#still need to calculate the proportion of chains where x resource response was greater than y resource response
-
-#mean change
-meanResourceDrought <- mean4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated<0)%>%
-  mutate(resource='drought')
-meanResource <- mean4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated>0)%>%
-  rbind(meanResourceDrought)
-
-#dispersion change
-dispersionResourceDrought <- dispersion4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated<0)%>%
-  mutate(resource='drought')
-dispersionResource <- dispersion4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated>0)%>%
-  rbind(dispersionResourceDrought)
-
-#richness change
-richnessResourceDrought <- richness4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated<0)%>%
-  mutate(resource='drought')
-richnessResource <- richness4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated>0)%>%
-  rbind(richnessResourceDrought)
-
-#evenness change
-evennessResourceDrought <- evenness4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated<0)%>%
-  mutate(resource='drought')
-evennessResource <- evenness4%>%
-  mutate(multi_resource=nutrients+water+carbon)%>%
-  filter(multi_resource==1)%>%
-  select(site_code, project_name, community_type, treatment, nutrients, carbon, precip, yr10, yr20, final_year_estimate)%>%
-  gather(key=resource, value=manipulated, nutrients:precip)%>%
-  filter(manipulated>0)%>%
-  rbind(evennessResourceDrought)
-
-
-#by resource at final year
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=meanResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.41)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.40, label='(a)', size=10, hjust='left')
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=dispersionResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.08, 0.15, 0.04), name='Change in Dispersion') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.04, 0.04)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.038, label='(b)', size=10, hjust='left')
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=richnessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-0.5, 0.2, 0.1), name='Proportion Richness Change') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.11, 0.05)) +
-  xlab('Resource Manipulated')+
-  annotate('text', x=0.5, y=0.045, label='(c)', size=10, hjust='left')
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=evennessResource, variable='final_year_estimate', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 0.06, 0.01), name='Change in Evenness') +
-  scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-                   labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.045)) +
-  xlab('Resource Manipulated')+
-  annotate('text', x=0.5, y=0.043, label='(d)', size=10, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
-
-# #10 year estimate - 10 years is the median experiment length
-# meanResourcePlot10 <- ggplot(data=barGraphStats(data=meanResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(0, 0.5, 0.1), name='Mean Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(0, 0.5)) +
-#   xlab('')+
-#   annotate('text', x=0.5, y=0.5, label='(a)', size=10, hjust='left')
-# dispersionResourcePlot10 <- ggplot(data=barGraphStats(data=dispersionResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-0.06, 0.10, 0.04), name='Dispersion Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.06, 0.10)) +
-#   xlab('')+
-#   annotate('text', x=0.5, y=0.10, label='(b)', size=10, hjust='left')
-# richnessResourcePlot10 <- ggplot(data=barGraphStats(data=richnessResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-0.5, 0.1, 0.1), name='Proportion Richness Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.2, 0.1)) +
-#   xlab('Resource Manipulated')+
-#   annotate('text', x=0.5, y=0.1, label='(c)', size=10, hjust='left')
-# evennessResourcePlot10 <- ggplot(data=barGraphStats(data=evennessResource, variable='yr10', byFactorNames=c('resource')), aes(x=resource, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-0.06, 0.06, 0.02), name='Evenness Change') +
-#   scale_x_discrete(limits=c('carbon', 'nutrients', 'drought', 'precip'),
-#                    labels=c('+' ~CO[2], '+nutrients', '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.06, 0.06)) +
-#   xlab('Resource Manipulated')+
-#   annotate('text', x=0.5, y=0.06, label='(d)', size=10, hjust='left')
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanResourcePlot10, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(dispersionResourcePlot10, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(richnessResourcePlot10, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(evennessResourcePlot10, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-# #export at 1800 x 1600
-
-
-
-
-      
-###summary stats from bayesian output
-#gather summary stats needed and relabel them
-chainsCommunitySummary <- chainsCommunity%>%
-  select(U_int.2.1, U_int.2.2, U_int.2.3, U_int.2.4, U_slope.2.1, U_slope.2.2, U_slope.2.3, U_slope.2.4, U_quad.2.1, U_quad.2.2, U_quad.2.3, U_quad.2.4, mu_int.2, mu_slope.2, mu_quad.2, U_int.3.1, U_int.3.2, U_int.3.3, U_int.3.4, U_slope.3.1, U_slope.3.2, U_slope.3.3, U_slope.3.4, U_quad.3.1, U_quad.3.2, U_quad.3.3, U_quad.3.4, mu_int.3, mu_slope.3, mu_quad.3, U_int.1.1, U_int.1.2, U_int.1.3, U_int.1.4, U_slope.1.1, U_slope.1.2, U_slope.1.3, U_slope.1.4, U_quad.1.1, U_quad.1.2, U_quad.1.3, U_quad.1.4, mu_int.1, mu_slope.1, mu_quad.1, U_int.4.1, U_int.4.2, U_int.4.3, U_int.4.4, U_slope.4.1, U_slope.4.2, U_slope.4.3, U_slope.4.4, U_quad.4.1, U_quad.4.2, U_quad.4.3, U_quad.4.4, mu_int.4, mu_slope.4, mu_quad.4, E_int.1.1, E_int.2.1, E_int.3.1, E_int.4.1, E_slope.1.1, E_slope.2.1, E_slope.3.1, E_slope.4.1, E_quad.1.1, E_quad.2.1, E_quad.3.1, E_quad.4.1, E_int.1.2, E_int.2.2, E_int.3.2, E_int.4.2, E_slope.1.2, E_slope.2.2, E_slope.3.2, E_slope.4.2, E_quad.1.2, E_quad.2.2, E_quad.3.2, E_quad.4.2, D_int.1.1, D_int.2.1, D_int.3.1, D_int.4.1, D_slope.1.1, D_slope.2.1, D_slope.3.1, D_slope.4.1, D_quad.1.1, D_quad.2.1, D_quad.3.1, D_quad.4.1, D_int.1.2, D_int.2.2, D_int.3.2, D_int.4.2, D_slope.1.2, D_slope.2.2, D_slope.3.2, D_slope.4.2, D_quad.1.2, D_quad.2.2, D_quad.3.2, D_quad.4.2)%>%
-  gather(key=key, value=value, U_int.2.1:D_quad.4.2)%>%
-  group_by(key)%>%
-  summarise(median=median(value), sd=sd(value))%>%
-  mutate(CI=sd*2)%>%
-  separate(key, into=c('head', 'variable', 'level'), sep='\\.', remove=F)%>%
-  separate(head, into=c('type', 'parameter'))%>%
-  mutate(variable=ifelse(variable==1, 'mean change', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))))%>%
-  mutate(type_level=paste(type, level, sep='_'))%>%
-  mutate(predictor=ifelse(type_level=='E_1', 'ANPP', ifelse(type_level=='E_2', 'gamma diversity', ifelse(type_level=='D_1', 'MAP', ifelse(type_level=='D_2', 'MAT', ifelse(type_level=='U_1', 'plot mani 2', ifelse(type_level=='U_2', 'plot mani 3', ifelse(type_level=='U_3', 'plot mani 4', ifelse(type_level=='U_4','plot mani 5', 'overall')))))))))%>%
-  select(parameter, variable, predictor, median, sd, CI)
+chainsCommunitySummary <- read.csv('bayesian_output_summary_final plots_10 yr_03302017.csv')
 
 chainsCommunityOverall <- chainsCommunitySummary%>%
   filter(predictor=='overall')%>%
@@ -711,155 +867,213 @@ chainsCommunityOverall <- chainsCommunitySummary%>%
   mutate(median_corrected=median+overall)
 
 
-#mean plots
-meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='mean change'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-1.1, 0.3), breaks=seq(-0.5, 0.5, 0.5)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('\nMean Change') +
+  annotate('text', x=3.45, y=-1.1, label='(a)', size=10, hjust='left')
+
+dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.22, 0.4), breaks=seq(-0.2, 0.6, 0.2)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Dispersion\nChange') +
+  annotate('text', x=3.45, y=-0.22, label='(b)', size=10, hjust='left')
+
+richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='richness' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.3, 0.8), breaks=seq(-0.3, 0.5, 0.3)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Richness\nChange') +
+  annotate('text', x=3.45, y=-0.3, label='(c)', size=10, hjust='left')
+
+evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
+  geom_point(size=4) +
+  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
+  scale_y_continuous(limits=c(-0.5, 0.25), breaks=seq(-0.3, 0.3, 0.3)) +
+  scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
+                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  geom_hline(aes(yintercept=0)) +
+  coord_flip() +
+  ggtitle('Evenness\nChange') +
+  annotate('text', x=3.45, y=-0.5, label='(d)', size=10, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(1,4)))
+print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
+print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+#export at 2400x500
+
+
+
+#mean plots --------------------------------------------------------
+meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
-  ylim(-1.15, 1.15) +
+  ylim(-1.3, 1.15) +
   geom_hline(aes(yintercept=0)) +
   coord_flip()
 
-meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='slope'&variable=='mean change'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.5, 0.6) +
+  ylim(-1.2, 1.2) +
   coord_flip()
 
-meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'&variable=='mean change'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.035, 0.05) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
-#dispersion plots
-dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+#dispersion plots --------------------------------------------------------
+dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-1.15, 1.15) +
+  ylim(-1.3, 1.15) +
   coord_flip()
 
-dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='slope'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.5, 0.6) +
+  ylim(-1.2, 1.2) +
   coord_flip()
 
-dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.035, 0.05) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
-#richness plots
-richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+#richness plots --------------------------------------------------------
+richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-1.15, 1.15) +
+  ylim(-1.3, 1.15) +
   coord_flip()
 
-richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='slope'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.5, 0.6) +
+  ylim(-1.2, 1.2) +
   coord_flip()
 
-richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.035, 0.05) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
-#evenness plots
-evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='int'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+#evenness plots --------------------------------------------------------
+evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-1.15, 1.15) +
+  ylim(-1.3, 1.15) +
   coord_flip()
 
-evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='slope'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.5, 0.6) +
+  ylim(-1.2, 1.2) +
   coord_flip()
 
-evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quad'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'gamma diversity', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
                    labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
-  ylim(-0.035, 0.05) +
+  scale_y_continuous(breaks=seq(-0.1, 0.1, 0.1), limits=c(-0.13,0.1)) +
   coord_flip()
 
-pushViewport(viewport(layout=grid.layout(4,3)))
+#plot all together --------------------------------------------------------
+pushViewport(viewport(layout=grid.layout(4,3))) 
 print(meanIntPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(meanSlopePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(meanQuadPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
@@ -875,199 +1089,176 @@ print(evennessQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
 #export at 2400x2000
 
 
-#overall responses
-meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean change' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.8, 0.2), breaks=seq(-0.5, 0.5, 0.5)) +
-  scale_x_discrete(limits=c('quad', 'slope', 'int'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('\nMean Change') +
-  annotate('text', x=3.45, y=-0.8, label='(a)', size=10, hjust='left')
 
-dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.2, 0.15), breaks=seq(-0.2, 0.2, 0.2)) +
-  scale_x_discrete(limits=c('quad', 'slope', 'int'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Dispersion\nChange') +
-  annotate('text', x=3.45, y=-0.2, label='(b)', size=10, hjust='left')
+###by resource mani - raw data--------------------------------------------------------
+trtDetail <- expRaw%>%
+  select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarize(n=mean(n), p=mean(p), k=mean(k), CO2=mean(CO2), precip=mean(precip))%>%
+  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
 
-richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='richness' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.12, 0.5), breaks=seq(-0.4, 0.4, 0.4)) +
-  scale_x_discrete(limits=c('quad', 'slope', 'int'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Proportion\nRichness Change') +
-  annotate('text', x=3.45, y=-0.12, label='(c)', size=10, hjust='left')
+rawTrt <- rawData%>%
+  filter(experiment_length>9)%>%
+  filter(treatment_year==experiment_length)%>%
+  select(site_code, project_name, community_type, treatment, plot_mani, rrich, anpp, MAT, MAP, experiment_length, treatment_year, mean_change, dispersion_change, SimpEven_change, S_PC)%>%
+  left_join(trtDetail)%>%
+  mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
+                              ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
+                                     ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
+                                            ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
+                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'nuts:CO2',
+                                                          ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'nuts:dro',
+                                                                 ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'nuts:irr',
+                                                                        ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
+                                                                               ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
+                                                                                      ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
+                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
 
-evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_y_continuous(limits=c(-0.31, 0.1), breaks=seq(-0.3, 0.3, 0.3)) +
-  scale_x_discrete(limits=c('quad', 'slope', 'int'),
-                   labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  coord_flip() +
-  ggtitle('Evenness\nChange') +
-  annotate('text', x=3.45, y=-0.31, label='(d)', size=10, hjust='left')
+#plot raw data by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
+meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='mean_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-5, 5, 0.10), name='Mean Change') +
+  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+  coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
+  xlab('')+
+  annotate('text', x=0.5, y=0.6, label='(a)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.57, label='a*', size=10) +
+  annotate('text', x=2, y=0.29, label='b*', size=10) +
+  annotate('text', x=3, y=0.4, label='b*', size=10) +
+  annotate('text', x=4, y=0.39, label='b*', size=10)
 
-pushViewport(viewport(layout=grid.layout(1,4)))
-print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(evennessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
-#export at 2400x500
+dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='dispersion_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Dispersion Change') +
+  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+  coord_cartesian(ylim=c(-0.1, 0.1), xlim=c(1,4)) +
+  xlab('') +
+  annotate('text', x=0.5, y=0.1, label='(b)', size=12, hjust='left') +
+  annotate('text', x=1, y=-0.056, label='*', size=10) +
+  annotate('text', x=2, y=-0.105, label='*', size=10)
+
+richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='S_PC', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-5, 5, 0.1), name='Richness Change') +
+  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+  coord_cartesian(ylim=c(-0.35, 0.15), xlim=c(1,4)) +
+  xlab('') +
+  annotate('text', x=0.5, y=0.15, label='(c)', size=12, hjust='left') +
+  annotate('text', x=1, y=-0.32, label='a*', size=10) +
+  annotate('text', x=2, y=-0.16, label='b', size=10) +
+  annotate('text', x=3, y=-0.29, label='ab*', size=10) +
+  annotate('text', x=4, y=-0.2, label='a*', size=10)
+
+evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='SimpEven_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+  geom_bar(stat="identity", fill='white', color='black') +
+  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+  scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Evenness Change') +
+  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+  coord_cartesian(ylim=c(-0.1, 0.15), xlim=c(1,4)) +
+  xlab('') +
+  annotate('text', x=0.5, y=0.15, label='(d)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.08, label='a*', size=10) +
+  annotate('text', x=2, y=0.135, label='ab', size=10) +
+  annotate('text', x=3, y=0.08, label='a', size=10) +
+  annotate('text', x=4, y=-0.07, label='b*', size=10)
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#export at 1800 x 1600
 
 
+###by magnitude of resource manipulated---------------------------------
+#N addition
+meanNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=mean_change)) +
+  geom_point(size=5) +
+  # scale_x_log10() +
+  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+  xlab('') +
+  annotate('text', x=0.4, y=1, label='(a)', size=12, hjust='left')
 
+dispersionNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=dispersion_change)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  # scale_x_log10() +
+  scale_y_continuous(breaks=seq(-0.4, 0.4, 0.2), name='Dispersion Change') +
+  xlab('') +
+  annotate('text', x=0.4, y=0.4, label='(b)', size=12, hjust='left')
 
+richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=S_PC)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  # scale_x_log10() +
+  scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
+  xlab(expression(paste('N added (g', m^-2, ')'))) +
+  annotate('text', x=0.4, y=1.5, label='(c)', size=12, hjust='left')
 
-# ###look for patterns of spp appearance/disappearance -- no clear patterns, probably because just the few CDR examples that are long term enough to see the pattern
-relAbund <- read.csv('SpeciesRelativeAbundance_April2016.csv')%>%
-  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
-  mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
-  group_by(exp_trt, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
-  summarise(relcov=mean(relcov))%>%
-  filter(exp_trt!='NIN::herbdiv::0::5F' & site_code!='GVN')
-# 
-# expinfo<-read.csv('ExperimentInformation_Mar2016.csv')%>%
-#   mutate(exp_trt=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-#   select(exp_trt, plot_mani, calendar_year)
-# 
-# relAbundYear<-merge(relAbund, expinfo, by=c("exp_trt","calendar_year"), all=F)
-# 
-# #make a new dataframe with just the label
-# exp_trt=relAbundYear%>%
-#   select(exp_trt)%>%
-#   unique()
-# 
-# #make a new dataframe to collect the turnover metrics
-# turnoverAll=data.frame(row.names=1) 
-# 
-# for(i in 1:length(relAbundYear$exp_trt)) {
-#   
-#   #creates a dataset for each unique year, trt, exp combo
-#   subset=relAbundYear[relAbundYear$exp_trt==as.character(exp_trt$exp_trt[i]),]%>%
-#     select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
-#     #get just first and last year of study
-#     filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))
-#   
-#   #need this to keep track of plot mani
-#   labels=subset%>%
-#     select(exp_trt, plot_mani, calendar_year)%>%
-#     unique()
-#   
-#   #calculate disappearance
-#   disappearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='disappearance')%>%
-#     group_by(calendar_year)%>%
-#     summarise(disappearance=mean(disappearance))
-#   
-#   #calculate appearance
-#   appearance=turnover(df=subset, time.var='calendar_year', species.var='genus_species', abundance.var='relcov', replicate.var=NA, metric='appearance')%>%
-#     group_by(calendar_year)%>%
-#     summarise(appearance=mean(appearance))
-#   
-#   #merging back with labels to get back plot_mani
-#   turnover=labels%>%
-#     left_join(disappearance, by='calendar_year')%>%
-#     left_join(appearance, by='calendar_year')%>%
-#     filter(calendar_year==max(calendar_year))%>%
-#     select(exp_trt, plot_mani, appearance, disappearance)
-# 
-#   #pasting variables into the dataframe made for this analysis
-#   turnoverAll=rbind(turnover, turnoverAll)  
-# }
-# 
-# turnoverCtl <- turnoverAll%>%
-#   filter(plot_mani==0)%>%
-#   separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
-#   select(site_code, project_name, community_type, appearance, disappearance)
-# names(turnoverCtl)[names(turnoverCtl)=='appearance'] <- 'appearance_ctl'
-# names(turnoverCtl)[names(turnoverCtl)=='disappearance'] <- 'disappearance_ctl'
-# 
-# turnoverDiff <- turnoverAll%>%
-#   mutate(trt=ifelse(plot_mani==0, 'ctl', 'trt'))%>%
-#   separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)%>%
-#   filter(trt!='ctl')%>%
-#   left_join(turnoverCtl, by=c('site_code', 'project_name', 'community_type'))%>%
-#   mutate(appearance_diff=appearance-appearance_ctl, disappearance_diff=disappearance-disappearance_ctl)
-# 
-# # plot(turnoverDiff$plot_mani, turnoverDiff$appearance_diff)
-# # plot(turnoverDiff$plot_mani, turnoverDiff$disappearance_diff)
-# 
-# turnoverRichness <- richness4%>%
-#   left_join(turnoverDiff, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-#   select(site_code, project_name, community_type, treatment, experiment_length, plot_mani, intercept, slope, quad, min_year, nutrients, water, carbon, precip, alt_length, final_year_estimate, yr20, appearance_diff, disappearance_diff)%>%
-#   filter(slope<0, quad>0)
-# 
-# plot(turnoverRichness$quad, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$quad, turnoverRichness$disappearance_diff)
-# plot(turnoverRichness$final_year_estimate, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$final_year_estimate, turnoverRichness$disappearance_diff)
-# plot(turnoverRichness$yr20, turnoverRichness$appearance_diff)
-# plot(turnoverRichness$yr20, turnoverRichness$disappearance_diff)
-# 
-# ###look at spp comp of five factor manipulations to find patterns of immigration or loss of dominant spp
-# relAbundFive <- relAbundYear
-# 
-# #make a new dataframe with just the label
-# expTrtYear=relAbundFive%>%
-#   select(exp_trt)%>%
-#   unique()
-# 
-# #make a new dataframe to collect the turnover metrics
-# relAbundFiveYear=data.frame(row.names=1)
-# 
-# for(i in 1:length(expTrtYear$exp_trt)) {
-# 
-#   #creates a dataset for each unique year, trt, exp combo
-#   subset=relAbundFive[relAbundFive$exp_trt==as.character(expTrtYear$exp_trt[i]),]%>%
-#     select(exp_trt, calendar_year, treatment, plot_mani, genus_species, relcov, plot_id)%>%
-#     group_by(exp_trt, calendar_year, treatment, plot_mani, genus_species)%>%
-#     summarise(relcov=mean(relcov))%>%
-#     ungroup()%>%
-#     #get just first and last year of study
-#     filter(calendar_year==min(calendar_year)|calendar_year==max(calendar_year))%>%
-#     mutate(time=ifelse(calendar_year==min(calendar_year), 'first', 'last'))%>%
-#     select(-calendar_year, -treatment)%>%
-#     spread(key=time, value=relcov, fill=0)
-# 
-#   #pasting variables into the dataframe made for this analysis
-#   relAbundFiveYear=rbind(subset, relAbundFiveYear)
-# }
-# 
-# relAbundFiveYear <- relAbundFiveYear%>%
-#   separate(exp_trt, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::', remove=F)
-# 
-# relAbundFiveYearRich <- richness4%>%
-#   left_join(relAbundFiveYear, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-#   select(site_code, project_name, community_type, treatment, plot_mani, genus_species, first, last, experiment_length, intercept, slope, quad, nutrients, water, carbon, precip, alt_length, yr10, final_year_estimate)%>%
-#   filter(plot_mani>4)
-# 
-# ggplot(data=relAbundFiveYearRich, aes(x=first, y=last, colour=quad)) +
-#   geom_point() +
-#   scale_colour_gradientn(colours=rainbow(4))
+evennessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=SimpEven_change)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  # scale_x_log10() +
+  scale_y_continuous(breaks=seq(-0.2, 0.6, 0.2), name='Evenness Change') +
+  xlab(expression(paste('N added (g', m^-2, ')'))) +
+  annotate('text', x=0.4, y=0.6, label='(d)', size=12, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#export at 1800 x 1600
+
+#H2O change
+meanPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
+  geom_point(size=5) +
+  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+  xlab('') +
+  annotate('text', x=-20, y=0.65, label='(a)', size=12, hjust='left')
+
+dispersionPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=dispersion_change)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+  xlab('') +
+  annotate('text', x=-20, y=0.2, label='(b)', size=12, hjust='left')
+
+richnessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
+  xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
+  annotate('text', x=-20, y=0.6, label='(c)', size=12, hjust='left')
+
+evennessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=SimpEven_change)) +
+  geom_point(size=5) +
+  geom_hline(yintercept=0) +
+  scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
+  xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
+  annotate('text', x=-20, y=0.2, label='(d)', size=12, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(evennessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+#export at 1800 x 1600
 
 
 
 
 
-#look at number replicates for dispersion results -- doesn't make a difference
-reps <- relAbund%>%
+
+#look at number replicates for dispersion results (all factors actually) -- doesn't make a difference --------------------------------------
+reps <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
   group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
   summarise(mean=mean(relcov))%>%
   ungroup()%>%
@@ -1077,188 +1268,47 @@ reps <- relAbund%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(rep_num=mean(rep_num))
 
-dispersionReps <- dispersion4%>%
-  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'), all=F)%>%
-  #filter out lovegrass mistake trt code until fixed in main dataset
-  filter(rep_num>1)
+dispersionReps <- rawTrt%>%
+  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'))
 
-# ggplot(data=dispersionReps, aes(x=rep_num, y=intercept, colour=plot_mani)) +
-#   geom_point()
-# ggplot(data=dispersionReps, aes(x=rep_num, y=slope, colour=plot_mani)) +
-#   geom_point()
-# ggplot(data=dispersionReps, aes(x=rep_num, y=quad, colour=plot_mani)) +
-#   geom_point()
-# ggplot(data=dispersionReps, aes(x=rep_num, y=yr10, colour=plot_mani)) +
-#   geom_point()
-
-ggplot(data=dispersionReps, aes(x=rep_num, y=yr10)) +
+meanRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=mean_change)) +
   geom_point() +
   xlab('Number of Relicates') +
+  ylab('Mean Change') +
+  scale_x_continuous(breaks=seq(0,50,5)) +
+  coord_cartesian(xlim=c(2,25)) +
+  annotate('text', x=0, y=1, label='(a)', size=12, hjust='left')
+dispersionRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=dispersion_change)) +
+  geom_point() +
+  geom_hline(yintercept=0) +
+  xlab('Number of Relicates') +
   ylab('Dispersion Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(0,45))
-#export at 900x900
-  
+  scale_x_continuous(breaks=seq(0,50,5)) +
+  coord_cartesian(xlim=c(2,25)) +
+  annotate('text', x=0, y=0.35, label='(b)', size=12, hjust='left')
+richnessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=S_PC)) +
+  geom_point() +
+  geom_hline(yintercept=0) +
+  xlab('Number of Relicates') +
+  ylab('Richness Change') +
+  scale_x_continuous(breaks=seq(0,50,5)) +
+  coord_cartesian(xlim=c(2,25)) +
+  annotate('text', x=0, y=1.4, label='(c)', size=12, hjust='left')
+evennessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=SimpEven_change)) +
+  geom_point() +
+  geom_hline(yintercept=0) +
+  xlab('Number of Relicates') +
+  ylab('Evenness Change') +
+  scale_x_continuous(breaks=seq(0,50,5)) +
+  coord_cartesian(xlim=c(2,25)) +
+  annotate('text', x=0, y=0.6, label='(d)', size=12, hjust='left')
 
-
-
-
-###look at five factor manipulations for mean change
-# #just for the four experiments with five factors, compare to their four factor treatments
-# meanFive <- mean4%>%
-#   filter(treatment=='1_y_n'|treatment=='8_y_n'|treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='2F'|treatment=='3F'|treatment=='4F'|treatment=='ghn'|treatment=='gsn'|treatment=='ncn'|treatment=='nhn'|treatment=='nsn')
-# 
-# cdr1APlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                      labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(a) CDR e001 A', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr1BPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(b) CDR e001 A', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr1CPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='C'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(c) CDR e001 A', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr1DPlot <- ggplot(data=subset(meanFive, project_name=='e001'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_y_n', '8_y_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(d) CDR e001 D', size=10, hjust='left') +
-#   theme(legend.position='none')
-# ninPlot <- ggplot(data=subset(meanFive, site_code=='NIN'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('2F', '3F', '4F'),
-#                    labels=c('4a', '4b', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(e) NIN herbdiv', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr2APlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='A'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(f) CDR e002 A', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr2BPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='B'), aes(x=treatment, y=yr10, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(g) CDR e002 B', size=10, hjust='left') +
-#   theme(legend.position='none')
-# cdr2CPlot <- ggplot(data=subset(meanFive, project_name=='e002'&community_type=='C'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('1_f_u_n', '8_f_u_n'),
-#                    labels=c('4', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(h) CDR e002 C', size=10, hjust='left') +
-#   theme(legend.position='none')
-# traPlot <- ggplot(data=subset(meanFive, site_code=='TRA'), aes(x=treatment, y=final_year_estimate, fill=treatment)) +
-#   geom_bar(stat="identity", colour='black') +
-#   scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-#   scale_x_discrete(limits=c('ghn', 'gsn', 'ncn', 'nhn', 'nsn'),
-#                    labels=c('4', '4', '4', '5', '5')) +
-#   coord_cartesian(ylim=c(0,1)) +
-#   scale_fill_manual(values=c('white', 'white', 'white', 'black', 'black')) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=1, label='(i) TRA lovegrass', size=10, hjust='left') +
-#   theme(legend.position='none')
-# 
-# pushViewport(viewport(layout=grid.layout(2,5)))
-# print(cdr1APlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(cdr1BPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(cdr1CPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-# print(cdr1DPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 4))
-# print(ninPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 5))
-# print(cdr2APlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(cdr2BPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-# print(cdr2CPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
-# print(traPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 4))
-# #export at 2400x1200
-
-
-#compare any four factor without N to five factor with N
-expRawMean <- expRaw%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
-
-meanCompare <- mean4%>%
-  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-  mutate(n_mani=ifelse(n>0, 1, 0))
-
-
-#plot without N at four factors, with N at five factors
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3), variable='final_year_estimate', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0), variable='final_year_estimate', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('Number of Factors Manipulated') +
-  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0), variable='final_year_estimate', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n+manip.', '5 factor\n+manip.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 2400x1200
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#export at 1800 x 1600
 
 
 
@@ -1266,7 +1316,6 @@ print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 
 
 
-
-
-
+###look at five factor manipulations for mean change --------------------------------------------------------
+#can't do this anymore because these experiments were not 10+ years (no NIN, no TRA, and no treatment with 4 factors including N)
 
