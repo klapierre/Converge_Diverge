@@ -1112,69 +1112,90 @@ rawTrt <- rawData%>%
                                                                         ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
                                                                                ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
                                                                                       ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
-                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
+                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))%>%
+  mutate(resource_mani_combo=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
+                                    ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
+                                           ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
+                                                  ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
+                                                         ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'multiple',
+                                                                ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'multiple',
+                                                                       ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'multiple',
+                                                                              ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'multiple',
+                                                                                     ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'multiple',
+                                                                                            ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'multiple', 
+                                                                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'multiple','other'))))))))))))
 
 #plot raw data by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='mean_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+meanResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='mean_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.10), name='Mean Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(0, 0.6), xlim=c(1,6)) +
   xlab('')+
   annotate('text', x=0.5, y=0.6, label='(a)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.57, label='a*', size=10) +
-  annotate('text', x=2, y=0.29, label='b*', size=10) +
-  annotate('text', x=3, y=0.4, label='b*', size=10) +
-  annotate('text', x=4, y=0.39, label='b*', size=10)
+  annotate('text', x=1, y=0.54, label='ab*', size=10) +
+  annotate('text', x=2, y=0.57, label='a*', size=10) +
+  annotate('text', x=3, y=0.29, label='b*', size=10) +
+  annotate('text', x=4, y=0.4, label='b*', size=10) +
+  annotate('text', x=5, y=0.39, label='b*', size=10) +
+  annotate('text', x=6, y=0.37, label='b*', size=10)
 
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='dispersion_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='dispersion_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Dispersion Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.1, 0.1), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.1, 0.1), xlim=c(1,6)) +
   xlab('') +
   annotate('text', x=0.5, y=0.1, label='(b)', size=12, hjust='left') +
-  annotate('text', x=1, y=-0.056, label='*', size=10) +
-  annotate('text', x=2, y=-0.105, label='*', size=10)
+  annotate('text', x=1, y=-0.065, label='ab', size=10) +
+  annotate('text', x=2, y=-0.056, label='ab', size=10) +
+  annotate('text', x=3, y=-0.105, label='a*', size=10) +
+  annotate('text', x=4, y=0.09, label='ab', size=10) +
+  annotate('text', x=5, y=0.05, label='b', size=10) +
+  annotate('text', x=6, y=-0.055, label='ab', size=10)
 
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='S_PC', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='S_PC', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.1), name='Richness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.35, 0.15), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.35, 0.17), xlim=c(1,6)) +
   xlab('') +
-  annotate('text', x=0.5, y=0.15, label='(c)', size=12, hjust='left') +
-  annotate('text', x=1, y=-0.32, label='a*', size=10) +
-  annotate('text', x=2, y=-0.16, label='b', size=10) +
-  annotate('text', x=3, y=-0.29, label='ab*', size=10) +
-  annotate('text', x=4, y=-0.2, label='a*', size=10)
+  annotate('text', x=0.5, y=0.17, label='(c)', size=12, hjust='left') +
+  annotate('text', x=1, y=0.169, label='a', size=10) +
+  annotate('text', x=2, y=-0.32, label='b*', size=10) +
+  annotate('text', x=3, y=-0.16, label='a', size=10) +
+  annotate('text', x=4, y=-0.29, label='ab*', size=10) +
+  annotate('text', x=5, y=-0.2, label='b*', size=10) +
+  annotate('text', x=6, y=-0.125, label='a', size=10)
 
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='SimpEven_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='SimpEven_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Evenness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.1, 0.15), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.1, 0.15), xlim=c(1,6)) +
   xlab('') +
   annotate('text', x=0.5, y=0.15, label='(d)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.08, label='a*', size=10) +
-  annotate('text', x=2, y=0.135, label='ab', size=10) +
-  annotate('text', x=3, y=0.08, label='a', size=10) +
-  annotate('text', x=4, y=-0.07, label='b*', size=10)
+  annotate('text', x=1, y=0.04, label='ab', size=10) +
+  annotate('text', x=2, y=0.08, label='a*', size=10) +
+  annotate('text', x=3, y=0.135, label='ab', size=10) +
+  annotate('text', x=4, y=0.08, label='a', size=10) +
+  annotate('text', x=5, y=-0.07, label='b*', size=10) +
+  annotate('text', x=6, y=-0.07, label='b*', size=10)
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
+#export at 2400 x 1600
 
 
 ###by magnitude of resource manipulated---------------------------------

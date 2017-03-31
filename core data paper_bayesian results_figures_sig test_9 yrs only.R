@@ -2090,55 +2090,56 @@ print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 
 ###summary stats from bayesian output --------------------------------------------------------
 #gather summary stats needed and relabel them
-chainsCommunitySummary <- chainsCommunity%>%
-  select(#plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-    U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
-    U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
-    U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
-    U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
-    #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-    U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
-    U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
-    U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
-    U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
-    #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-    U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
-    U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
-    U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
-    U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
-    #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
-    D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
-    D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
-    D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
-    #richness intercept, linear, and quad slopes (center digit): 2=richness
-    D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
-    D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
-    D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
-    #MAP intercept, linear, and quad slopes (center digit): 1=MAP
-    E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
-    E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
-    E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
-    #MAT intercept, linear, and quad slopes (center digit): 2=MAT
-    E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
-    E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
-    E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
-    #overall intercept, linear, and quad slopes
-    mu.1.1, mu.2.1, mu.3.1, mu.4.1,
-    mu.1.2, mu.2.2, mu.3.2, mu.4.2,
-    mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
-  gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
-  group_by(parameter)%>%
-  summarise(median=median(value), sd=sd(value))%>%
-  mutate(CI=sd*2)%>%
-  separate(parameter, c('level', 'variable', 'predictor', 'parameter'))%>%
-  mutate(parameter=ifelse(level=='mu', predictor, parameter), predictor=ifelse(level=='mu', 'overall', predictor))%>%
-  #rename parts to be more clear
-  mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
-         parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
-         predictor=ifelse(level=='D'&predictor==1, 'ANPP', ifelse(level=='D'&predictor==2, 'rrich', ifelse(level=='E'&predictor==1, 'MAP', ifelse(level=='E'&predictor==2, 'MAT', ifelse(level=='U'&predictor==1, 'plot mani 2', ifelse(level=='U'&predictor==2, 'plot mani 3', ifelse(level=='U'&predictor==3, 'plot mani 4', ifelse(level=='U'&predictor==4, 'plot mani 5', 'overall')))))))))%>%
-  select(level, parameter, variable, predictor, predictor, median, sd, CI)
+# chainsCommunitySummary <- chainsCommunity%>%
+#   select(#plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
+#     U.1.2.1, U.2.2.1, U.3.2.1, U.4.2.1,
+#     U.1.3.1, U.2.3.1, U.3.3.1, U.4.3.1,
+#     U.1.4.1, U.2.4.1, U.3.4.1, U.4.4.1,
+#     #plot_mani linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.2, U.2.1.2, U.3.1.2, U.4.1.2,
+#     U.1.2.2, U.2.2.2, U.3.2.2, U.4.2.2,
+#     U.1.3.2, U.2.3.2, U.3.3.2, U.4.3.2,
+#     U.1.4.2, U.2.4.2, U.3.4.2, U.4.4.2,
+#     #plot_mani quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+#     U.1.1.3, U.2.1.3, U.3.1.3, U.4.1.3,
+#     U.1.2.3, U.2.2.3, U.3.2.3, U.4.2.3,
+#     U.1.3.3, U.2.3.3, U.3.3.3, U.4.3.3,
+#     U.1.4.3, U.2.4.3, U.3.4.3, U.4.4.3,
+#     #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+#     D.1.1.1, D.2.1.1, D.3.1.1, D.4.1.1,
+#     D.1.1.2, D.2.1.2, D.3.1.2, D.4.1.2,
+#     D.1.1.3, D.2.1.3, D.3.1.3, D.4.1.3,
+#     #richness intercept, linear, and quad slopes (center digit): 2=richness
+#     D.1.2.1, D.2.2.1, D.3.2.1, D.4.2.1,
+#     D.1.2.2, D.2.2.2, D.3.2.2, D.4.2.2,
+#     D.1.2.3, D.2.2.3, D.3.2.3, D.4.2.3,
+#     #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+#     E.1.1.1, E.2.1.1, E.3.1.1, E.4.1.1,
+#     E.1.1.2, E.2.1.2, E.3.1.2, E.4.1.2,
+#     E.1.1.3, E.2.1.3, E.3.1.3, E.4.1.3,
+#     #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+#     E.1.2.1, E.2.2.1, E.3.2.1, E.4.2.1,
+#     E.1.2.2, E.2.2.2, E.3.2.2, E.4.2.2,
+#     E.1.2.3, E.2.2.3, E.3.2.3, E.4.2.3,
+#     #overall intercept, linear, and quad slopes
+#     mu.1.1, mu.2.1, mu.3.1, mu.4.1,
+#     mu.1.2, mu.2.2, mu.3.2, mu.4.2,
+#     mu.1.3, mu.2.3, mu.3.3, mu.4.3)%>%
+#   gather(key=parameter, value=value, U.1.1.1:mu.4.3)%>%
+#   group_by(parameter)%>%
+#   summarise(median=median(value), sd=sd(value))%>%
+#   mutate(CI=sd*2)%>%
+#   separate(parameter, c('level', 'variable', 'predictor', 'parameter'))%>%
+#   mutate(parameter=ifelse(level=='mu', predictor, parameter), predictor=ifelse(level=='mu', 'overall', predictor))%>%
+#   #rename parts to be more clear
+#   mutate(variable=ifelse(variable==1, 'mean', ifelse(variable==2, 'dispersion', ifelse(variable==3, 'evenness', 'richness'))),
+#          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
+#          predictor=ifelse(level=='D'&predictor==1, 'ANPP', ifelse(level=='D'&predictor==2, 'rrich', ifelse(level=='E'&predictor==1, 'MAP', ifelse(level=='E'&predictor==2, 'MAT', ifelse(level=='U'&predictor==1, 'plot mani 2', ifelse(level=='U'&predictor==2, 'plot mani 3', ifelse(level=='U'&predictor==3, 'plot mani 4', ifelse(level=='U'&predictor==4, 'plot mani 5', 'overall')))))))))%>%
+#   select(level, parameter, variable, predictor, predictor, median, sd, CI)
 
-write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_03132017.csv')
+# write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_03132017.csv')
+chainsCommunitySummary <- read.csv('bayesian_output_summary_final plots_03132017.csv')
 
 chainsCommunityOverall <- chainsCommunitySummary%>%
   filter(predictor=='overall')%>%
@@ -2493,67 +2494,84 @@ rawTrt <- rawData%>%
                                                                         ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
                                                                                ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
                                                                                       ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
-                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
+                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr','other'))))))))))))%>%
+  mutate(resource_mani_combo=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
+                                    ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
+                                           ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
+                                                  ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
+                                                         ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'multiple',
+                                                                ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'multiple',
+                                                                       ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'multiple',
+                                                                              ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'multiple',
+                                                                                     ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'multiple',
+                                                                                            ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'multiple', 
+                                                                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'multiple','other'))))))))))))
 
 #plot raw data by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='mean_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+meanResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='mean_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.10), name='Mean Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.45), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(0, 0.45), xlim=c(1,6)) +
   xlab('')+
   annotate('text', x=0.5, y=0.45, label='(a)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.42, label='a*', size=10) +
-  annotate('text', x=2, y=0.335, label='b*', size=10) +
-  annotate('text', x=3, y=0.35, label='b*', size=10) +
-  annotate('text', x=4, y=0.355, label='b*', size=10)
+  annotate('text', x=1, y=0.35, label='b*', size=10) +
+  annotate('text', x=2, y=0.42, label='a*', size=10) +
+  annotate('text', x=3, y=0.335, label='b*', size=10) +
+  annotate('text', x=4, y=0.35, label='b*', size=10) +
+  annotate('text', x=5, y=0.355, label='b*', size=10) +
+  annotate('text', x=6, y=0.33, label='b*', size=10)
 
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='dispersion_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='dispersion_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Dispersion Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.07, 0.03), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.07, 0.03), xlim=c(1,6)) +
   xlab('') +
   annotate('text', x=0.5, y=0.03, label='(b)', size=12, hjust='left')
 
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='S_PC', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='S_PC', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.1), name='Richness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.2, 0.15), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.2, 0.15), xlim=c(1,6)) +
   xlab('') +
   annotate('text', x=0.5, y=0.15, label='(c)', size=12, hjust='left') +
-  annotate('text', x=1, y=-0.18, label='a*', size=10) +
-  annotate('text', x=2, y=0.14, label='ab', size=10) +
-  annotate('text', x=3, y=0.12, label='b*', size=10) +
-  annotate('text', x=4, y=-0.11, label='ab', size=10)
+  annotate('text', x=1, y=0.07, label='a', size=10) +
+  annotate('text', x=2, y=-0.185, label='b*', size=10) +
+  annotate('text', x=3, y=0.14, label='ab', size=10) +
+  annotate('text', x=4, y=0.125, label='a*', size=10) +
+  annotate('text', x=5, y=-0.115, label='ab', size=10) +
+  annotate('text', x=6, y=0.09, label='a', size=10)
 
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(rawTrt, resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='SimpEven_change', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='SimpEven_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
   geom_bar(stat="identity", fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
   scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Evenness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.09, 0.14), xlim=c(1,4)) +
+  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
+                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
+  coord_cartesian(ylim=c(-0.09, 0.14), xlim=c(1,6)) +
   xlab('') +
   annotate('text', x=0.5, y=0.14, label='(d)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.058, label='a*', size=10) +
-  annotate('text', x=2, y=0.128, label='ab', size=10) +
-  annotate('text', x=3, y=0.015, label='b', size=10) +
-  annotate('text', x=4, y=-0.055, label='ab', size=10)
+  annotate('text', x=1, y=0.035, label='ab', size=10) +
+  annotate('text', x=2, y=0.058, label='a*', size=10) +
+  annotate('text', x=3, y=0.128, label='ab', size=10) +
+  annotate('text', x=4, y=-0.05, label='b', size=10) +
+  annotate('text', x=5, y=-0.055, label='ab', size=10) +
+  annotate('text', x=6, y=-0.055, label='b*', size=10)
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
+#export at 2400 x 1600
 
 
 ###by magnitude of resource manipulated---------------------------------
