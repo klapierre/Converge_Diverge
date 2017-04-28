@@ -46,7 +46,7 @@ colSd <- function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=sd, na.rm=na.rm)
 ##################################################################################
 ##################################################################################
 #experiment information --------------------------------------------------------
-expRaw <- read.csv('ExperimentInformation_Dec2016.csv')
+expRaw <- read.csv('ExperimentInformation_Apr2017.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
@@ -75,12 +75,12 @@ expInfoSummary <- rawData%>%
   summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp),
             MAT=mean(MAT), MAP=mean(MAP))%>%
   ungroup()%>%
-  summarise(length_median=median(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
-            plot_mani_median=median(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
-            rrich_median=median(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
-            anpp_median=median(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
-            MAP_median=median(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
-            MAT_median=median(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
+  summarise(length_median=mean(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
+            plot_mani_median=mean(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
+            rrich_median=mean(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
+            anpp_median=mean(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
+            MAP_median=mean(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
+            MAT_median=mean(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
   gather(variable, estimate)
 
 #treatment info
@@ -2316,159 +2316,159 @@ print(evennessQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
 
 
 
-###by resource mani - model output--------------------------------------------------------
-#still need to calculate the proportion of chains where x resource response was greater than y resource response
-trtDetail <- expRaw%>%
-  select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarize(n=mean(n), p=mean(p), k=mean(k), CO2=mean(CO2), precip=mean(precip))%>%
-  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
-
-chainsTrt <- chainsEquations%>%
-  select(variable, site_code, project_name, community_type, treatment, intercept, linear, quadratic, yr9, yr_final, plot_mani, rrich, anpp, MAT, MAP, min_year, experiment_length, alt_length)%>%
-  left_join(trtDetail)
-
-resourceMani <- chainsTrt%>%
-  mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
-                              ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
-                                     ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
-                                            ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
-                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'nuts:CO2',
-                                                          ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'nuts:dro',
-                                                                 ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'nuts:irr',
-                                                                        ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
-                                                                               ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
-                                                                                      ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
-                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
-
-#plot model output by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='mean'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.20), name='Mean Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.60, label='(a)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.42, label='a*', size=10) +
-  annotate('text', x=2, y=0.47, label='ab*', size=10) +
-  annotate('text', x=3, y=0.35, label='b*', size=10) +
-  annotate('text', x=4, y=0.35, label='b*', size=10)
-
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='dispersion'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.01), name='Dispersion Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.05, 0.03), xlim=c(1,4)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.03, label='(b)', size=12, hjust='left')
-
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='richness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Richness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.15, 0.06), xlim=c(1,4)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.06, label='(c)', size=12, hjust='left') +
-  annotate('text', x=1, y=-0.13, label='ab*', size=10) +
-  annotate('text', x=2, y=-0.10, label='a*', size=10) +
-  annotate('text', x=3, y=-0.05, label='b', size=10) +
-  annotate('text', x=4, y=-0.12, label='ab*', size=10)
-
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='evenness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Evenness Change') +
-  scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-                   labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-  coord_cartesian(ylim=c(-0.03, 0.07), xlim=c(1,4)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.07, label='(d)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.055, label='a*', size=10) +
-  annotate('text', x=3, y=0.05, label='ab*', size=10) +
-  annotate('text', x=4, y=0.02, label='b', size=10)
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
-
-
-###by magnitude of resource manipulated---------------------------------
-#N addition
-meanNPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&n>0), aes(x=n, y=yr_final)) +
-  geom_point(size=5) +
-  coord_trans(x="log") +
-  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('N added (gm-2)') +
-  annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
-
-dispersionNPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&n>0), aes(x=n, y=yr_final)) +
-  geom_point(size=5) +
-  coord_trans(x="log") +
-  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-  xlab('N added (gm-2)') +
-  annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
-
-richnessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&n>0), aes(x=n, y=yr_final)) +
-  geom_point(size=5) +
-  coord_trans(x="log") +
-  scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-  xlab('N added (gm-2)') +
-  annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
-
-evennessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&n>0), aes(x=n, y=yr_final)) +
-  geom_point(size=5) +
-  coord_trans(x="log") +
-  scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
-  xlab('N added (gm-2)') +
-  annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
-
-#H2O change
-meanPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&precip!=0), aes(x=precip, y=yr_final)) +
-  geom_point(size=5) +
-  # scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('H2O added/removed (mm)') +
-  annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
-
-dispersionPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&precip!=0), aes(x=precip, y=yr_final)) +
-  geom_point(size=5) +
-  # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-  xlab('H2O added/removed (mm)') +
-  annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
-
-richnessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&precip!=0), aes(x=precip, y=yr_final)) +
-  geom_point(size=5) +
-  # scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-  xlab('H2O added/removed (mm)') +
-  annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
-
-evennessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&precip!=0), aes(x=precip, y=yr_final)) +
-  geom_point(size=5) +
-  # scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
-  xlab('H2O added/removed (mm)') +
-  annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
+# ###by resource mani - model output--------------------------------------------------------
+# #still need to calculate the proportion of chains where x resource response was greater than y resource response
+# trtDetail <- expRaw%>%
+#   select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
+#   group_by(site_code, project_name, community_type, treatment)%>%
+#   summarize(n=mean(n), p=mean(p), k=mean(k), CO2=mean(CO2), precip=mean(precip))%>%
+#   mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
+# 
+# chainsTrt <- chainsEquations%>%
+#   select(variable, site_code, project_name, community_type, treatment, intercept, linear, quadratic, yr9, yr_final, plot_mani, rrich, anpp, MAT, MAP, min_year, experiment_length, alt_length)%>%
+#   left_join(trtDetail)
+# 
+# resourceMani <- chainsTrt%>%
+#   mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
+#                               ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
+#                                      ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
+#                                             ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
+#                                                    ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'nuts:CO2',
+#                                                           ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'nuts:dro',
+#                                                                  ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'nuts:irr',
+#                                                                         ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
+#                                                                                ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
+#                                                                                       ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
+#                                                                                              ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
+# 
+# #plot model output by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
+# meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='mean'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-5, 5, 0.20), name='Mean Change') +
+#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+#   coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
+#   xlab('')+
+#   annotate('text', x=0.5, y=0.60, label='(a)', size=12, hjust='left') +
+#   annotate('text', x=1, y=0.42, label='a*', size=10) +
+#   annotate('text', x=2, y=0.47, label='ab*', size=10) +
+#   annotate('text', x=3, y=0.35, label='b*', size=10) +
+#   annotate('text', x=4, y=0.35, label='b*', size=10)
+# 
+# dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='dispersion'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-5, 5, 0.01), name='Dispersion Change') +
+#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+#   coord_cartesian(ylim=c(-0.05, 0.03), xlim=c(1,4)) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=0.03, label='(b)', size=12, hjust='left')
+# 
+# richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='richness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Richness Change') +
+#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+#   coord_cartesian(ylim=c(-0.15, 0.06), xlim=c(1,4)) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=0.06, label='(c)', size=12, hjust='left') +
+#   annotate('text', x=1, y=-0.13, label='ab*', size=10) +
+#   annotate('text', x=2, y=-0.10, label='a*', size=10) +
+#   annotate('text', x=3, y=-0.05, label='b', size=10) +
+#   annotate('text', x=4, y=-0.12, label='ab*', size=10)
+# 
+# evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='evenness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
+#   geom_bar(stat="identity", fill='white', color='black') +
+#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
+#   scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Evenness Change') +
+#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
+#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
+#   coord_cartesian(ylim=c(-0.03, 0.07), xlim=c(1,4)) +
+#   xlab('') +
+#   annotate('text', x=0.5, y=0.07, label='(d)', size=12, hjust='left') +
+#   annotate('text', x=1, y=0.055, label='a*', size=10) +
+#   annotate('text', x=3, y=0.05, label='ab*', size=10) +
+#   annotate('text', x=4, y=0.02, label='b', size=10)
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# #export at 1800 x 1600
+# 
+# 
+# ###by magnitude of resource manipulated---------------------------------
+# #N addition
+# meanNPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&n>0), aes(x=n, y=yr_final)) +
+#   geom_point(size=5) +
+#   coord_trans(x="log") +
+#   scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+#   xlab('N added (gm-2)') +
+#   annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
+# 
+# dispersionNPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&n>0), aes(x=n, y=yr_final)) +
+#   geom_point(size=5) +
+#   coord_trans(x="log") +
+#   scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+#   xlab('N added (gm-2)') +
+#   annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
+# 
+# richnessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&n>0), aes(x=n, y=yr_final)) +
+#   geom_point(size=5) +
+#   coord_trans(x="log") +
+#   scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
+#   xlab('N added (gm-2)') +
+#   annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
+# 
+# evennessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&n>0), aes(x=n, y=yr_final)) +
+#   geom_point(size=5) +
+#   coord_trans(x="log") +
+#   scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
+#   xlab('N added (gm-2)') +
+#   annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(dispersionNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(richnessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# #export at 1800 x 1600
+# 
+# #H2O change
+# meanPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&precip!=0), aes(x=precip, y=yr_final)) +
+#   geom_point(size=5) +
+#   # scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+#   xlab('H2O added/removed (mm)') +
+#   annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
+# 
+# dispersionPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&precip!=0), aes(x=precip, y=yr_final)) +
+#   geom_point(size=5) +
+#   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+#   xlab('H2O added/removed (mm)') +
+#   annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
+# 
+# richnessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&precip!=0), aes(x=precip, y=yr_final)) +
+#   geom_point(size=5) +
+#   # scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
+#   xlab('H2O added/removed (mm)') +
+#   annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
+# 
+# evennessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&precip!=0), aes(x=precip, y=yr_final)) +
+#   geom_point(size=5) +
+#   # scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
+#   xlab('H2O added/removed (mm)') +
+#   annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(dispersionPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# print(evennessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# #export at 1800 x 1600
 
 
 ###by resource mani - raw data--------------------------------------------------------
@@ -2648,6 +2648,53 @@ print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 
 #export at 1800 x 1600
 
 
+###for factorial experiments, are responses (agnostic to factor identity) additive?
+#raw data--------------------------------------------------------
+rawFactor <- expRaw%>%
+  select(site_code, project_name, community_type, treatment, factorial)%>%
+  filter(factorial==1)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  unique()%>%
+  left_join(rawData)%>%
+  filter(!is.na(mean_change))%>%
+  filter(treatment_year==9|treatment_year==experiment_length)%>%
+  filter(plot_mani<6)
+
+#plot factorial responses for each metric
+meanFactorial <- ggplot(barGraphStats(data=rawFactor, variable="mean_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+  geom_bar(stat="identity", color='black', fill='white') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+  xlab('') +
+  annotate('text', x=0.5, y=0.65, label='(a)', size=12, hjust='left')
+
+dispersionFactorial <- ggplot(barGraphStats(data=rawFactor, variable="dispersion_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+  geom_bar(stat="identity", color='black', fill='white') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+  xlab('') +
+  annotate('text', x=0.5, y=0.38, label='(b)', size=12, hjust='left')
+
+richnessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="S_PC", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+  geom_bar(stat="identity", color='black', fill='white') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+  scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
+  xlab('Number of Factors') +
+  annotate('text', x=0.5, y=0.6, label='(c)', size=12, hjust='left')
+
+evennessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="SimpEven_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+  geom_bar(stat="identity", color='black', fill='white') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+  scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
+  xlab('Number of Factors') +
+  annotate('text', x=0.5, y=0.3, label='(d)', size=12, hjust='left')
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meanFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(evennessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(richnessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+#export at 1800 x 1600
 
 
 
