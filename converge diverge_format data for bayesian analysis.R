@@ -3,8 +3,11 @@ library(dplyr)
 library(ggplot2)
 library(gridExtra)
 
-#kim's
+#kim's laptop
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
+
+#kim's desktop
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
 #Meghan
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
@@ -200,6 +203,20 @@ e2<-qplot(SimpEven_change, data=ForAnalysis9yr, geom="histogram")+
 grid.arrange( m, d2,s1, e2, ncol=2)
 
 
+
+#9 year, single resource manipulations only
+resource9 <- ForAnalysis9yr%>%
+  left_join(expInfo)%>%
+  #filter out anything with more than one resource manipulated
+  filter(plot_mani<2)%>%
+  #make resources binary
+  mutate(n1=ifelse(n>0, 1, 0), p1=ifelse(p>0, 1, 0), other_nut=ifelse(k>0, 1, ifelse(other_trt=='mirconutrients and lime added', 1, ifelse(other_trt=='lime added', 1, 0))), CO2_1=ifelse(CO2>0, 1, 0), irr=ifelse(precip>1, 1, 0), drought=ifelse(precip<0, 1, 0), sum=n1+p1+other_nut+CO2_1+irr+drought)%>%
+  #drop megarich because they add NPK to all megaliths, so no true resource control
+  filter(site!='MEGARICH')
+  
+  
+  
+  
 
 
 #10+ year datasets (all years)
