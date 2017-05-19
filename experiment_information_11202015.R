@@ -1,5 +1,12 @@
-#Kim's
+#add qiang's data
+#check john's transect fertilization error
+#check all treatments and plot manis
+
+#Kim's laptop
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
+
+#kim's desktop
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
 #Meghan's
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
@@ -739,7 +746,7 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F1', 2, 1)))%>%
+  mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F1', 4, 3)))%>%
   mutate(resource_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
@@ -764,7 +771,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 2, 1)))%>%
+  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, 3)))%>%
   mutate(resource_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
@@ -923,7 +930,7 @@ e6<-read.delim("KUFS_E6.txt")%>%
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
          n=ifelse(treatment=='N0P0S0'|treatment=='N0P8S0', 0, ifelse(treatment=='N4P0S0'|treatment=='N4P8S0', 4, ifelse(treatment=='N8P0S0'|treatment=='N8P8S0', 8, 16))),
-         p=ifelse(treatment=='N0P0S0'|treatment=='N4P0S0'|treatment=='N8P0S0', 0, 8),
+         p=ifelse(treatment=='N0P0S0'|treatment=='N4P0S0'|treatment=='N8P0S0'|treatment=='N16P0S0', 0, 8),
          k=0, 
          CO2=0, 
          precip=0, 
