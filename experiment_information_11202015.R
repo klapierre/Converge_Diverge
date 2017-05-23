@@ -1,4 +1,3 @@
-#add qiang's data
 #check john's transect fertilization error
 #check all treatments and plot manis
 
@@ -20,7 +19,7 @@ library(dplyr)
 #### if all plots were burned (at any frequency (<20yrs) over the course of the experiment or at the site where the experiment takes place), fenced to remove herbivores (at any point in time where the experiment takes place), or mowed/clipped, then the variable gets a 0 for all plots, but management=1. SEE Experiment_List for Details. Otherwise they match treatments.
 #### successional and plant_mani are binary variables
 ####   if successional=1, then all plots were disturbed in some way prior to the experiment start
-#   if plant_mani=1, then some or all species are planted into the plots at the start of the experiment
+#   if plant_mani=1, then some or all species are planted into the plots at the start of the experiment; this can vary by treatment within a site (but most sites it is a 1 for all plots)
 #### cessation is a binary variable for each treatment and year combination, and is 1 when the treatment has been stopped - DROPPING CESSATION
 # plot_mani is the total number of factors manipulated compared to the control (i.e., if all plots are burned plot_mani does not increase, but if treatment plots are burned when controls are not, then plot_mani increases by 1)
 # resource_mani is a binary variable to subset out the treatments that do not directly manipulate a resource (e.g., only increased temperature)
@@ -652,6 +651,7 @@ study119<-read.delim("JRN_Study119.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  filter(calendar_year<1986)%>%
   unique()
 
 study278<-read.delim("JRN_study278.txt")%>%
@@ -775,8 +775,8 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F1', 4, 3)))%>%
-  mutate(resource_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
+  mutate(resource_mani=ifelse(treatment=='N0F0'|treatment=='N0F1', 0, 3))%>%
+  mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
@@ -801,7 +801,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, 3)))%>%
+  mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, ifelse(treatment=='N0B1', 1, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
@@ -1150,7 +1150,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
          p=0, 
          k=0, 
          CO2=0, 
-         precip=0, 
+         precip=ifelse(treatment=='SPRING'|treatment=='WINTER', 10, 0), 
          temp=0,
          mow_clip=0, 
          burn=0, 
@@ -1188,7 +1188,7 @@ herbdiv<-read.csv("NIN_herbdiv.csv")%>%
          plant_mani=1, 
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF'|treatment=='3NF', 1, ifelse(treatment=='4NF', 2, ifelse(treatment=='2F'|treatment=='3F', 4, ifelse(treatment=='4F', 5, ifelse(treatment=='1F'|treatment=='5NF', 3, 6)))))))%>%
-  mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 1))%>%
+  mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 3))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
@@ -1214,7 +1214,7 @@ ccd<-read.delim("NTG_CCD.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='CN-'|treatment=='CN+', 1,ifelse(treatment=='CNA', 0,ifelse(treatment=='CH-'|treatment=='CH+'|treatment=='CL-'|treatment=='CL+'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA'|treatment=='WN-'|treatment=='WN+', 2, 3))))%>%
+  mutate(plot_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='CN-'|treatment=='CN+'|treatment=='WNA', 1,ifelse(treatment=='CNA', 0,ifelse(treatment=='CH-'|treatment=='CH+'|treatment=='CL-'|treatment=='CL+'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA'|treatment=='WN-'|treatment=='WN+', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA', 0, 1))%>%
   mutate(max_trt=ifelse(treatment=='CH-'|treatment=='CHA'|treatment=='CH+'|treatment=='CN-'|treatment=='CNA'|treatment=='CN+'|treatment=='WH-'|treatment=='WHA'|treatment=='WH+'|treatment=='WN-'|treatment=='WNA'|treatment=='WN+', 1, 0))%>%
   mutate(public=0)%>%
@@ -1738,7 +1738,7 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
 #kim's
-write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Apr2017.csv')
+write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_May2017.csv')
 
 #meghan's
 write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Dec2016.csv")
@@ -1748,3 +1748,12 @@ write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInfor
 #   select(-calendar_year, -treatment_year)%>%
 #   unique()
 # write.csv(check, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Feb2016_CHECK.csv")
+
+# check2 <- combine[,c(12:20,23)]
+# check2a <- combine[,12:16]
+# check3$sum_plotmani <- rowSums(check2!=0)
+# check3a$sum_resourcemani <- rowSums(check2a!=0)
+# check4 <- cbind(combine, check3)%>%
+#   cbind(check3a)%>%
+#   mutate(check_plotmani=plot_mani-sum_plotmani, check_resource=resource_mani-sum_resourcemani)%>%
+#   select(site_code, project_name, treatment, plot_mani, sum_plotmani, check_plotmani, resource_mani, sum_resourcemani, check_resource)
