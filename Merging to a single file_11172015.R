@@ -249,7 +249,9 @@ study119<-read.delim("JRN_Study119.txt")%>%
 study119_names<-read.delim("JRN_Study119_specieslist.txt")
 study1192<-merge(study119, study119_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
-  select(-species_code)
+  select(-species_code)%>%
+  #in 1986 the control was mistakenly fertilized; delete from there
+  filter(calendar_year<1986)
 
 study278<-read.delim("JRN_study278.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -precip, -data_type,-plot_mani, -species_num)%>%
