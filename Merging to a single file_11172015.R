@@ -238,13 +238,10 @@ nde<-read.csv("IMGERS_NDE.csv")%>%
   filter(abundance!=0)
 
 yu<-read.delim("IMGERS_Yu.txt")%>%
-  select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -p, -k, -plot_mani, -data_type, -species_num)%>%
-  gather(species_code, abundance, sp1:sp29)%>%
-  mutate(community_type=0)
-yu_names<-read.delim("IMGERS_Yu_specieslist.txt")
-yu2<-merge(yu, yu_names,by="species_code", all=T)%>%
-  filter(abundance!=0)%>%
-  select(-species_code)
+  select(-experiment_year)%>%
+  gather(genus_species, abundance, Leymus.chinensis:Heteropappus.altaicus)%>%
+  mutate(community_type=0, block=0)%>%
+  filter(abundance!=0)
 
 study119<-read.delim("JRN_Study119.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n, -data_type,-plot_mani, -species_num, -plot_id1)%>%
@@ -582,12 +579,12 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   filter(abundance!=0)
 
 #merge all datasets
-combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu2)%>%
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu)%>%
   mutate(genus_species=tolower(genus_species))
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRawAbundance_Dec2016.csv")
+write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_May2017.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -606,42 +603,42 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "~/Dropbox/converge_diverge/datasets/Longform/SpeciesRelativeAbundance_Dec2016.csv")
+write.csv(relcov, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_May2017.csv")
 
-##for Codyn dataset
-expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
-forcodyn<-merge(expinfo, relcov, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
-  select(site_code,project_name,community_type,calendar_year,treatment_year,genus_species,relcov,plot_mani, plot_id)
-
-##get sp1 sp2
-species<-forcodyn%>%
-  select(site_code,project_name, genus_species)%>%
-  mutate(exp=paste(site_code, project_name, sep="::"))%>%
-  unique()
-
-exp<-species%>%
-  select(site_code,project_name)%>%
-  mutate(exp=paste(site_code, project_name, sep="::"))%>%
-  unique()
-
-forcodynsp<-data.frame(row.names = 1)
-
-for (i in 1: length(exp$exp)) {
-  
-  subset<-species%>%
-    filter(exp==exp$exp[i])
-  
-  newnames<-subset%>%
-    mutate(sp="sp", num=seq(1,nrow(subset), by=1), species=paste(sp, num, sep=""))
-  
-  forcodynsp<-rbind(newnames, forcodynsp)
-}
-
-forcodyn2<-merge(forcodyn, forcodynsp, by=c("site_code", "project_name", "genus_species"))%>%
-  select(-genus_species, -sp, -num, -exp)%>%
-  #there are some repeat species!GAH
-  tbl_df()%>%
-  group_by(site_code, project_name, community_type, calendar_year, treatment_year, plot_mani, plot_id, species)%>%
-  summarize(relcov=mean(relcov))
-
-write.csv(forcodyn2,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
+# ##for Codyn dataset
+# expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
+# forcodyn<-merge(expinfo, relcov, by=c("site_code","project_name","community_type","treatment_year","calendar_year","treatment"))%>%
+#   select(site_code,project_name,community_type,calendar_year,treatment_year,genus_species,relcov,plot_mani, plot_id)
+# 
+# ##get sp1 sp2
+# species<-forcodyn%>%
+#   select(site_code,project_name, genus_species)%>%
+#   mutate(exp=paste(site_code, project_name, sep="::"))%>%
+#   unique()
+# 
+# exp<-species%>%
+#   select(site_code,project_name)%>%
+#   mutate(exp=paste(site_code, project_name, sep="::"))%>%
+#   unique()
+# 
+# forcodynsp<-data.frame(row.names = 1)
+# 
+# for (i in 1: length(exp$exp)) {
+#   
+#   subset<-species%>%
+#     filter(exp==exp$exp[i])
+#   
+#   newnames<-subset%>%
+#     mutate(sp="sp", num=seq(1,nrow(subset), by=1), species=paste(sp, num, sep=""))
+#   
+#   forcodynsp<-rbind(newnames, forcodynsp)
+# }
+# 
+# forcodyn2<-merge(forcodyn, forcodynsp, by=c("site_code", "project_name", "genus_species"))%>%
+#   select(-genus_species, -sp, -num, -exp)%>%
+#   #there are some repeat species!GAH
+#   tbl_df()%>%
+#   group_by(site_code, project_name, community_type, calendar_year, treatment_year, plot_mani, plot_id, species)%>%
+#   summarize(relcov=mean(relcov))
+# 
+# write.csv(forcodyn2,"~/Dropbox/CoDyn/R files/11_06_2015_v7/corre_relcov.csv")
