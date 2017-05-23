@@ -13,16 +13,11 @@ setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_Dec2016.csv")%>%
+alldata<-read.csv("SpeciesRelativeAbundance_May2017.csv")%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
-  # #get rid of duplicate species within a plot and year for IMGERS_Yu 2006 plot 107 and 2008 plot 401 duplicate species is salsola collina pall.
-  tbl_df()%>%
-  group_by(exp_year, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
-  summarise(relcov=mean(relcov))%>%
-  tbl_df()
+  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
-expinfo<-read.csv("ExperimentInformation_Dec2016.csv")%>%
+expinfo<-read.csv("ExperimentInformation_May2017.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
@@ -78,10 +73,10 @@ for(i in 1:length(exp_year$exp_year)) {
   
   #collecting and labeling distances to centroid from betadisper
   trt_disp=data.frame(data.frame(exp_year=exp_year$exp_year[i], 
-                                              plot_id=species$plot_id, 
-                                              treatment=species$treatment,
-                                              dist=disp$distances))%>%
-    tbl_df%>%
+                                 plot_id=species$plot_id,
+                                 treatment=species$treatment,
+                                 dist=disp$distances))%>%
+    tbl_df()%>%
     group_by(exp_year, treatment)%>%
     summarize(dispersion=mean(dist))
   
@@ -111,4 +106,4 @@ for(i in 1:length(exp_year$exp_year)) {
 
 #write csv
 
-write.csv(for.analysis, 'DiversityMetrics_Dec2016.csv')
+write.csv(for.analysis, 'DiversityMetrics_May2017.csv')
