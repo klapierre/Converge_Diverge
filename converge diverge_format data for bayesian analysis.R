@@ -15,13 +15,13 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_Dec2016.csv')%>%
+expInfo <- read.csv('ExperimentInformation_May2017.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep='::'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
 #diversity data
-div <- merge(read.csv('DiversityMetrics_Dec2016.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+div <- merge(read.csv('DiversityMetrics_May2017.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -52,7 +52,7 @@ turnover9yr <- turnoverAll%>%
 
 ##18% of our our data is from CDR and KNZ
 
-write.csv(turnover9yr, "turnover_9yr_Mar2017.csv")
+write.csv(turnover9yr, "turnover_9yr_May2017.csv")
 
 ggplot(turnover9yr, aes(x=treatment_year, y=appearance/total, color=plot_mani)) +
   geom_point()
@@ -163,30 +163,30 @@ SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
 #full dataset
-write.csv(ForAnalysis, "ForBayesianAnalysis_Dec2016.csv")
+write.csv(ForAnalysis, "ForBayesianAnalysis_May2017.csv")
 
-#9 yr or less
-ForAnalysis9yr <- ForAnalysis%>%
-  filter(treatment_year<10)
+#8 yr or less
+ForAnalysis8yr <- ForAnalysis%>%
+  filter(treatment_year<9)
 
 ##18% of our our data is from CDR and KNZ
 
-write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9yr_Dec2016.csv")
+write.csv(ForAnalysis8yr, "ForBayesianAnalysis_8yr_May2017.csv")
 
 
 #Plot of 9 year data used in paper.
 theme_set(theme_bw(16))
-d2<-qplot(dispersion_change, data=ForAnalysis9yr, geom="histogram")+
+d2<-qplot(dispersion_change, data=ForAnalysis8yr, geom="histogram")+
   ggtitle("Within Treatment Change")+
   xlab("Trt Disp - Cont Disp")+
   geom_vline(xintercept = 0, size=2)
 
-m<-qplot(mean_change, data=ForAnalysis9yr, geom="histogram")+
+m<-qplot(mean_change, data=ForAnalysis8yr, geom="histogram")+
   ggtitle("Among Treatment Change")+
   xlab(" Distance between Centriods")+
   geom_vline(xintercept = 0, size=2)
 
-s1<-qplot(S_PC, data=ForAnalysis9yr, geom="histogram")+
+s1<-qplot(S_PC, data=ForAnalysis8yr, geom="histogram")+
   ggtitle("Richness Percent Change")+
   xlab("Percent Change in Richness")+
   geom_vline(xintercept = 0, size=2)
@@ -195,7 +195,7 @@ s1<-qplot(S_PC, data=ForAnalysis9yr, geom="histogram")+
 
 # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
 #   ggtitle("even percent change")
-e2<-qplot(SimpEven_change, data=ForAnalysis9yr, geom="histogram")+
+e2<-qplot(SimpEven_change, data=ForAnalysis8yr, geom="histogram")+
   ggtitle("Evenness Change")+
   xlab("Trt Evenness - Cont Evenness")+
   geom_vline(xintercept = 0, size=2)
@@ -204,30 +204,32 @@ grid.arrange( m, d2,s1, e2, ncol=2)
 
 
 
-#9 year, single resource manipulations only
-resource9 <- ForAnalysis9yr%>%
+#8 year, single resource manipulations only
+resource8 <- ForAnalysis8yr%>%
   left_join(expInfo)%>%
   #filter out anything with more than one resource manipulated
   filter(plot_mani<2)%>%
   #make resources binary
   mutate(n1=ifelse(n>0, 1, 0), p1=ifelse(p>0, 1, 0), other_nut=ifelse(k>0, 1, ifelse(other_trt=='mirconutrients and lime added', 1, ifelse(other_trt=='lime added', 1, 0))), CO2_1=ifelse(CO2>0, 1, 0), irr=ifelse(precip>1, 1, 0), drought=ifelse(precip<0, 1, 0), sum=n1+p1+other_nut+CO2_1+irr+drought)%>%
   #drop megarich because they add NPK to all megaliths, so no true resource control
-  filter(site!='MEGARICH')
-  
+  filter(project_name!='MEGARICH', sum==1)%>%
+  mutate(resource=ifelse(n1==1, 'n', ifelse(p1==1, 'p', ifelse(other_nut==1, 'other_nut', ifelse(CO2_1==1, 'CO2', ifelse(irr==1, 'irrigation', 'drought'))))))
+
+write.csv(resource8, 'ForBayesianAnalysis_singleresource_May2017.csv')
   
   
   
 
 
-#10+ year datasets (all years)
-ForAnalysis10yr <- ForAnalysis%>%
-  filter(experiment_length>9)
-write.csv(ForAnalysis10yr, "ForBayesianAnalysis_10yr_Dec2016.csv")
+#9+ year datasets (all years)
+ForAnalysis9yr <- ForAnalysis%>%
+  filter(experiment_length>8)
+write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9plusyr_May2017.csv")
 
-#absolute value
-ForAnalysisAbsValue <- ForAnalysis9yr%>%
-  mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
-write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
+# #absolute value
+# ForAnalysisAbsValue <- ForAnalysis9yr%>%
+#   mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
+# write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
 
 
 

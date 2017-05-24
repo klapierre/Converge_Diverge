@@ -46,7 +46,7 @@ colSd <- function (x, na.rm=FALSE) apply(X=x, MARGIN=2, FUN=sd, na.rm=na.rm)
 ##################################################################################
 ##################################################################################
 #experiment information --------------------------------------------------------
-expRaw <- read.csv('ExperimentInformation_Apr2017.csv')
+expRaw <- read.csv('ExperimentInformation_May2017.csv')
 
 expInfo <- expRaw%>%
   filter(treatment_year!=0)%>%
@@ -54,7 +54,7 @@ expInfo <- expRaw%>%
   mutate(irrigation=ifelse(precip>0, 1, 0), drought=ifelse(precip<0, 1, 0))%>%
   summarise(min_year=min(treatment_year), nutrients=mean(nutrients), water=mean(water), carbon=mean(carbon), irrigation=mean(irrigation), drought=mean(drought))
 
-rawData <- read.csv('ForBayesianAnalysis_9yr_Dec2016.csv')
+rawData <- read.csv('ForBayesianAnalysis_8yr_May2017.csv')
 
 rawData2<- rawData%>%
   filter(plot_mani<6, anpp!='NA')%>%
@@ -68,19 +68,19 @@ expInfo2 <- rawData%>%
   summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani))
 
 #for table of experiment summarizing various factors
-expInfoSummary <- rawData%>%
+rawDataAll <- read.csv('ForBayesianAnalysis_May2017.csv')
+expInfoSummary <- rawDataAll%>%
   filter(plot_mani<6, anpp!='NA')%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp),
-            MAT=mean(MAT), MAP=mean(MAP))%>%
+  summarise(experiment_length=mean(experiment_length), plot_mani=mean(plot_mani), rrich=mean(rrich), anpp=mean(anpp), MAT=mean(MAT), MAP=mean(MAP))%>%
   ungroup()%>%
-  summarise(length_median=mean(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
+  summarise(length_mean=mean(experiment_length), length_min=min(experiment_length), length_max=max(experiment_length),
             plot_mani_median=mean(plot_mani), plot_mani_min=min(plot_mani), plot_mani_max=max(plot_mani),
-            rrich_median=mean(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
-            anpp_median=mean(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
-            MAP_median=mean(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
-            MAT_median=mean(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
+            rrich_mean=mean(rrich), rrich_min=min(rrich), rrich_max=max(rrich),
+            anpp_mean=mean(anpp), anpp_min=min(anpp), anpp_max=max(anpp),
+            MAP_mean=mean(MAP), MAP_min=min(MAP), MAP_max=max(MAP),
+            MAT_mean=mean(MAT), MAT_min=min(MAT), MAT_max=max(MAT))%>%
   gather(variable, estimate)
 
 #treatment info
