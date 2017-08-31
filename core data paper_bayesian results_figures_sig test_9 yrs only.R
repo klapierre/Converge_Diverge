@@ -6,6 +6,7 @@ library(codyn)
 library(plyr)
 library(dplyr)
 library(tidyr)
+library(nlme)
 
 #kim's laptop
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
@@ -2479,7 +2480,7 @@ trtDetail <- expRaw%>%
   mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
 
 rawTrt <- rawData%>%
-  filter(treatment_year==9|treatment_year==experiment_length)%>%
+  filter(treatment_year==8|treatment_year==experiment_length)%>%
   select(site_code, project_name, community_type, treatment, plot_mani, rrich, anpp, MAT, MAP, experiment_length, treatment_year, mean_change, dispersion_change, SimpEven_change, S_PC)%>%
   left_join(trtDetail)%>%
   mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
@@ -2503,7 +2504,10 @@ rawTrt <- rawData%>%
                                                                               ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'multiple',
                                                                                      ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'multiple',
                                                                                             ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'multiple', 
-                                                                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'multiple','other'))))))))))))
+                                                                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'multiple','other'))))))))))))%>%
+  mutate(n_only=ifelse(n>0&plot_mani==1&site_code!='CEH', 'n only', 'not'))%>%
+  mutate(water_only=ifelse(precip!=0&plot_mani==1, 'water only', 'not'))%>%
+  mutate(site_proj_comm=paste(site_code, project_name, community_type))
 
 #plot raw data by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
 meanResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='mean_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
@@ -2574,36 +2578,50 @@ print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col 
 
 ###by magnitude of resource manipulated---------------------------------
 #N addition
-meanNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=mean_change)) +
+#model
+summary(meanModel<-lme(mean_change~n, random=~1|site_proj_comm,data=subset(rawTrt, n_only=='n only')))
+summary(dispModel<-lme(dispersion_change~n, random=~1|site_proj_comm,data=subset(rawTrt, n_only=='n only')))
+summary(richModel<-lme(S_PC~n, random=~1|site_proj_comm,data=subset(rawTrt, n_only=='n only')))
+summary(evenModel<-lme(SimpEven_change~n, random=~1|site_proj_comm,data=subset(rawTrt, n_only=='n only')))
+
+#figs
+meanNPlotFinal <- ggplot(data=subset(rawTrt, n_only=='n only'), aes(x=n, y=mean_change)) +
   geom_point(size=5) +
   scale_x_log10() +
   scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
   xlab('') +
-  annotate('text', x=0.4, y=1, label='(a)', size=12, hjust='left')
+  annotate('text', x=0.4, y=1, label='(a)', size=12, hjust='left') +
+  geom_segment(aes(x = 0.432, y = 0.2217095, xend = 152.57, yend = 0.6995399), size=3) +
+  theme(legend.position="none")
+#add text that intercept: t32=7.94, slope: t22=4.15
 
-dispersionNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=dispersion_change)) +
+dispersionNPlotFinal <- ggplot(data=subset(rawTrt, n_only=='n only'), aes(x=n, y=dispersion_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_x_log10() +
   scale_y_continuous(breaks=seq(-0.4, 0.4, 0.2), name='Dispersion Change') +
   xlab('') +
   annotate('text', x=0.4, y=0.4, label='(b)', size=12, hjust='left')
+#add text that intercept: n.s., slope: n.s.
 
-richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=S_PC)) +
+richnessNPlotFinal <- ggplot(data=subset(rawTrt, n_only=='n only'), aes(x=n, y=S_PC)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_x_log10() +
   scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
   xlab(expression(paste('N added (g', m^-2, ')'))) +
-  annotate('text', x=0.4, y=1.5, label='(c)', size=12, hjust='left')
+  annotate('text', x=0.4, y=1.5, label='(c)', size=12, hjust='left') +
+  geom_segment(aes(x = 0.432, y = -0.001551951, xend = 152.57, yend = -0.5481047), size=3) +
+  theme(legend.position="none")
+#add text that intercept: n.s., slope: t22=-2.93
 
-evennessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=SimpEven_change)) +
+evennessNPlotFinal <- ggplot(data=subset(rawTrt, n_only=='n only'), aes(x=n, y=SimpEven_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_x_log10() +
   scale_y_continuous(breaks=seq(-0.2, 0.6, 0.2), name='Evenness Change') +
   xlab(expression(paste('N added (g', m^-2, ')'))) +
-  annotate('text', x=0.4, y=0.6, label='(d)', size=12, hjust='left')
+  annotate('text', x=0.4, y=0.6, label='(d)', size=12, hjust='left') +
+  geom_segment(aes(x = 0.432, y = 0.0008551233, xend = 152.57, yend = 0.302005), size=3) +
+  theme(legend.position="none")
+#add text that intercept: n.s., slope: t22=3.32
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -2613,32 +2631,42 @@ print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 #export at 1800 x 1600
 
 #H2O change
-meanPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
+#model
+summary(meanModelPrecip<-lme(mean_change~precip, random=~1|site_proj_comm,data=subset(rawTrt, water_only=='water only')))
+summary(dispModelPrecip<-lme(dispersion_change~precip, random=~1|site_proj_comm,data=subset(rawTrt, water_only=='water only')))
+summary(richModelPrecip<-lme(S_PC~precip, random=~1|site_proj_comm,data=subset(rawTrt, water_only=='water only')))
+summary(evenModelPrecip<-lme(SimpEven_change~precip, random=~1|site_proj_comm,data=subset(rawTrt, water_only=='water only')))
+
+#figs
+meanPrecipPlotFinal <- ggplot(data=subset(rawTrt, water_only=='water only'), aes(x=precip, y=mean_change)) +
   geom_point(size=5) +
   scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
   xlab('') +
-  annotate('text', x=-80, y=0.65, label='(a)', size=12, hjust='left')
+  annotate('text', x=-80, y=0.65, label='(a)', size=12, hjust='left') +
+  geom_segment(aes(x = -80, y = 0.26261887, xend = 116, yend = 0.26261887), size=3) +
+  theme(legend.position="none")
+#add text that intercept: t24=13.60, slope: n.s.
 
-dispersionPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=dispersion_change)) +
+dispersionPrecipPlotFinal <- ggplot(data=subset(rawTrt, water_only=='water only'), aes(x=precip, y=dispersion_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
   xlab('') +
   annotate('text', x=-80, y=0.2, label='(b)', size=12, hjust='left')
+#add text that intercept: n.s., slope: n.s.
 
-richnessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
+richnessPrecipPlotFinal <- ggplot(data=subset(rawTrt, water_only=='water only'), aes(x=precip, y=S_PC)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
   annotate('text', x=-80, y=0.6, label='(c)', size=12, hjust='left')
+#add text that intercept: n.s., slope: n.s.
 
-evennessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=SimpEven_change)) +
+evennessPrecipPlotFinal <- ggplot(data=subset(rawTrt, water_only=='water only'), aes(x=precip, y=SimpEven_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
   annotate('text', x=-80, y=0.2, label='(d)', size=12, hjust='left')
+#add text that intercept: n.s., slope: n.s.
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -2648,59 +2676,59 @@ print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 
 #export at 1800 x 1600
 
 
-###for factorial experiments, are responses (agnostic to factor identity) additive?
-#raw data--------------------------------------------------------
-rawFactor <- expRaw%>%
-  select(site_code, project_name, community_type, treatment, factorial)%>%
-  filter(factorial==1)%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  unique()%>%
-  left_join(rawData)%>%
-  filter(!is.na(mean_change))%>%
-  filter(treatment_year==9|treatment_year==experiment_length)%>%
-  filter(plot_mani<6)
-
-#plot factorial responses for each metric
-meanFactorial <- ggplot(barGraphStats(data=rawFactor, variable="mean_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('') +
-  annotate('text', x=0.5, y=0.65, label='(a)', size=12, hjust='left')
-
-dispersionFactorial <- ggplot(barGraphStats(data=rawFactor, variable="dispersion_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-  xlab('') +
-  annotate('text', x=0.5, y=0.38, label='(b)', size=12, hjust='left')
-
-richnessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="S_PC", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
-  xlab('Number of Factors') +
-  annotate('text', x=0.5, y=0.6, label='(c)', size=12, hjust='left')
-
-evennessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="SimpEven_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
-  xlab('Number of Factors') +
-  annotate('text', x=0.5, y=0.3, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(evennessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-print(richnessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-#export at 1800 x 1600
+# ###for factorial experiments, are responses (agnostic to factor identity) additive?
+# #raw data--------------------------------------------------------
+# rawFactor <- expRaw%>%
+#   select(site_code, project_name, community_type, treatment, factorial)%>%
+#   filter(factorial==1)%>%
+#   group_by(site_code, project_name, community_type, treatment)%>%
+#   unique()%>%
+#   left_join(rawData)%>%
+#   filter(!is.na(mean_change))%>%
+#   filter(treatment_year==9|treatment_year==experiment_length)%>%
+#   filter(plot_mani<6)
+# 
+# #plot factorial responses for each metric
+# meanFactorial <- ggplot(barGraphStats(data=rawFactor, variable="mean_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+#   geom_bar(stat="identity", color='black', fill='white') +
+#   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+#   scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
+#   xlab('') +
+#   annotate('text', x=0.5, y=0.65, label='(a)', size=12, hjust='left')
+# 
+# dispersionFactorial <- ggplot(barGraphStats(data=rawFactor, variable="dispersion_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+#   geom_bar(stat="identity", color='black', fill='white') +
+#   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+#   scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+#   xlab('') +
+#   annotate('text', x=0.5, y=0.38, label='(b)', size=12, hjust='left')
+# 
+# richnessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="S_PC", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+#   geom_bar(stat="identity", color='black', fill='white') +
+#   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+#   scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
+#   xlab('Number of Factors') +
+#   annotate('text', x=0.5, y=0.6, label='(c)', size=12, hjust='left')
+# 
+# evennessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="SimpEven_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
+#   geom_bar(stat="identity", color='black', fill='white') +
+#   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
+#   scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
+#   xlab('Number of Factors') +
+#   annotate('text', x=0.5, y=0.3, label='(d)', size=12, hjust='left')
+# 
+# pushViewport(viewport(layout=grid.layout(2,2)))
+# print(meanFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(dispersionFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(evennessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+# print(richnessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+# #export at 1800 x 1600
 
 
 
 
 #look at number replicates for dispersion results (all factors actually) -- doesn't make a difference --------------------------------------
-reps <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
+reps <- read.csv('SpeciesRelativeAbundance_May2017.csv')%>%
   group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
   summarise(mean=mean(relcov))%>%
   ungroup()%>%
@@ -2711,38 +2739,46 @@ reps <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
   summarise(rep_num=mean(rep_num))
 
 dispersionReps <- rawTrt%>%
-  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'))
+  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
+  mutate(site_proj_comm=paste(site_code, project_name, community_type))
 
+#model
+summary(meanModelDisp<-lme(mean_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
+summary(dispModelDisp<-lme(dispersion_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
+summary(richModelDisp<-lme(S_PC~rep_num, random=~1|site_proj_comm,data=dispersionReps))
+summary(evenModelDisp<-lme(SimpEven_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
+
+#figs
 meanRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=mean_change)) +
   geom_point() +
   xlab('Number of Relicates') +
   ylab('Mean Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
-  annotate('text', x=0, y=1, label='(a)', size=12, hjust='left')
+  scale_x_continuous(breaks=seq(0,20,5)) +
+  coord_cartesian(xlim=c(2,20)) +
+  annotate('text', x=0, y=1, label='(a)', size=12, hjust='left') +
+  geom_segment(aes(x = 3, y = 0.3213704, xend = 18, yend = 0.1860824), size=3) +
+  theme(legend.position="none")
+#add text that intercept: t210=11.79., slope: t210=-2.16
 dispersionRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=dispersion_change)) +
   geom_point() +
-  geom_hline(yintercept=0) +
   xlab('Number of Relicates') +
   ylab('Dispersion Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
+  scale_x_continuous(breaks=seq(0,20,5)) +
+  coord_cartesian(xlim=c(2,20)) +
   annotate('text', x=0, y=0.35, label='(b)', size=12, hjust='left')
 richnessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=S_PC)) +
   geom_point() +
-  geom_hline(yintercept=0) +
   xlab('Number of Relicates') +
   ylab('Richness Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
+  scale_x_continuous(breaks=seq(0,20,5)) +
+  coord_cartesian(xlim=c(2,20)) +
   annotate('text', x=0, y=1.4, label='(c)', size=12, hjust='left')
 evennessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=SimpEven_change)) +
   geom_point() +
-  geom_hline(yintercept=0) +
   xlab('Number of Relicates') +
   ylab('Evenness Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
+  scale_x_continuous(breaks=seq(0,20,5)) +
+  coord_cartesian(xlim=c(2,20)) +
   annotate('text', x=0, y=0.6, label='(d)', size=12, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(2,2)))
@@ -2865,3 +2901,60 @@ print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 #export at 2400x1200
+
+
+###look at trts with multiple resources --------------------------------------------------------
+trtType <- rawTrt%>%
+  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', 'other')))))))))))))))%>%
+  mutate(disp_abs=abs(dispersion_change), rich_abs=abs(S_PC), even_abs=abs(SimpEven_change))
+
+meanChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="mean_change", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
+  theme(axis.text.x  = element_blank()) +
+  geom_vline(xintercept=5.5) +
+  geom_vline(xintercept=11.5) +
+  geom_vline(xintercept=13.5) +
+  ylab('Mean Change')
+
+dispersionChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="disp_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
+  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
+  theme(axis.text.x  = element_blank()) +
+  geom_vline(xintercept=5.5) +
+  geom_vline(xintercept=11.5) +
+  geom_vline(xintercept=13.5) +
+  ylab('Abs Dispersion Change')
+
+richnessChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="rich_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
+  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
+  theme(axis.text.x  = element_blank()) +
+  geom_vline(xintercept=5.5) +
+  geom_vline(xintercept=11.5) +
+  geom_vline(xintercept=13.5) +
+  ylab('Abs Richness Change')
+
+evennessChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="even_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
+  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
+  theme(axis.text.x  = element_blank()) +
+  geom_vline(xintercept=5.5) +
+  geom_vline(xintercept=11.5) +
+  geom_vline(xintercept=13.5) +
+  ylab('Abs Evenness Change')
+
+
+pushViewport(viewport(layout=grid.layout(4,1)))
+print(meanChangeInteractions, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionChangeInteractions, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(richnessChangeInteractions, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
+print(evennessChangeInteractions, vp=viewport(layout.pos.row = 4, layout.pos.col = 1))
+#export at 1800 x 1600
