@@ -2908,6 +2908,13 @@ trtType <- rawTrt%>%
   mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', 'other')))))))))))))))%>%
   mutate(disp_abs=abs(dispersion_change), rich_abs=abs(S_PC), even_abs=abs(SimpEven_change))
 
+#model
+summary(meanModelType<-lme(mean_change~trt_type, random=~1|site_proj_comm,data=trtType))
+summary(dispModelType<-lme(dispersion_change~trt_type, random=~1|site_proj_comm,data=trtType))
+summary(richModelType<-lme(S_PC~trt_type, random=~1|site_proj_comm,data=trtType))
+summary(evenModelType<-lme(SimpEven_change~trt_type, random=~1|site_proj_comm,data=trtType))
+
+#figs
 meanChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="mean_change", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
   geom_bar(stat='identity') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
