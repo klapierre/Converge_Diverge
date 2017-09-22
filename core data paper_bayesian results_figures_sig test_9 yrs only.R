@@ -98,19 +98,19 @@ trtInfo <- rawData%>%
 ################################################################################
 ################################################################################
 
-# #only run to generate initial chains files
-# #raw chains data --------------------------------------------------------
-# memory.limit(size=50000)
-# chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_0.csv', comment.char='#')
-# chains1 <- chains1[-1:-5000,]
-# chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_1.csv', comment.char='#')
-# chains2 <- chains2[-1:-5000,]
-# chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_2.csv', comment.char='#')
-# chains3 <- chains3[-1:-5000,]
-# chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_3.csv', comment.char='#')
-# chains4 <- chains4[-1:-5000,]
-# 
-# chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+#only run to generate initial chains files
+#raw chains data --------------------------------------------------------
+memory.limit(size=50000)
+chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_0.csv', comment.char='#')
+chains1 <- chains1[-1:-5000,]
+chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_1.csv', comment.char='#')
+chains2 <- chains2[-1:-5000,]
+chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_2.csv', comment.char='#')
+chains3 <- chains3[-1:-5000,]
+chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\mv_raw_disp\\mv_raw_disp_cholesky_3.csv', comment.char='#')
+chains4 <- chains4[-1:-5000,]
+
+chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
 # 
 # 
 # #density plot of chains --------------------------------------------------------
@@ -2030,7 +2030,7 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 
 
 ###summary stats from bayesian output --------------------------------------------------------
-#gather summary stats needed and relabel them
+# # gather summary stats needed and relabel them
 # chainsCommunitySummary <- chainsCommunity%>%
 #   select(#plot_mani intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
 #     U.1.1.1, U.2.1.1, U.3.1.1, U.4.1.1,
@@ -2078,9 +2078,9 @@ print(evennessPlot, vp=viewport(layout.pos.row=2, layout.pos.col=2))
 #          parameter=ifelse(parameter==1, 'intercept', ifelse(parameter==2, 'linear', 'quadratic')),
 #          predictor=ifelse(level=='D'&predictor==1, 'ANPP', ifelse(level=='D'&predictor==2, 'rrich', ifelse(level=='E'&predictor==1, 'MAP', ifelse(level=='E'&predictor==2, 'MAT', ifelse(level=='U'&predictor==1, 'plot mani 2', ifelse(level=='U'&predictor==2, 'plot mani 3', ifelse(level=='U'&predictor==3, 'plot mani 4', ifelse(level=='U'&predictor==4, 'plot mani 5', 'overall')))))))))%>%
 #   select(level, parameter, variable, predictor, predictor, median, sd, CI)
-
-# write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_03132017.csv')
-chainsCommunitySummary <- read.csv('bayesian_output_summary_final plots_03132017.csv')
+# 
+# write.csv(chainsCommunitySummary, 'bayesian_output_summary_final plots_09122017.csv')
+chainsCommunitySummary <- read.csv('bayesian_output_summary_final plots_09122017.csv')
 
 chainsCommunityOverall <- chainsCommunitySummary%>%
   filter(predictor=='overall')%>%
