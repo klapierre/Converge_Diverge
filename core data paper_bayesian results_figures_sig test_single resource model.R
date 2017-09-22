@@ -1210,165 +1210,7 @@ print(evennessQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
 #export at 2400x2000
 
 
-
-
-
-# ###by resource mani - model output--------------------------------------------------------
-# #still need to calculate the proportion of chains where x resource response was greater than y resource response
-# trtDetail <- expRaw%>%
-#   select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
-#   group_by(site_code, project_name, community_type, treatment)%>%
-#   summarize(n=mean(n), p=mean(p), k=mean(k), CO2=mean(CO2), precip=mean(precip))%>%
-#   mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
-# 
-# chainsTrt <- chainsEquations%>%
-#   select(variable, site_code, project_name, community_type, treatment, intercept, linear, quadratic, yr9, yr_final, plot_mani, rrich, anpp, MAT, MAP, min_year, experiment_length, alt_length)%>%
-#   left_join(trtDetail)
-# 
-# resourceMani <- chainsTrt%>%
-#   mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
-#                               ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
-#                                      ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
-#                                             ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
-#                                                    ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'nuts:CO2',
-#                                                           ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'nuts:dro',
-#                                                                  ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'nuts:irr',
-#                                                                         ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
-#                                                                                ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
-#                                                                                       ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
-#                                                                                              ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr', 'other'))))))))))))
-# 
-# #plot model output by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
-# meanResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='mean'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-5, 5, 0.20), name='Mean Change') +
-#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(0, 0.6), xlim=c(1,4)) +
-#   xlab('')+
-#   annotate('text', x=0.5, y=0.60, label='(a)', size=12, hjust='left') +
-#   annotate('text', x=1, y=0.42, label='a*', size=10) +
-#   annotate('text', x=2, y=0.47, label='ab*', size=10) +
-#   annotate('text', x=3, y=0.35, label='b*', size=10) +
-#   annotate('text', x=4, y=0.35, label='b*', size=10)
-# 
-# dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='dispersion'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-5, 5, 0.01), name='Dispersion Change') +
-#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.05, 0.03), xlim=c(1,4)) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=0.03, label='(b)', size=12, hjust='left')
-# 
-# richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='richness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Richness Change') +
-#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.15, 0.06), xlim=c(1,4)) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=0.06, label='(c)', size=12, hjust='left') +
-#   annotate('text', x=1, y=-0.13, label='ab*', size=10) +
-#   annotate('text', x=2, y=-0.10, label='a*', size=10) +
-#   annotate('text', x=3, y=-0.05, label='b', size=10) +
-#   annotate('text', x=4, y=-0.12, label='ab*', size=10)
-# 
-# evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=subset(resourceMani, variable=='evenness'&resource_mani!='other'&resource_mani!='nuts:CO2'&resource_mani!='nuts:dro'&resource_mani!='nuts:irr'&resource_mani!='CO2:dro'&resource_mani!='CO2:irr'&resource_mani!='nuts:CO2:dro'&resource_mani!='nuts:CO2:irr'), variable='yr_final', byFactorNames=c('resource_mani')), aes(x=resource_mani, y=mean)) +
-#   geom_bar(stat="identity", fill='white', color='black') +
-#   geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-#   scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Evenness Change') +
-#   scale_x_discrete(limits=c('nuts', 'CO2', 'irrigation', 'drought'),
-#                    labels=c('+nutrients', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O)) +
-#   coord_cartesian(ylim=c(-0.03, 0.07), xlim=c(1,4)) +
-#   xlab('') +
-#   annotate('text', x=0.5, y=0.07, label='(d)', size=12, hjust='left') +
-#   annotate('text', x=1, y=0.055, label='a*', size=10) +
-#   annotate('text', x=3, y=0.05, label='ab*', size=10) +
-#   annotate('text', x=4, y=0.02, label='b', size=10)
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-# #export at 1800 x 1600
-# 
-# 
-# ###by magnitude of resource manipulated---------------------------------
-# #N addition
-# meanNPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&n>0), aes(x=n, y=yr_final)) +
-#   geom_point(size=5) +
-#   coord_trans(x="log") +
-#   scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-#   xlab('N added (gm-2)') +
-#   annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
-# 
-# dispersionNPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&n>0), aes(x=n, y=yr_final)) +
-#   geom_point(size=5) +
-#   coord_trans(x="log") +
-#   scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-#   xlab('N added (gm-2)') +
-#   annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
-# 
-# richnessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&n>0), aes(x=n, y=yr_final)) +
-#   geom_point(size=5) +
-#   coord_trans(x="log") +
-#   scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-#   xlab('N added (gm-2)') +
-#   annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
-# 
-# evennessNPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&n>0), aes(x=n, y=yr_final)) +
-#   geom_point(size=5) +
-#   coord_trans(x="log") +
-#   scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
-#   xlab('N added (gm-2)') +
-#   annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(dispersionNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(richnessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-# #export at 1800 x 1600
-# 
-# #H2O change
-# meanPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='mean'&precip!=0), aes(x=precip, y=yr_final)) +
-#   geom_point(size=5) +
-#   # scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-#   xlab('H2O added/removed (mm)') +
-#   annotate('text', x=0.1, y=1, label='(a)', size=12, hjust='left')
-# 
-# dispersionPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='dispersion'&precip!=0), aes(x=precip, y=yr_final)) +
-#   geom_point(size=5) +
-#   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-#   xlab('H2O added/removed (mm)') +
-#   annotate('text', x=0.1, y=0.5, label='(b)', size=12, hjust='left')
-# 
-# richnessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='richness'&precip!=0), aes(x=precip, y=yr_final)) +
-#   geom_point(size=5) +
-#   # scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-#   xlab('H2O added/removed (mm)') +
-#   annotate('text', x=0.1, y=2, label='(c)', size=12, hjust='left')
-# 
-# evennessPrecipPlotFinal <- ggplot(data=subset(resourceMani, variable=='evenness'&precip!=0), aes(x=precip, y=yr_final)) +
-#   geom_point(size=5) +
-#   # scale_y_continuous(breaks=seq(-0.35, 0.5, 0.25), name='Evenness Change') +
-#   xlab('H2O added/removed (mm)') +
-#   annotate('text', x=0.1, y=0.5, label='(d)', size=12, hjust='left')
-# 
-# pushViewport(viewport(layout=grid.layout(2,2)))
-# print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(dispersionPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-# print(evennessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-# #export at 1800 x 1600
-
-
-###by resource mani - raw data--------------------------------------------------------
+###by magnitude of resource manipulated---------------------------------
 trtDetail <- expRaw%>%
   select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip)%>%
   group_by(site_code, project_name, community_type, treatment)%>%
@@ -1376,129 +1218,78 @@ trtDetail <- expRaw%>%
   mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
 
 rawTrt <- rawData%>%
-  filter(treatment_year==9|treatment_year==experiment_length)%>%
-  select(site_code, project_name, community_type, treatment, plot_mani, rrich, anpp, MAT, MAP, experiment_length, treatment_year, mean_change, dispersion_change, SimpEven_change, S_PC)%>%
-  left_join(trtDetail)%>%
-  mutate(resource_mani=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
-                              ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
-                                     ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
-                                            ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
-                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'nuts:CO2',
-                                                          ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'nuts:dro',
-                                                                 ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'nuts:irr',
-                                                                        ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'CO2:dro',
-                                                                               ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'CO2:irr',
-                                                                                      ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'nuts:CO2:dro', 
-                                                                                             ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'nuts:CO2:irr','other'))))))))))))%>%
-  mutate(resource_mani_combo=ifelse((n+p+k)>0&CO2==0&drought==0&irrigation==0, 'nuts',
-                                    ifelse((n+p+k)==0&CO2>0&drought==0&irrigation==0, 'CO2',
-                                           ifelse((n+p+k)==0&CO2==0&drought<0&irrigation==0, 'drought',
-                                                  ifelse((n+p+k)==0&CO2==0&drought==0&irrigation>0, 'irrigation',
-                                                         ifelse((n+p+k)>0&CO2>0&drought==0&irrigation==0, 'multiple',
-                                                                ifelse((n+p+k)>0&CO2==0&drought<0&irrigation==0, 'multiple',
-                                                                       ifelse((n+p+k)>0&CO2==0&drought==0&irrigation>0, 'multiple',
-                                                                              ifelse((n+p+k)==0&CO2>0&drought<0&irrigation==0, 'multiple',
-                                                                                     ifelse((n+p+k)==0&CO2>0&drought==0&irrigation>0, 'multiple',
-                                                                                            ifelse((n+p+k)>0&CO2>0&drought<0&irrigation==0,'multiple', 
-                                                                                                   ifelse((n+p+k)>0&CO2>0&drought==0&irrigation>0,'multiple','other'))))))))))))
+  left_join(trtDetail)
 
-#plot raw data by resource manipulated at final year of each experiment (varies by experiment) ---------------------------
-meanResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='mean_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.10), name='Mean Change') +
-  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
-                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
-  coord_cartesian(ylim=c(0, 0.45), xlim=c(1,6)) +
-  xlab('')+
-  annotate('text', x=0.5, y=0.45, label='(a)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.35, label='b*', size=10) +
-  annotate('text', x=2, y=0.42, label='a*', size=10) +
-  annotate('text', x=3, y=0.335, label='b*', size=10) +
-  annotate('text', x=4, y=0.35, label='b*', size=10) +
-  annotate('text', x=5, y=0.355, label='b*', size=10) +
-  annotate('text', x=6, y=0.33, label='b*', size=10)
-
-dispersionResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='dispersion_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.02), name='Dispersion Change') +
-  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
-                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
-  coord_cartesian(ylim=c(-0.07, 0.03), xlim=c(1,6)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.03, label='(b)', size=12, hjust='left')
-
-richnessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='S_PC', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.1), name='Richness Change') +
-  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
-                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
-  coord_cartesian(ylim=c(-0.2, 0.15), xlim=c(1,6)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.15, label='(c)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.07, label='a', size=10) +
-  annotate('text', x=2, y=-0.185, label='b*', size=10) +
-  annotate('text', x=3, y=0.14, label='ab', size=10) +
-  annotate('text', x=4, y=0.125, label='a*', size=10) +
-  annotate('text', x=5, y=-0.115, label='ab', size=10) +
-  annotate('text', x=6, y=0.09, label='a', size=10)
-
-evennessResourcePlotFinal <- ggplot(data=barGraphStats(data=rawTrt, variable='SimpEven_change', byFactorNames=c('resource_mani_combo')), aes(x=resource_mani_combo, y=mean)) +
-  geom_bar(stat="identity", fill='white', color='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(-5, 5, 0.05), name='Evenness Change') +
-  scale_x_discrete(limits=c('other', 'nuts', 'CO2', 'irrigation', 'drought', 'multiple'),
-                   labels=c('non-', '+nuts', '+' ~CO[2], '+' ~H[2]*O, '-' ~H[2]*O, 'multiple')) +
-  coord_cartesian(ylim=c(-0.09, 0.14), xlim=c(1,6)) +
-  xlab('') +
-  annotate('text', x=0.5, y=0.14, label='(d)', size=12, hjust='left') +
-  annotate('text', x=1, y=0.035, label='ab', size=10) +
-  annotate('text', x=2, y=0.058, label='a*', size=10) +
-  annotate('text', x=3, y=0.128, label='ab', size=10) +
-  annotate('text', x=4, y=-0.05, label='b', size=10) +
-  annotate('text', x=5, y=-0.055, label='ab', size=10) +
-  annotate('text', x=6, y=-0.055, label='b*', size=10)
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionResourcePlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessResourcePlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 2400 x 1600
-
-
-###by magnitude of resource manipulated---------------------------------
 #N addition
-meanNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=mean_change)) +
-  geom_point(size=5) +
-  scale_x_log10() +
-  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('') +
-  annotate('text', x=0.4, y=1, label='(a)', size=12, hjust='left')
+Nmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_mean_posteriors.csv', comment.char='#')
+NmeanMean <- as.data.frame(colMeans(Nmean))%>%
+  add_rownames('parameter')
+names(NmeanMean)[names(NmeanMean) == 'colMeans(Nmean)'] <- 'mean'
+NmeanSD <- as.data.frame(colSd(Nmean))%>%
+  add_rownames('parameter')
+names(NmeanSD)[names(NmeanSD) == 'colSd(Nmean)'] <- 'sd'
+NmeanOverall <- NmeanMean%>%
+  left_join(NmeanSD)
 
-dispersionNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=dispersion_change)) +
+meanNPlotFinal <- ggplot(data=subset(rawTrt, resource=='n'), aes(x=n, y=mean_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_x_log10() +
-  scale_y_continuous(breaks=seq(-0.4, 0.4, 0.2), name='Dispersion Change') +
+  scale_y_continuous(name='Mean Change') +
+  stat_function(fun=function(x){(0.1996768 + 0.003897660*x)}, size=5) +
+  xlab('') +
+  annotate('text', x=0.4, y=0.7, label='(a)', size=12, hjust='left')
+
+Ndispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_dispersion_posteriors.csv', comment.char='#')
+NdispersionMean <- as.data.frame(colMeans(Ndispersion))%>%
+  add_rownames('parameter')
+names(NdispersionMean)[names(NdispersionMean) == 'colMeans(Ndispersion)'] <- 'mean'
+NdispersionSD <- as.data.frame(colSd(Ndispersion))%>%
+  add_rownames('parameter')
+names(NdispersionSD)[names(NdispersionSD) == 'colSd(Ndispersion)'] <- 'sd'
+NdispersionOverall <- NdispersionMean%>%
+  left_join(NdispersionSD)
+
+dispersionNPlotFinal <- ggplot(data=subset(rawTrt, resource=='n'), aes(x=n, y=dispersion_change)) +
+  geom_point(size=5) +
+  scale_x_log10() +
+  scale_y_continuous(name='Dispersion Change') +
+  stat_function(fun=function(x){(-0.03662403 + 0.002749455*x)}, size=5) +
   xlab('') +
   annotate('text', x=0.4, y=0.4, label='(b)', size=12, hjust='left')
 
-richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=S_PC)) +
-  geom_point(size=5) +
-  geom_hline(yintercept=0) +
-  scale_x_log10() +
-  scale_y_continuous(breaks=seq(-1,2,0.5), name='Richness Change') +
-  xlab(expression(paste('N added (g', m^-2, ')'))) +
-  annotate('text', x=0.4, y=1.5, label='(c)', size=12, hjust='left')
+Nrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_richness_posteriors.csv', comment.char='#')
+NrichnessMean <- as.data.frame(colMeans(Nrichness))%>%
+  add_rownames('parameter')
+names(NrichnessMean)[names(NrichnessMean) == 'colMeans(Nrichness)'] <- 'mean'
+NrichnessSD <- as.data.frame(colSd(Nrichness))%>%
+  add_rownames('parameter')
+names(NrichnessSD)[names(NrichnessSD) == 'colSd(Nrichness)'] <- 'sd'
+NrichnessOverall <- NrichnessMean%>%
+  left_join(NrichnessSD)
 
-evennessNPlotFinal <- ggplot(data=subset(rawTrt, n>0), aes(x=n, y=SimpEven_change)) +
+richnessNPlotFinal <- ggplot(data=subset(rawTrt, resource=='n'), aes(x=n, y=S_PC)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
   scale_x_log10() +
-  scale_y_continuous(breaks=seq(-0.2, 0.6, 0.2), name='Evenness Change') +
+  scale_y_continuous(name='Richness Change') +
+  stat_function(fun=function(x){(-0.2093481 + 0.005159877*x)}, size=5) +
+  xlab(expression(paste('N added (g', m^-2, ')'))) +
+  annotate('text', x=0.4, y=0.7, label='(c)', size=12, hjust='left')
+
+Nevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_simpson_posteriors.csv', comment.char='#')
+NevennessMean <- as.data.frame(colMeans(Nevenness))%>%
+  add_rownames('parameter')
+names(NevennessMean)[names(NevennessMean) == 'colMeans(Nevenness)'] <- 'mean'
+NevennessSD <- as.data.frame(colSd(Nevenness))%>%
+  add_rownames('parameter')
+names(NevennessSD)[names(NevennessSD) == 'colSd(Nevenness)'] <- 'sd'
+NevennessOverall <- NevennessMean%>%
+  left_join(NevennessSD)
+
+evennessNPlotFinal <- ggplot(data=subset(rawTrt, resource=='n'), aes(x=n, y=SimpEven_change)) +
+  geom_point(size=5) +
+  scale_x_log10() +
+  scale_y_continuous(name='Evenness Change') +
+  stat_function(fun=function(x){(-0.03487945 + 0.002683607*x)}, size=5) +
   xlab(expression(paste('N added (g', m^-2, ')'))) +
   annotate('text', x=0.4, y=0.6, label='(d)', size=12, hjust='left')
 
@@ -1510,143 +1301,79 @@ print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 #export at 1800 x 1600
 
 #H2O change
-meanPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
-  geom_point(size=5) +
-  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('') +
-  annotate('text', x=-80, y=0.65, label='(a)', size=12, hjust='left')
+H2Omean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_mean_posteriors.csv', comment.char='#')
+H2OmeanMean <- as.data.frame(colMeans(H2Omean))%>%
+  add_rownames('parameter')
+names(H2OmeanMean)[names(H2OmeanMean) == 'colMeans(H2Omean)'] <- 'mean'
+H2OmeanSD <- as.data.frame(colSd(H2Omean))%>%
+  add_rownames('parameter')
+names(H2OmeanSD)[names(H2OmeanSD) == 'colSd(H2Omean)'] <- 'sd'
+H2OmeanOverall <- H2OmeanMean%>%
+  left_join(H2OmeanSD)
 
-dispersionPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=dispersion_change)) +
+meanH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
-  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
+  scale_y_continuous(name='Mean Change') +
+  stat_function(fun=function(x){(0.1821189 + 0.0002323004*x)*(0.1102327)+(0.2479358)}, size=5) +
   xlab('') +
-  annotate('text', x=-80, y=0.2, label='(b)', size=12, hjust='left')
+  annotate('text', x=-80, y=0.6, label='(a)', size=12, hjust='left')
 
-richnessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
+H2Odispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_dispersion_posteriors.csv', comment.char='#')
+H2OdispersionMean <- as.data.frame(colMeans(H2Odispersion))%>%
+  add_rownames('parameter')
+names(H2OdispersionMean)[names(H2OdispersionMean) == 'colMeans(H2Odispersion)'] <- 'mean'
+H2OdispersionSD <- as.data.frame(colSd(H2Odispersion))%>%
+  add_rownames('parameter')
+names(H2OdispersionSD)[names(H2OdispersionSD) == 'colSd(H2Odispersion)'] <- 'sd'
+H2OdispersionOverall <- H2OdispersionMean%>%
+  left_join(H2OdispersionSD)
+
+dispersionH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=dispersion_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
-  scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
+  scale_y_continuous(name='Dispersion Change') +
+  stat_function(fun=function(x){(-0.5576201 + 0.0005579544*x)*(0.0764769)+(0.0007942693)}, size=5) +
+  xlab('') +
+  annotate('text', x=-80, y=0.3, label='(b)', size=12, hjust='left')
+
+H2Orichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_richness_posteriors.csv', comment.char='#')
+H2OrichnessMean <- as.data.frame(colMeans(H2Orichness))%>%
+  add_rownames('parameter')
+names(H2OrichnessMean)[names(H2OrichnessMean) == 'colMeans(H2Orichness)'] <- 'mean'
+H2OrichnessSD <- as.data.frame(colSd(H2Orichness))%>%
+  add_rownames('parameter')
+names(H2OrichnessSD)[names(H2OrichnessSD) == 'colSd(H2Orichness)'] <- 'sd'
+H2OrichnessOverall <- H2OrichnessMean%>%
+  left_join(H2OrichnessSD)
+
+richnessH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
+  geom_point(size=5) +
+  scale_y_continuous(name='Richness Change') +
+  stat_function(fun=function(x){(-0.08455013 + 0.001098969*x)*(0.1781236)+(-0.02631029)}, size=5) +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
   annotate('text', x=-80, y=0.6, label='(c)', size=12, hjust='left')
 
-evennessPrecipPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=SimpEven_change)) +
+H2Oevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_simpson_posteriors.csv', comment.char='#')
+H2OevennessMean <- as.data.frame(colMeans(H2Oevenness))%>%
+  add_rownames('parameter')
+names(H2OevennessMean)[names(H2OevennessMean) == 'colMeans(H2Oevenness)'] <- 'mean'
+H2OevennessSD <- as.data.frame(colSd(H2Oevenness))%>%
+  add_rownames('parameter')
+names(H2OevennessSD)[names(H2OevennessSD) == 'colSd(H2Oevenness)'] <- 'sd'
+H2OevennessOverall <- H2OevennessMean%>%
+  left_join(H2OevennessSD)
+
+evennessH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=SimpEven_change)) +
   geom_point(size=5) +
-  geom_hline(yintercept=0) +
-  scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
+  scale_y_continuous(name='Evenness Change') +
+  stat_function(fun=function(x){(-0.07954122 + 0.0006981923*x)*(0.0783639)+(0.009980187)}, size=5) +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
-  annotate('text', x=-80, y=0.2, label='(d)', size=12, hjust='left')
+  annotate('text', x=-80, y=0.3, label='(d)', size=12, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionPrecipPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(evennessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-print(richnessPrecipPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-#export at 1800 x 1600
-
-
-###for factorial experiments, are responses (agnostic to factor identity) additive?
-#raw data--------------------------------------------------------
-rawFactor <- expRaw%>%
-  select(site_code, project_name, community_type, treatment, factorial)%>%
-  filter(factorial==1)%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  unique()%>%
-  left_join(rawData)%>%
-  filter(!is.na(mean_change))%>%
-  filter(treatment_year==9|treatment_year==experiment_length)%>%
-  filter(plot_mani<6)
-
-#plot factorial responses for each metric
-meanFactorial <- ggplot(barGraphStats(data=rawFactor, variable="mean_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(0, 1, 0.20), name='Mean Change') +
-  xlab('') +
-  annotate('text', x=0.5, y=0.65, label='(a)', size=12, hjust='left')
-
-dispersionFactorial <- ggplot(barGraphStats(data=rawFactor, variable="dispersion_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-0.5, 0.5, 0.1), name='Dispersion Change') +
-  xlab('') +
-  annotate('text', x=0.5, y=0.38, label='(b)', size=12, hjust='left')
-
-richnessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="S_PC", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-1,2,0.25), name='Richness Change') +
-  xlab('Number of Factors') +
-  annotate('text', x=0.5, y=0.6, label='(c)', size=12, hjust='left')
-
-evennessFactorial <- ggplot(barGraphStats(data=rawFactor, variable="SimpEven_change", byFactorNames=c("plot_mani")), aes(x=plot_mani, y=mean)) +
-  geom_bar(stat="identity", color='black', fill='white') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.1) +
-  scale_y_continuous(breaks=seq(-0.4, 0.5, 0.1), name='Evenness Change') +
-  xlab('Number of Factors') +
-  annotate('text', x=0.5, y=0.3, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionFactorial, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(evennessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-print(richnessFactorial, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-#export at 1800 x 1600
-
-
-
-
-#look at number replicates for dispersion results (all factors actually) -- doesn't make a difference --------------------------------------
-reps <- read.csv('SpeciesRelativeAbundance_Dec2016.csv')%>%
-  group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
-  summarise(mean=mean(relcov))%>%
-  ungroup()%>%
-  group_by(site_code, project_name, community_type, treatment, calendar_year)%>%
-  summarise(rep_num=n())%>%
-  ungroup()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(rep_num=mean(rep_num))
-
-dispersionReps <- rawTrt%>%
-  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'))
-
-meanRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=mean_change)) +
-  geom_point() +
-  xlab('Number of Relicates') +
-  ylab('Mean Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
-  annotate('text', x=0, y=1, label='(a)', size=12, hjust='left')
-dispersionRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=dispersion_change)) +
-  geom_point() +
-  geom_hline(yintercept=0) +
-  xlab('Number of Relicates') +
-  ylab('Dispersion Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
-  annotate('text', x=0, y=0.35, label='(b)', size=12, hjust='left')
-richnessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=S_PC)) +
-  geom_point() +
-  geom_hline(yintercept=0) +
-  xlab('Number of Relicates') +
-  ylab('Richness Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
-  annotate('text', x=0, y=1.4, label='(c)', size=12, hjust='left')
-evennessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=SimpEven_change)) +
-  geom_point() +
-  geom_hline(yintercept=0) +
-  xlab('Number of Relicates') +
-  ylab('Evenness Change') +
-  scale_x_continuous(breaks=seq(0,50,10)) +
-  coord_cartesian(xlim=c(2,45)) +
-  annotate('text', x=0, y=0.6, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(meanH2OPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersionH2OPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(evennessH2OPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(richnessH2OPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 #export at 1800 x 1600
 
 
@@ -1654,111 +1381,95 @@ print(evennessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 
 
+###comparing different resource manipulation types
+#mean change
+trtmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_mean_posteriors.csv', comment.char='#')
+trtmeanMean <- as.data.frame(colMeans(trtmean))%>%
+  add_rownames('parameter')
+names(trtmeanMean)[names(trtmeanMean) == 'colMeans(trtmean)'] <- 'mean'
+trtmeanSD <- as.data.frame(colSd(trtmean))%>%
+  add_rownames('parameter')
+names(trtmeanSD)[names(trtmeanSD) == 'colSd(trtmean)'] <- 'sd'
+trtmeanOverall <- trtmeanMean%>%
+  left_join(trtmeanSD)
 
-###look at five factor manipulations for mean change --------------------------------------------------------
-#compare any four factor without N to five factor with N - using model data final year--------------------------
-expRawMean <- expRaw%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
-
-meanCompare <- subset(chainsEquations, project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')%>%
-  select(variable, site_code, project_name, community_type, treatment, plot_mani, yr9)%>%
-  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-  mutate(n_mani=ifelse(n>0, 1, 0))
-
-#plot without N at four factors, with N at five factors
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
+meantrtPlotFinal <- ggplot(data=trtmeanOverall, aes(x=parameter, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_y_continuous(name='Mean Change') +
   xlab('') +
-  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('Number of Factors Manipulated') +
-  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n+manip.', '5 factor\n+manip.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
+  annotate('text', x=0.5, y=1, label='(a)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+
+#dispersion
+trtdispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_disp_posteriors.csv', comment.char='#')
+trtdispersionMean <- as.data.frame(colMeans(trtdispersion))%>%
+  add_rownames('parameter')
+names(trtdispersionMean)[names(trtdispersionMean) == 'colMeans(trtdispersion)'] <- 'mean'
+trtdispersionSD <- as.data.frame(colSd(trtdispersion))%>%
+  add_rownames('parameter')
+names(trtdispersionSD)[names(trtdispersionSD) == 'colSd(trtdispersion)'] <- 'sd'
+trtdispersionOverall <- trtdispersionMean%>%
+  left_join(trtdispersionSD)
+
+dispersiontrtPlotFinal <- ggplot(data=trtdispersionOverall, aes(x=parameter, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_y_continuous(name='Dispersion Change') +
   xlab('') +
-  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
+  annotate('text', x=0.5, y=1, label='(b)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5))
 
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 2400x1200
+#richness
+trtrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_richness_posteriors.csv', comment.char='#')
+trtrichnessMean <- as.data.frame(colMeans(trtrichness))%>%
+  add_rownames('parameter')
+names(trtrichnessMean)[names(trtrichnessMean) == 'colMeans(trtrichness)'] <- 'mean'
+trtrichnessSD <- as.data.frame(colSd(trtrichness))%>%
+  add_rownames('parameter')
+names(trtrichnessSD)[names(trtrichnessSD) == 'colSd(trtrichness)'] <- 'sd'
+trtrichnessOverall <- trtrichnessMean%>%
+  left_join(trtrichnessSD)
 
-#compare any four factor without N to five factor with N - using raw data final year--------------------------
-expRawMean <- expRaw%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))%>%
-  ungroup()%>%
-  select(site_code, project_name, community_type, treatment, plot_mani, n, herb_removal, plant_mani)
-
-meanCompare <- subset(rawTrt, project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')%>%
-  left_join(expRawMean, all=F)%>%
-  mutate(n_mani=ifelse(n>0, 1, 0))
-
-
-#plot without N at four factors, with N at five factors--------------------------
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
+richnesstrtPlotFinal <- ggplot(data=trtrichnessOverall, aes(x=parameter, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_y_continuous(name='Richness Change') +
   xlab('') +
-  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
-  theme(legend.position='none') +
-  annotate('text', x=1, y=0.4, label='a*', size=10) +
-  annotate('text', x=2, y=0.57, label='a*', size=10) +
-  annotate('text', x=3, y=0.8, label='b*', size=10)
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'herb_removal')), aes(x=interaction(plot_mani, herb_removal), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(limits=c('4.0', '4.1', '5.1'), labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('Number of Factors Manipulated') +
-  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
-  theme(legend.position='none') +
-  annotate('text', x=1, y=0.39, label='*', size=10) +
-  annotate('text', x=2, y=0.6, label='*', size=10) +
-  annotate('text', x=3, y=0.59, label='*', size=10)
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'plant_mani')), aes(x=interaction(plot_mani, plant_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(limits=c('4.0', '4.1', '5.1'), labels=c('4 factor\n-manip', '4 factor\n+manip.', '5 factor\n+manip.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
-  theme(legend.position='none') +
-  annotate('text', x=1, y=0.39, label='*', size=10) +
-  annotate('text', x=2, y=0.61, label='*', size=10) +
-  annotate('text', x=3, y=0.69, label='*', size=10)
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
+  annotate('text', x=0.5, y=1, label='(c)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5))
 
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 2400x1200
+#evenness
+trtevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_simp_posteriors.csv', comment.char='#')
+trtevennessMean <- as.data.frame(colMeans(trtevenness))%>%
+  add_rownames('parameter')
+names(trtevennessMean)[names(trtevennessMean) == 'colMeans(trtevenness)'] <- 'mean'
+trtevennessSD <- as.data.frame(colSd(trtevenness))%>%
+  add_rownames('parameter')
+names(trtevennessSD)[names(trtevennessSD) == 'colSd(trtevenness)'] <- 'sd'
+trtevennessOverall <- trtevennessMean%>%
+  left_join(trtevennessSD)
+
+evennesstrtPlotFinal <- ggplot(data=trtevennessOverall, aes(x=parameter, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
+  scale_y_continuous(name='Evenness Change') +
+  xlab('') +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
+  annotate('text', x=0.5, y=1, label='(d)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+
+
+pushViewport(viewport(layout=grid.layout(2,2)))
+print(meantrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(dispersiontrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(evennesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(richnesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+#export at 1800 x 1600
+
+
+
+
