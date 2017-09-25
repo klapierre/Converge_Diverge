@@ -17,7 +17,7 @@ setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge di
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34, color='black'),
              axis.title.y=element_text(size=40, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=34, color='black'),
-             plot.title = element_text(size=24, vjust=2),
+             plot.title = element_text(size=40, vjust=2),
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
              legend.title=element_blank(), legend.text=element_text(size=20))
 
@@ -2065,10 +2065,10 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   scale_y_continuous(limits=c(-0.8, 0.3), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   coord_flip() +
-  ggtitle('\nMean Change') +
+  ggtitle('Mean\nChange') +
   annotate('text', x=3.45, y=-0.8, label='(a)', size=10, hjust='left')
 
 dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='dispersion' & predictor=='overall'), aes(x=parameter, y=median)) +
@@ -2077,7 +2077,7 @@ dispersionOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='d
   scale_y_continuous(limits=c(-0.3, 0.18), breaks=seq(-0.2, 0.2, 0.2)) +
   scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   coord_flip() +
   ggtitle('Dispersion\nChange') +
@@ -2089,10 +2089,10 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='ric
   scale_y_continuous(limits=c(-0.3, 0.5), breaks=seq(-0.3, 0.5, 0.3)) +
   scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   coord_flip() +
-  ggtitle('Richness Change') +
+  ggtitle('Richness\nChange') +
   annotate('text', x=3.45, y=-0.3, label='(c)', size=10, hjust='left')
 
 evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='evenness' & predictor=='overall'), aes(x=parameter, y=median)) +
@@ -2101,7 +2101,7 @@ evennessOverallPlot <- ggplot(data=subset(chainsCommunitySummary, variable=='eve
   scale_y_continuous(limits=c(-0.4, 0.25), breaks=seq(-0.3, 0.3, 0.3)) +
   scale_x_discrete(limits=c('quadratic', 'linear', 'intercept'),
                    labels=c('Quadratic Slope', 'Linear Slope', 'Intercept')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=28, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   coord_flip() +
   ggtitle('Evenness\nChange') +
@@ -2295,7 +2295,7 @@ trtDetail <- expRaw%>%
 rawTrt <- rawData%>%
   left_join(trtDetail)
 
-#N addition
+#N addition (Figure 4)
 Nmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_mean_posteriors.csv', comment.char='#')
 NmeanMean <- as.data.frame(colMeans(Nmean))%>%
   add_rownames('parameter')
@@ -2308,7 +2308,7 @@ NmeanOverall <- NmeanMean%>%
 
 meanNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=mean_change)) +
   geom_point(size=5) +
-  scale_x_log10() +
+  # scale_x_log10() +
   scale_y_continuous(name='Mean Change') +
   stat_function(fun=function(x){(0.2003873 + 0.003866423*x)}, size=5) +
   xlab('') +
@@ -2326,13 +2326,12 @@ NdispersionOverall <- NdispersionMean%>%
 
 dispersionNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=dispersion_change)) +
   geom_point(size=5) +
-  scale_x_log10() +
+  # scale_x_log10() +
   scale_y_continuous(name='Dispersion Change') +
   xlab('') +
   annotate('text', x=0.4, y=0.4, label='(b)', size=12, hjust='left')
 
 
-#####START HERE: figure out how to do different lines for the 3 precip levels and color the points by MAP
 Nrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_richness_posteriors.csv', comment.char='#')
 NrichnessMean <- as.data.frame(colMeans(Nrichness))%>%
   add_rownames('parameter')
@@ -2343,13 +2342,16 @@ names(NrichnessSD)[names(NrichnessSD) == 'colSd(Nrichness)'] <- 'sd'
 NrichnessOverall <- NrichnessMean%>%
   left_join(NrichnessSD)
 
-richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=S_PC)) +
+richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=S_PC, color=MAP)) +
   geom_point(size=5) +
-  scale_x_log10() +
+  # scale_x_log10() +
   scale_y_continuous(name='Richness Change') +
-  stat_function(fun=function(x){(-0.2093481 + 0.005159877*x)}, size=5) +
+  stat_function(fun=function(x){(0.04821532 - 0.0001258736*1000 - 0.01420553*x + 0.00001198415*1000*x)}, size=5, color='#4793CF') +
+  stat_function(fun=function(x){(0.04821532 - 0.0001258736*600 - 0.01420553*x + 0.00001198415*600*x)}, size=5, color='#2D5E88') +
+  stat_function(fun=function(x){(0.04821532 - 0.0001258736*200 - 0.01420553*x + 0.00001198415*200*x)}, size=5, color='#153049') +
   xlab(expression(paste('N added (g', m^-2, ')'))) +
-  annotate('text', x=0.4, y=0.7, label='(c)', size=12, hjust='left')
+  annotate('text', x=0.4, y=0.7, label='(c)', size=12, hjust='left') +
+  theme(legend.position=c(0.02,0.02), legend.justification=c(0,0))
 
 Nevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_simpson_posteriors.csv', comment.char='#')
 NevennessMean <- as.data.frame(colMeans(Nevenness))%>%
@@ -2363,9 +2365,8 @@ NevennessOverall <- NevennessMean%>%
 
 evennessNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=SimpEven_change)) +
   geom_point(size=5) +
-  scale_x_log10() +
+  # scale_x_log10() +
   scale_y_continuous(name='Evenness Change') +
-  stat_function(fun=function(x){(-0.03487945 + 0.002683607*x)}, size=5) +
   xlab(expression(paste('N added (g', m^-2, ')'))) +
   annotate('text', x=0.4, y=0.6, label='(d)', size=12, hjust='left')
 
@@ -2376,7 +2377,7 @@ print(richnessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 print(evennessNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 #export at 1800 x 1600
 
-#H2O change
+#H2O change (Figure S3)
 H2Omean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_mean_posteriors.csv', comment.char='#')
 H2OmeanMean <- as.data.frame(colMeans(H2Omean))%>%
   add_rownames('parameter')
@@ -2390,7 +2391,7 @@ H2OmeanOverall <- H2OmeanMean%>%
 meanH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
   geom_point(size=5) +
   scale_y_continuous(name='Mean Change') +
-  stat_function(fun=function(x){(0.1821189 + 0.0002323004*x)*(0.1102327)+(0.2479358)}, size=5) +
+  stat_function(fun=function(x){(0.1820251 + 0.0002544999*x)}, size=5) +
   xlab('') +
   annotate('text', x=-80, y=0.6, label='(a)', size=12, hjust='left')
 
@@ -2407,7 +2408,6 @@ H2OdispersionOverall <- H2OdispersionMean%>%
 dispersionH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=dispersion_change)) +
   geom_point(size=5) +
   scale_y_continuous(name='Dispersion Change') +
-  stat_function(fun=function(x){(-0.5576201 + 0.0005579544*x)*(0.0764769)+(0.0007942693)}, size=5) +
   xlab('') +
   annotate('text', x=-80, y=0.3, label='(b)', size=12, hjust='left')
 
@@ -2424,7 +2424,6 @@ H2OrichnessOverall <- H2OrichnessMean%>%
 richnessH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
   geom_point(size=5) +
   scale_y_continuous(name='Richness Change') +
-  stat_function(fun=function(x){(-0.08455013 + 0.001098969*x)*(0.1781236)+(-0.02631029)}, size=5) +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
   annotate('text', x=-80, y=0.6, label='(c)', size=12, hjust='left')
 
@@ -2441,7 +2440,6 @@ H2OevennessOverall <- H2OevennessMean%>%
 evennessH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=SimpEven_change)) +
   geom_point(size=5) +
   scale_y_continuous(name='Evenness Change') +
-  stat_function(fun=function(x){(-0.07954122 + 0.0006981923*x)*(0.0783639)+(0.009980187)}, size=5) +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
   annotate('text', x=-80, y=0.3, label='(d)', size=12, hjust='left')
 
@@ -2457,9 +2455,14 @@ print(richnessH2OPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 
 
 
-###comparing different resource manipulation types
+###comparing different resource manipulation types (Figure 3)
+#get means and sd to backtransform
+trtInteractionsData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\treatment interactions_09072017.csv')%>%
+  summarize(mean_mean_change=mean(mean_change), sd_mean_change=sd(mean_change), mean_dispersion_change=mean(dispersion_change), sd_dispersion_change=sd(dispersion_change), mean_richness_change=mean(S_PC), sd_richness_change=sd(S_PC), mean_evenness_change=mean(SimpEven_change), sd_evenness_change=sd(SimpEven_change))
+
+
 #mean change
-trtmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_mean_posteriors.csv', comment.char='#')
+trtmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_mean_posteriors.csv', comment.char='#')*0.1471785+0.3233751
 trtmeanMean <- as.data.frame(colMeans(trtmean))%>%
   add_rownames('parameter')
 names(trtmeanMean)[names(trtmeanMean) == 'colMeans(trtmean)'] <- 'mean'
@@ -2470,16 +2473,16 @@ trtmeanOverall <- trtmeanMean%>%
   left_join(trtmeanSD)
 
 meantrtPlotFinal <- ggplot(data=trtmeanOverall, aes(x=parameter, y=mean)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Mean Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
-  annotate('text', x=0.5, y=1, label='(a)', size=12, hjust='left') +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  annotate('text', x=0.5, y=0.6, label='(a)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #dispersion
-trtdispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_disp_posteriors.csv', comment.char='#')
+trtdispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_disp_posteriors.csv', comment.char='#')*0.09374439+0.003188805
 trtdispersionMean <- as.data.frame(colMeans(trtdispersion))%>%
   add_rownames('parameter')
 names(trtdispersionMean)[names(trtdispersionMean) == 'colMeans(trtdispersion)'] <- 'mean'
@@ -2490,16 +2493,16 @@ trtdispersionOverall <- trtdispersionMean%>%
   left_join(trtdispersionSD)
 
 dispersiontrtPlotFinal <- ggplot(data=trtdispersionOverall, aes(x=parameter, y=mean)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Dispersion Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
-  annotate('text', x=0.5, y=1, label='(b)', size=12, hjust='left') +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  annotate('text', x=0.5, y=0.2, label='(b)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #richness
-trtrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_richness_posteriors.csv', comment.char='#')
+trtrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_richness_posteriors.csv', comment.char='#')*0.2397557-0.04606815
 trtrichnessMean <- as.data.frame(colMeans(trtrichness))%>%
   add_rownames('parameter')
 names(trtrichnessMean)[names(trtrichnessMean) == 'colMeans(trtrichness)'] <- 'mean'
@@ -2510,16 +2513,16 @@ trtrichnessOverall <- trtrichnessMean%>%
   left_join(trtrichnessSD)
 
 richnesstrtPlotFinal <- ggplot(data=trtrichnessOverall, aes(x=parameter, y=mean)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Richness Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
-  annotate('text', x=0.5, y=1, label='(c)', size=12, hjust='left') +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  annotate('text', x=0.5, y=0.5, label='(c)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #evenness
-trtevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_simp_posteriors.csv', comment.char='#')
+trtevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_simp_posteriors.csv', comment.char='#')*0.1003621+0.01021106
 trtevennessMean <- as.data.frame(colMeans(trtevenness))%>%
   add_rownames('parameter')
 names(trtevennessMean)[names(trtevennessMean) == 'colMeans(trtevenness)'] <- 'mean'
@@ -2530,13 +2533,14 @@ trtevennessOverall <- trtevennessMean%>%
   left_join(trtevennessSD)
 
 evennesstrtPlotFinal <- ggplot(data=trtevennessOverall, aes(x=parameter, y=mean)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Evenness Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr')) +
-  annotate('text', x=0.5, y=1, label='(d)', size=12, hjust='left') +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  annotate('text', x=0.5, y=0.15, label='(d)', size=12, hjust='left') +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
+
 
 
 pushViewport(viewport(layout=grid.layout(2,2)))
@@ -2544,11 +2548,11 @@ print(meantrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(dispersiontrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(evennesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 print(richnesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-#export at 1800 x 1600
+#export at 1800 x 2400
 
 
 
-#look at number replicates for dispersion results (all factors actually) -- doesn't make a difference --------------------------------------
+#look at number replicates for dispersion results (all factors actually) -- doesn't make a difference (Figure S4) --------------------------------------
 reps <- read.csv('SpeciesRelativeAbundance_May2017.csv')%>%
   group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
   summarise(mean=mean(relcov))%>%
@@ -2615,7 +2619,7 @@ print(evennessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 
 
 
-###look at five factor manipulations for mean change --------------------------------------------------------
+###look at five factor manipulations for mean change (Figure S5)--------------------------------------------------------
 #compare any four factor without N to five factor with N - using model data final year--------------------------
 expRawMean <- expRaw%>%
   group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
@@ -2722,67 +2726,3 @@ print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 #export at 2400x1200
-
-
-###look at trts with multiple resources --------------------------------------------------------
-trtType <- rawTrt%>%
-  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', 'other')))))))))))))))%>%
-  mutate(disp_abs=abs(dispersion_change), rich_abs=abs(S_PC), even_abs=abs(SimpEven_change))
-
-#model
-summary(meanModelType<-lme(mean_change~trt_type, random=~1|site_proj_comm,data=trtType))
-summary(dispModelType<-lme(dispersion_change~trt_type, random=~1|site_proj_comm,data=trtType))
-summary(richModelType<-lme(S_PC~trt_type, random=~1|site_proj_comm,data=trtType))
-summary(evenModelType<-lme(SimpEven_change~trt_type, random=~1|site_proj_comm,data=trtType))
-
-#figs
-meanChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="mean_change", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
-  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
-  theme(axis.text.x  = element_blank()) +
-  geom_vline(xintercept=5.5) +
-  geom_vline(xintercept=11.5) +
-  geom_vline(xintercept=13.5) +
-  ylab('Mean Change')
-
-dispersionChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="disp_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
-  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
-  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
-  theme(axis.text.x  = element_blank()) +
-  geom_vline(xintercept=5.5) +
-  geom_vline(xintercept=11.5) +
-  geom_vline(xintercept=13.5) +
-  ylab('Abs Dispersion Change')
-
-richnessChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="rich_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
-  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
-  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
-  theme(axis.text.x  = element_blank()) +
-  geom_vline(xintercept=5.5) +
-  geom_vline(xintercept=11.5) +
-  geom_vline(xintercept=13.5) +
-  ylab('Abs Richness Change')
-
-evennessChangeInteractions <- ggplot(barGraphStats(data=subset(trtType, trt_type!='other'), variable="even_abs", byFactorNames=c("trt_type")), aes(x=trt_type, y=mean))+
-  geom_bar(stat='identity') +
-  geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
-  scale_x_discrete(limits=c('N', 'P', 'drought', 'irr', 'CO2', 'N+drought', 'N+irr', 'N+P', 'P+K', 'N+CO2', 'CO2+irr', 'N+P+K', 'N+CO2+irr', 'N+P+K+irr')) +
-  theme(axis.text.x  = element_text(angle=90, vjust=0.5)) +
-  theme(axis.text.x  = element_blank()) +
-  geom_vline(xintercept=5.5) +
-  geom_vline(xintercept=11.5) +
-  geom_vline(xintercept=13.5) +
-  ylab('Abs Evenness Change')
-
-
-pushViewport(viewport(layout=grid.layout(4,1)))
-print(meanChangeInteractions, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionChangeInteractions, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(richnessChangeInteractions, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
-print(evennessChangeInteractions, vp=viewport(layout.pos.row = 4, layout.pos.col = 1))
-#export at 1800 x 1600
