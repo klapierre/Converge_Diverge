@@ -2472,12 +2472,12 @@ names(trtmeanSD)[names(trtmeanSD) == 'colSd(trtmean)'] <- 'sd'
 trtmeanOverall <- trtmeanMean%>%
   left_join(trtmeanSD)
 
-meantrtPlotFinal <- ggplot(data=trtmeanOverall, aes(x=parameter, y=mean)) +
+meantrtPlotFinal <- ggplot(data=subset(trtmeanOverall, parameter!='CO2...Irr'&parameter!='P...K'&parameter!='N...CO2...Irr'), aes(x=parameter, y=mean)) +
   geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Mean Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
   annotate('text', x=0.5, y=0.6, label='(a)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
@@ -2492,12 +2492,12 @@ names(trtdispersionSD)[names(trtdispersionSD) == 'colSd(trtdispersion)'] <- 'sd'
 trtdispersionOverall <- trtdispersionMean%>%
   left_join(trtdispersionSD)
 
-dispersiontrtPlotFinal <- ggplot(data=trtdispersionOverall, aes(x=parameter, y=mean)) +
+dispersiontrtPlotFinal <- ggplot(data=subset(trtdispersionOverall, parameter!='CO2...Irr'&parameter!='P...K'&parameter!='N...CO2...Irr'), aes(x=parameter, y=mean)) +
   geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Dispersion Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
   annotate('text', x=0.5, y=0.2, label='(b)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
@@ -2512,12 +2512,12 @@ names(trtrichnessSD)[names(trtrichnessSD) == 'colSd(trtrichness)'] <- 'sd'
 trtrichnessOverall <- trtrichnessMean%>%
   left_join(trtrichnessSD)
 
-richnesstrtPlotFinal <- ggplot(data=trtrichnessOverall, aes(x=parameter, y=mean)) +
+richnesstrtPlotFinal <- ggplot(data=subset(trtrichnessOverall, parameter!='CO2...Irr'&parameter!='P...K'&parameter!='N...CO2...Irr'), aes(x=parameter, y=mean)) +
   geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Richness Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
   annotate('text', x=0.5, y=0.5, label='(c)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
@@ -2532,12 +2532,12 @@ names(trtevennessSD)[names(trtevennessSD) == 'colSd(trtevenness)'] <- 'sd'
 trtevennessOverall <- trtevennessMean%>%
   left_join(trtevennessSD)
 
-evennesstrtPlotFinal <- ggplot(data=trtevennessOverall, aes(x=parameter, y=mean)) +
+evennesstrtPlotFinal <- ggplot(data=subset(trtevennessOverall, parameter!='CO2...Irr'&parameter!='P...K'&parameter!='N...CO2...Irr'), aes(x=parameter, y=mean)) +
   geom_bar(stat='identity', fill='white', color='black') +
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Evenness Change') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...Irr', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'P...K', 'N...CO2...Irr', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*Irr (1)')), expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'P*K (1)', expression(paste(CO[2],'*N*Irr (1)')), 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
   annotate('text', x=0.5, y=0.15, label='(d)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
