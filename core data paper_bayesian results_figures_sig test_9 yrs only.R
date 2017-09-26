@@ -2551,55 +2551,7 @@ print(richnesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 
 
 
-###look at five factor manipulations for mean change (Figure S5)--------------------------------------------------------
-#compare any four factor without N to five factor with N - using model data final year--------------------------
-expRawMean <- expRaw%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarise(n=mean(n), herb_removal=mean(herb_removal), plant_mani=mean(plant_mani))
-
-meanCompare <- subset(chainsEquations, project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')%>%
-  select(variable, site_code, project_name, community_type, treatment, plot_mani, yr9)%>%
-  left_join(expRawMean, by=c('site_code', 'project_name', 'community_type', 'treatment', 'plot_mani'), all=F)%>%
-  mutate(n_mani=ifelse(n>0, 1, 0))
-
-#plot without N at four factors, with N at five factors
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
-  scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&herb_removal>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('Number of Factors Manipulated') +
-  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plant_mani>0&variable=='mean'), variable='yr9', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(labels=c('4 factor\n+manip.', '5 factor\n+manip.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
-  theme(legend.position='none')
-
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 2400x1200
-
+###look at five factor manipulations for mean change (Figure S5)------------------------------------------------
 #compare any four factor without N to five factor with N - using raw data final year--------------------------
 expRawMean <- expRaw%>%
   group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
@@ -2609,52 +2561,21 @@ expRawMean <- expRaw%>%
 
 meanCompare <- subset(rawTrt, project_name=='e001'|project_name=='e002'|site_code=='NIN'|site_code=='TRA')%>%
   left_join(expRawMean, all=F)%>%
-  mutate(n_mani=ifelse(n>0, 1, 0))
-
+  mutate(n_mani=ifelse(n>0, 1, 0))%>%
+  mutate(trt=paste(n_mani, plot_mani, sep=':'))%>%
+  mutate(keep=ifelse(experiment_length==treatment_year, 1, ifelse(treatment_year==8, 1, 0)))
 
 #plot without N at four factors, with N at five factors--------------------------
-compareNPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
+ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6&keep==1), variable='mean_change', byFactorNames=c('plot_mani', 'n_mani')), aes(x=interaction(plot_mani, n_mani), y=mean, fill=as.factor(plot_mani))) +
   geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='Mean Change') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, width=0.2)) +
+  scale_y_continuous(breaks=seq(0, 0.7, 0.2), name='Mean Change') +
   scale_x_discrete(labels=c('4 factor\n-N', '4 factor\n+N', '5 factor\n+N')) +
-  coord_cartesian(ylim=c(0,1)) +
+  coord_cartesian(ylim=c(0,0.7)) +
   scale_fill_manual(values=c('white', 'grey')) +
   xlab('') +
-  annotate('text', x=0.5, y=1, label='(a) Nitrogen Comparison', size=10, hjust='left') +
   theme(legend.position='none') +
-  annotate('text', x=1, y=0.4, label='a*', size=10) +
-  annotate('text', x=2, y=0.57, label='a*', size=10) +
-  annotate('text', x=3, y=0.8, label='b*', size=10)
-compareHerbPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'herb_removal')), aes(x=interaction(plot_mani, herb_removal), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(limits=c('4.0', '4.1', '5.1'), labels=c('4 factor\n-excl.', '4 factor\n+excl.', '5 factor\n+excl.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('Number of Factors Manipulated') +
-  annotate('text', x=0.5, y=1, label='(b) Herbivore Removal Comparison', size=10, hjust='left') +
-  theme(legend.position='none') +
-  annotate('text', x=1, y=0.39, label='*', size=10) +
-  annotate('text', x=2, y=0.6, label='*', size=10) +
-  annotate('text', x=3, y=0.59, label='*', size=10)
-comparePlantPlot <- ggplot(data=barGraphStats(data=subset(meanCompare, plot_mani>3&plot_mani<6), variable='mean_change', byFactorNames=c('plot_mani', 'plant_mani')), aes(x=interaction(plot_mani, plant_mani), y=mean, fill=as.factor(plot_mani))) +
-  geom_bar(stat="identity", colour='black') +
-  geom_errorbar(aes(ymin=mean-1.96*se, ymax=mean+1.96*se, width=0.2)) +
-  scale_y_continuous(breaks=seq(0, 1.0, 0.2), name='') +
-  scale_x_discrete(limits=c('4.0', '4.1', '5.1'), labels=c('4 factor\n-manip', '4 factor\n+manip.', '5 factor\n+manip.')) +
-  coord_cartesian(ylim=c(0,1)) +
-  scale_fill_manual(values=c('white', 'grey')) +
-  xlab('') +
-  annotate('text', x=0.5, y=1, label='(c) Plant Manipulation Comparison', size=10, hjust='left') +
-  theme(legend.position='none') +
-  annotate('text', x=1, y=0.39, label='*', size=10) +
-  annotate('text', x=2, y=0.61, label='*', size=10) +
-  annotate('text', x=3, y=0.69, label='*', size=10)
-
-pushViewport(viewport(layout=grid.layout(1,3)))
-print(compareNPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(comparePlantPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(compareHerbPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 2400x1200
+  annotate('text', x=1, y=0.37, label='a*', size=10) +
+  annotate('text', x=2, y=0.52, label='b*', size=10) +
+  annotate('text', x=3, y=0.73, label='c*', size=10)
+#export at 800x800
