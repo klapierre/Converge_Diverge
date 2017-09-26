@@ -2541,80 +2541,12 @@ evennesstrtPlotFinal <- ggplot(data=subset(trtevennessOverall, parameter!='CO2..
   annotate('text', x=0.5, y=0.15, label='(d)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
-
-
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(meantrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(dispersiontrtPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(evennesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 print(richnesstrtPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 #export at 1800 x 2400
-
-
-
-#look at number replicates for dispersion results (all factors actually) -- doesn't make a difference (Figure S4) --------------------------------------
-reps <- read.csv('SpeciesRelativeAbundance_May2017.csv')%>%
-  group_by(site_code, project_name, community_type, treatment, calendar_year, plot_id)%>%
-  summarise(mean=mean(relcov))%>%
-  ungroup()%>%
-  group_by(site_code, project_name, community_type, treatment, calendar_year)%>%
-  summarise(rep_num=n())%>%
-  ungroup()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(rep_num=mean(rep_num))
-
-dispersionReps <- rawTrt%>%
-  left_join(reps, by=c('site_code', 'project_name', 'community_type', 'treatment'))%>%
-  mutate(site_proj_comm=paste(site_code, project_name, community_type))
-
-#model
-summary(meanModelDisp<-lme(mean_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
-summary(dispModelDisp<-lme(dispersion_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
-summary(richModelDisp<-lme(S_PC~rep_num, random=~1|site_proj_comm,data=dispersionReps))
-summary(evenModelDisp<-lme(SimpEven_change~rep_num, random=~1|site_proj_comm,data=dispersionReps))
-
-#figs
-meanRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=mean_change)) +
-  geom_point() +
-  xlab('Number of Relicates') +
-  ylab('Mean Change') +
-  scale_x_continuous(breaks=seq(0,20,5)) +
-  coord_cartesian(xlim=c(2,20)) +
-  annotate('text', x=0, y=1, label='(a)', size=12, hjust='left') +
-  geom_segment(aes(x = 3, y = 0.3213704, xend = 18, yend = 0.1860824), size=3) +
-  theme(legend.position="none")
-#add text that intercept: t210=11.79., slope: t210=-2.16
-dispersionRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=dispersion_change)) +
-  geom_point() +
-  xlab('Number of Relicates') +
-  ylab('Dispersion Change') +
-  scale_x_continuous(breaks=seq(0,20,5)) +
-  coord_cartesian(xlim=c(2,20)) +
-  annotate('text', x=0, y=0.35, label='(b)', size=12, hjust='left')
-richnessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=S_PC)) +
-  geom_point() +
-  xlab('Number of Relicates') +
-  ylab('Richness Change') +
-  scale_x_continuous(breaks=seq(0,20,5)) +
-  coord_cartesian(xlim=c(2,20)) +
-  annotate('text', x=0, y=1.4, label='(c)', size=12, hjust='left')
-evennessRepPlot <- ggplot(data=dispersionReps, aes(x=rep_num, y=SimpEven_change)) +
-  geom_point() +
-  xlab('Number of Relicates') +
-  ylab('Evenness Change') +
-  scale_x_continuous(breaks=seq(0,20,5)) +
-  coord_cartesian(xlim=c(2,20)) +
-  annotate('text', x=0, y=0.6, label='(d)', size=12, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(meanRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(dispersionRepPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(richnessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(evennessRepPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
-
-
-
 
 
 
