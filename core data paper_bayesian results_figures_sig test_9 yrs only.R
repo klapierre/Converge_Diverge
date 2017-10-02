@@ -219,8 +219,8 @@ chainsEquations <- chainsExperiment%>%
          curve4=ifelse(variable=='mean', '*x^2)*(0.1417218)+(0.2924074)}, size=0.5, xlim=c(0,',
                        ifelse(variable=='dispersion', '*x^2)*(0.0859427)+(0.0001271936)}, size=0.5, xlim=c(0,',
                               ifelse(variable=='evenness', '*x^2)*(0.09476219)+(0.01686738)}, size=0.5, xlim=c(0,', '*x^2)*(0.2127569)+(-0.04917495)}, size=0.5, xlim=c(0,'))),
-         curve5='), colour=grey) +',
-         curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, sep='')) 
+         curve5='), colour=', curve6=') +',
+         curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, color, curve6, sep='')) 
 #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
 # write.csv(chainsEquations,'plot mani_equations_greyscale.csv', row.names=F)
 
