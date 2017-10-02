@@ -213,6 +213,7 @@ chainsEquations <- chainsExperiment%>%
   mutate(yr_final=ifelse(variable=='mean', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.1417218)+(0.2924074),
                     ifelse(variable=='dispersion', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.0859427)+(0.0001271936),
                            ifelse(variable=='evenness', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.09476219)+(0.01686738), (intercept+linear*alt_length+quadratic*alt_length^2)*(0.2127569)+(-0.04917495)))))%>%
+  mutate(color=ifelse(variable=='mean'&rrich<=20, '#000AE544', ifelse(variable=='mean'&21<=rrich&rrich<=40, '#1F09C144', ifelse(variable=='mean'&41<=rrich&rrich<=60, '#3F079D44', ifelse(variable=='mean'&61<=rrich&rrich<=80, '#5F057944', ifelse(variable=='mean'&81<=rrich&rrich<=100, '#7F035544', ifelse(variable=='mean'&101<=rrich&rrich<=120, '#9F013144', ifelse(variable=='mean'&rrich>120, '#BF000D44', ifelse(variable=='dispersion'&MAT<-10, '#000BE544', ifelse(variable=='dispersion'&-10<=MAT&MAT<=-6, '#1B09C644', ifelse(variable=='dispersion'&-5<=MAT&MAT<=-1, '#3607A744', ifelse(variable=='dispersion'&0<=MAT&MAT<=4, '#51068844', ifelse(variable=='dispersion'&5<=MAT&MAT<=9, '#6D046944', ifelse(variable=='dispersion'&10<=MAT&MAT<=14, '#88034A44', ifelse(variable=='dispersion'&15<=MAT&MAT<=19, '#A3012B44', ifelse(variable=='dispersion'&MAT>=20, '#BF000D44', ifelse(variable=='richness'&MAT<-10, '#000BE544', ifelse(variable=='richness'&-10<=MAT<=-6, '#1B09C644', ifelse(variable=='richness'&-5<=MAT&MAT<=-1, '#3607A744', ifelse(variable=='richness'&0<=MAT&MAT<=4, '#51068844', ifelse(variable=='richness'&5<=MAT<=9, '#6D046944', ifelse(variable=='richness'&10<=MAT<=14, '#88034A44', ifelse(variable=='richness'&15<=MAT<=19, '#A3012B44', ifelse(variable=='richness'&MAT>=20, '#BF000D44', ifelse(variable=='evenness'&MAP<200, '#000BE544', ifelse(variable=='evenness'&200<=MAP&MAP<=399, '#1B09C644', ifelse(variable=='evenness'&400<=MAP&MAP<=599, '#3607A744', ifelse(variable=='evenness'&600<=MAP&MAP<=799, '#51068844', ifelse(variable=='evenness'&800<=MAP<=999, '#6D046944', ifelse(variable=='evenness'&1000<=MAP<=1199, '#88034A44', ifelse(variable=='evenness'&1200<=MAP<=1399, '#A3012B44', '#BF000D44')))))))))))))))))))))))))))))))%>%
   mutate(curve1='stat_function(fun=function(x){(',
          curve2=' + ',
          curve3='*x + ',
@@ -222,7 +223,7 @@ chainsEquations <- chainsExperiment%>%
          curve5='), colour=', curve6=') +',
          curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, color, curve6, sep='')) 
 #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(chainsEquations,'plot mani_equations_greyscale.csv', row.names=F)
+# write.csv(chainsEquations,'plot mani_equations_env varis.csv', row.names=F)
 
 
 
