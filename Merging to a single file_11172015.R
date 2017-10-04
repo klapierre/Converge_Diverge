@@ -1,4 +1,7 @@
-#Kim
+#kim's desktop
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
+
+#Kim's laptop
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 
 #Meghan
@@ -10,7 +13,7 @@ library(reshape2)
 library(tidyr)
 library(dplyr)
 
-# nov 20, 2015 -checked all plots have recorded species, so the fitler abundance !=0 step will not remove any plots.
+# nov 20, 2015 -checked all plots have recorded species, so the filter abundance !=0 step will not remove any plots.
 
 watering<-read.delim("ANG_watering.txt")%>%
   gather(species_code, abundance, sp1:sp43)%>%
@@ -586,7 +589,7 @@ combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_May2017.csv")
+write.csv(combine, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_Oct2017.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -605,7 +608,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_May2017.csv")
+write.csv(relcov, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")
 
 # ##for Codyn dataset
 # expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
