@@ -104,7 +104,8 @@ bowman<-read.delim("NWT_bowman_anpp.txt")%>%
   mutate(block=0)
 snow<-read.delim("NWT_snow_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
-  mutate(block=0)
+  mutate(block=0)%>%
+  filter(anpp!='.')
 oface<-read.delim("ORNL_FACE_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0, block=0)
