@@ -20,13 +20,16 @@ expInfo <- read.csv('ExperimentInformation_May2017.csv')%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
+anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
+  select(-X)
+
 #diversity data
 div <- merge(read.csv('DiversityMetrics_May2017.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
 #anpp data
-anpp<-read.csv("ANPP_Dec2016.csv")%>%
+anpp<-read.csv("ANPP_Oct2017.csv")%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -234,9 +237,7 @@ write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9plusyr_May2017.csv")
 
 
 
-
-
-
+# ANPP data ---------------------------------------------------------------
 
 ##doing the same thing for anpp
 anppMeans<-anpp%>%
@@ -279,21 +280,68 @@ anppcdre002<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_man
 anppCompareExp<-rbind(anppCompareExp1, anppcdre002, anppcdre001)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
-  write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Dec2016.csv")
-  
-ForANPPAnalysis9yr<-ForANPPAnalysis%>%
-  filter(treatment_year<10)
-write.csv(ForANPPAnalysis9yr, "ForBayesianAnalysisANPP_9yr_Dec2016.csv")
 
-qplot(anpp_PC, data=anppCompareExp, geom="histogram")+
-  xlab("ANPP Percent Change")+
-  geom_vline(xintercept = 0, size=2)
+write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
 
-test<-ForANPPAnalysis%>%
-  select(site_code, project_name, community_type)%>%
-  unique()
+###looking at stability
+
+#calculate CV for each treatment year combo for spatial and temporal. do not do varience, too variable.
+
+anpp_spatial<-anpp%>%
+  group_by(site_code, project_name, community_type, treatment_year, calendar_year, treatment)%>%
+  summarize(anpp_sp_sd=sd(anpp, na.rm=T),
+            anpp_sp_mean=mean(anpp, na.rm=T),
+            anpp_sp_cv=(anpp_sp_sd/anpp_sp_mean)*100)%>%
+  select(-anpp_sp_sd, -anpp_sp_mean)%>%
+  filter(treatment_year!=0)
+
+anpp_spatial_details<-merge(anpp_spatial, anpp_expInfo, by=c("site_code", "project_name", "community_type","treatment"))
+
+anpp_spatial_forAnalysis<-merge(anpp_spatial_details, SiteExp, by=c("site_code", "project_name", "community_type"))%>%
+  filter(pulse==0)
+
+write.csv(anpp_spatial_forAnalysis, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Spatail_ForAnalysis.csv")
+
+#checking how long the dataset it. drop KNZ_GFP and NANT_wet
+todrop<-anpp_temp_cv<-anpp%>%
+  select(site_code, project_name, community_type, calendar_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(n=length(calendar_year))%>%
+  mutate(drop=ifelse(n<3,1,0))
+
+anpp_sub<-merge(todrop, anpp, by=c("site_code","project_name","community_type"))%>%
+  filter(drop!=1)
+
+anpp_temp_cv<-anpp_sub%>%
+  group_by(site_code, project_name, community_type, treatment, plot_id)%>%
+  summarize(anpp_temp_mean=mean(anpp, na.rm=T),
+            anpp_temp_sd=sd(anpp, na.rm=T),
+            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarize(anpp_temp_cv=mean(anpp_temp_cv, na.rm=T))
+
+anpp_temp_details<-merge(anpp_temp_cv, anpp_expInfo, by=c("site_code", "project_name", "community_type","treatment"))
+
+anpp_temp_forAnalysis<-merge(anpp_temp_details, SiteExp, by=c("site_code", "project_name", "community_type"))%>%
+  filter(pulse==0)
+
+write.csv(anpp_temp_forAnalysis, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Temporal_ForAnalysis.csv")
 
 
+# ForANPPAnalysis9yr<-ForANPPAnalysis%>%
+#   filter(treatment_year<10)
+# write.csv(ForANPPAnalysis9yr, "ForBayesianAnalysisANPP_9yr_Dec2016.csv")
+# 
+# qplot(anpp_PC, data=anppCompareExp, geom="histogram")+
+#   xlab("ANPP Percent Change")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# test<-ForANPPAnalysis%>%
+#   select(site_code, project_name, community_type)%>%
+#   unique()
+# 
+# 
 
 ###ANPP to MAP
 test<-ForAnalysis%>%
