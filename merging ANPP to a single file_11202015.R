@@ -1,5 +1,10 @@
+#kim's desktop
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\anpp text files')
+
+#kim's laptop
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\anpp text files")
 
+#meghan's laptop
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/anpp text files")
 
 library(gtools)
@@ -97,6 +102,10 @@ nfert<-read.delim("NWT_246NFert_anpp.txt")%>%
 bowman<-read.delim("NWT_bowman_anpp.txt")%>%
   select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(block=0)
+snow<-read.delim("NWT_snow_anpp.txt")%>%
+  select(site_code, project_name, community_type, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
+  mutate(block=0)%>%
+  filter(anpp!='.')
 oface<-read.delim("ORNL_FACE_anpp.txt")%>%
   select(site_code, project_name, treatment_year, calendar_year, treatment, plot_id, anpp)%>%
   mutate(community_type=0, block=0)
@@ -128,8 +137,8 @@ nitadd<-read.csv("YMN_NitAdd_anpp.csv")%>%
   select(-data_type)%>%
   mutate(community_type=0, block=0)
 
-anpp <- rbind(bgp, biocon, bowman, clonal, cxn, e001, e002, events, exp1, gb, gfp, imagine, interaction, irg, kgfert, lind, megarich, nde, nfert, nitadd, nitphos, nitrogen, nsfc, oface, pme, pplots, ramps, rhps, rmapc, snfert, t7, tide,tmece, uk, wapaclip, water, watering, watfer, wenndex, wet, yu)
+anpp <- rbind(bgp, biocon, bowman, clonal, cxn, e001, e002, events, exp1, gb, gfp, imagine, interaction, irg, kgfert, lind, megarich, nde, nfert, nitadd, nitphos, nitrogen, nsfc, oface, pme, pplots, ramps, rhps, rmapc, snfert, snow, t7, tide,tmece, uk, wapaclip, water, watering, watfer, wenndex, wet, yu)
 
 #write.csv(anpp, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_11202015.csv')
 
-write.csv(anpp, "~/Dropbox/converge_diverge/datasets/LongForm/ANPP_Dec2016.csv")
+write.csv(anpp, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ANPP_Oct2017.csv")

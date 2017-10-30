@@ -15,10 +15,9 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_May2017.csv')%>%
-  mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep='::'))%>%
-  select(-X)%>%
-  filter(treatment_year!=0)
+expInfo <- read.csv('ExperimentInformation_ANPP_Oct2017.csv')%>%
+  mutate(exp_year=paste(site_code, project_name, community_type, sep='::'))%>%
+  select(-X)
 
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
@@ -29,12 +28,16 @@ div <- merge(read.csv('DiversityMetrics_May2017.csv'), expInfo, by=c('exp_year',
   filter(treatment_year!=0)
 
 #anpp data
+<<<<<<< HEAD
 anpp<-read.csv("ANPP_Oct2017.csv")%>%
+=======
+anpp<-read.csv("ANPP_OCT2017.csv")%>%
+>>>>>>> 455efdf31caabc67e5a48e71fa15195d60f20a05
   select(-X)%>%
   filter(treatment_year!=0)
 
 #appearance/disappearance data
-SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
+SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
   select(-X)
 
 turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
@@ -245,17 +248,17 @@ anppMeans<-anpp%>%
   group_by(site_code, project_name, calendar_year, treatment, community_type)%>%
   summarize(anpp=mean(anpp))
 
-anppMeans2<-merge(anppMeans, expInfo, by=c("site_code","project_name","community_type","treatment", "calendar_year"))#rows are dropped b/c species were not recorded those years
+anppMeans2<-merge(anppMeans, expInfo, by=c("site_code","project_name","community_type","treatment"))#rows are dropped b/c species were not recorded those years
 
 anppControls <- subset(anppMeans2, subset=(plot_mani==0))%>%
-  select(exp_year, anpp)
+  select(exp_year, calendar_year, anpp)
 names(anppControls)[names(anppControls)=='anpp'] <- 'ctl_anpp'
 anppTrt <- subset(anppMeans2, subset=(plot_mani!=0))
 
 #merge controls and treatments
-anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
+anppCompare <- merge(anppControls, anppTrt, by=c('exp_year', 'calendar_year'))%>%
   mutate(anpp_PC=(anpp-ctl_anpp)/ctl_anpp)%>%
-  select(exp_year, treatment, plot_mani, anpp_PC)
+  select(exp_year, calendar_year, treatment, plot_mani, anpp_PC)
 
 # a1<-qplot(anpp_PC, data=anppCompare, geom="histogram")+
 #   ggtitle("anpp percent change")
@@ -267,19 +270,27 @@ anppCompare <- merge(anppControls, anppTrt, by=c('exp_year'))%>%
 ###merging with experiment (treatment) information
 anppCompareExp1 <- merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   #removing treatments that were pulses, did not directly manipulate a resource, or had ceased and pre-treatment data
-  filter(pulse==0, treatment_year>0, site_code!="CDR")%>%
-  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+  filter(pulse==0, site_code!="CDR")%>%
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year)
 
 anppcdre001<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   filter(site_code=="CDR"&treatment==1|treatment==6|treatment==8|treatment==9,plot_mani>0)%>%
-  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year)
 anppcdre002<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
   filter(site_code=="CDR"&treatment=='1_f_u_n'|treatment=='6_f_u_n'|treatment=='8_f_u_n'|treatment=='9_f_u_n',plot_mani>0)%>%
-  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year, treatment_year)
+  select(exp_year, treatment, plot_mani, anpp_PC, site_code, project_name, community_type, calendar_year)
 
 anppCompareExp<-rbind(anppCompareExp1, anppcdre002, anppcdre001)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
+<<<<<<< HEAD
+=======
+  write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
+  
+ForANPPAnalysis9yr<-ForANPPAnalysis%>%
+  filter(treatment_year<10)
+write.csv(ForANPPAnalysis9yr, "ForBayesianAnalysisANPP_9yr_Dec2016.csv")
+>>>>>>> 455efdf31caabc67e5a48e71fa15195d60f20a05
 
 write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
 

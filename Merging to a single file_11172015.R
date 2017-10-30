@@ -1,4 +1,7 @@
-#Kim
+#kim's desktop
+setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
+
+#Kim's laptop
 setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 
 #Meghan
@@ -10,7 +13,7 @@ library(reshape2)
 library(tidyr)
 library(dplyr)
 
-# nov 20, 2015 -checked all plots have recorded species, so the fitler abundance !=0 step will not remove any plots.
+# nov 20, 2015 -checked all plots have recorded species, so the filter abundance !=0 step will not remove any plots.
 
 watering<-read.delim("ANG_watering.txt")%>%
   gather(species_code, abundance, sp1:sp43)%>%
@@ -430,8 +433,14 @@ ccd<-read.delim("NTG_CCD.txt")%>%
          block=0)
 ccd_names<-read.delim("NTG_CCD_specieslist.txt")
 ccd2<-merge(ccd, ccd_names, by="species_code", all=T)%>%
+  filter(site_code!='Saskatchewan')%>% #take Saskatchewan out because one plot needs to be dropped
   filter(abundance!=0)%>%
   select(-species_code)
+sask <- merge(ccd, ccd_names, by="species_code", all=T)%>%
+  filter(site_code=='Saskatchewan'&plot_id!=32)%>% #drop plot 32 because it is missing data from 2 years
+  filter(abundance!=0)%>%
+  select(-species_code)
+
 
 nfert<-read.delim("NWT_246NFert.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -experiment_year, -n,  -data_type, -plot_mani, -species_num, -plot_id1)%>%
@@ -581,12 +590,12 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   filter(abundance!=0)
 
 #merge all datasets
-combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu)%>%
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, sask, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu)%>%
   mutate(genus_species=tolower(genus_species))
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-write.csv(combine, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_May2017.csv")
+write.csv(combine, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_Oct2017.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -605,7 +614,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-write.csv(relcov, "C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_May2017.csv")
+write.csv(relcov, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")
 
 # ##for Codyn dataset
 # expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
