@@ -10,6 +10,8 @@ setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge di
 #Meghan's
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
 
+setwd('C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
+
 library(tidyr)
 library(dplyr)
 
@@ -1082,7 +1084,7 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
          successional=0, 
          plant_mani=0, 
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=="wuug", 0, ifelse(treatment=="wnug"|treatment=="wupg"|treatment=="wuuu", 1, ifelse(treatment=="suuu"|treatment=='uuuu'|treatment=='wnpg'|treatment=='wnuu'|treatment=="wupu", 2, ifelse(treatment=='snuu'|treatment=='supu'|treatment=='unuu'|treatment=='uupu'|treatment=='wnpu',3, 4)))))%>%
+  mutate(plot_mani=ifelse(treatment=="wuuu", 0, ifelse(treatment=='wnuu'|treatment=="wupu"|treatment=="suuu"|treatment=='uuuu', 1, ifelse(treatment=='wnpu'|treatment=='snuu'|treatment=='supu'|treatment=='unuu'|treatment=='uupu', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
@@ -1740,6 +1742,8 @@ write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups
 
 #meghan's
 write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Dec2016.csv")
+
+write.csv(combine, 'C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_ANPP_Oct2017.csv')
 
 # ##checking
 # check<-combine%>%
