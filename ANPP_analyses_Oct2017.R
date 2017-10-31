@@ -1,28 +1,38 @@
 library(tidyverse)
 library(ggplot2)
+library(lme4)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
+setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
+
+theme_set(theme_bw(12))
+
 #read in data
 
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
 
-anpp<-read.csv("ANPP_Oct2017.csv")%>%
+anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
   select(-X)%>%
   filter(treatment_year!=0)%>%
   group_by(site_code, project_name, community_type, treatment, plot_id)%>%
   mutate(numyear=length(treatment_year))%>%
   filter(numyear>5)
 
-trtint<-read.csv('treatment interactions_09072017.csv')%>%
+trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, treatment, trt_type)
+  select(site_project_comm, treatment, trt_type, trt_type2, trt_type3)
+
+###select the data to use
+
+#for CDR e001/e002 selecting treatments , 6, 8, 9. For BGP dropping mowing treatments 
+#dropping outliers as well
 
 dat2<-merge(anpp_expInfo, anpp, by=c("site_code","project_name","community_type","treatment"))%>%
   select(-nutrients, -light, -carbon, -water, -other_manipulation, -max_trt, -public, -factorial, -block)%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  mutate(delete=ifelse(site_project_comm=="KNZ_IRG_u"&anpp>1600|site_code=="CDR"&anpp>3000|site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==6|site_code=="CDR"&treatment==8|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="6_f_u_n"|site_code=="CDR"&treatment=="8_f_u_n",1,0))%>%
+  mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|site_project_comm=="maerc_fireplots_0"&anpp>3000|site_code=="CDR"&anpp>3000|project_name=="BGP"&anpp>2500|project_name=="IRG"&anpp>1500,1,0))%>%
   filter(delete!=1)
 
 nosev<-dat2%>%
@@ -35,12 +45,16 @@ sev<-dat2%>%
 
 all_anpp_dat<-rbind(sev, nosev)
 
-ggplot(data=all_anpp_dat, aes(anpp))+
-  geom_histogram()+
-  facet_wrap(~site_project_comm, ncol=4, scales="free")
+# ggplot(data=all_anpp_dat, aes(anpp))+
+#   geom_histogram()+
+#   facet_wrap(~site_project_comm, ncol=4, scales="free")
 
 
-#write.csv(all_anpp_dat, "ANPP_6yrs_alldata_fixedsev_cdrsubset.csv")
+write.csv(all_anpp_dat, "ANPP_6yrs_Oct2017.csv")
+# 
+# anpp_trts<-all_anpp_dat%>%
+#   select(site_project_comm, treatment)%>%
+#   unique
 
 #calculate spatail
 anpp_spatial<-all_anpp_dat%>%
@@ -82,7 +96,7 @@ logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
-logRRsp<-logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
+logRRsp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
   mutate(logrr=abs(log(manpp/contanpp)))%>%
   group_by(site_project_comm, treatment.x, calendar_year)%>%
   summarise(mlogrr=mean(logrr),
@@ -92,7 +106,7 @@ logRRsp<-logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year",
   select(-treatment.x)
 
 ###temporal analysis
-cont<-anpp_temp_cv%>%
+cont_temp<-anpp_temp_cv%>%
   filter(plot_mani==0)%>%
   mutate(cont_temp_cv=anpp_temp_cv)%>%
   ungroup()%>%
@@ -100,25 +114,33 @@ cont<-anpp_temp_cv%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(-treatment)
 
-trt<-anpp_temp_cv%>%
+trt_temp<-anpp_temp_cv%>%
   filter(plot_mani>0)
 
-tograph1<-merge(cont, trt, by=c("site_code", 'project_name',"community_type"))%>%
+tograph1_temp<-merge(cont_temp, trt_temp, by=c("site_code", 'project_name',"community_type"))%>%
   mutate(id=paste(site_code, project_name, community_type, sep="_"))
 
-tograph<-merge(tograph1, trtint, by=c("site_project_comm","treatment"))
+tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment"))
 
-ggplot(data=tograph, aes(x=cont_temp_cv, y=anpp_temp_cv))+
-  geom_point(aes(color=trt_type))+
-  geom_abline(slope=1, intercept=0)+
-  geom_smooth(method="lm")
+ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+  geom_point(aes(color=trt_type3), size=2)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black")+
+  ylab("Temporal CV Treatment Plots")+
+  xlab("Temporal CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","pink3","black","orange3","gray","yellow2","darkgray","red"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus","Other", "2 Resources","Multiple Resources","Resource+Other","Multiple Resources+Other"))
 
-tograph_log1<-merge(logRR, cont, by="site_project_comm")
-tograph_log<-merge(tograph_log1, trtint, by=c("site_project_comm","treatment"))
+tograph_log1_temp<-merge(logRR, cont_temp, by="site_project_comm")
+tograph_log_temp<-merge(tograph_log1_temp, trtint, by=c("site_project_comm","treatment"))
 
-ggplot(data=tograph_log, aes(x=cont_temp_cv, y=mrr))+
-  geom_point(aes(color=trt_type))+
-  geom_smooth(method='lm')
+ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr))+
+  geom_point(aes(color=trt_type3), size=2)+
+  geom_smooth(method="lm", se=F, color="black")+
+  ylab("Log Response Ratio")+
+  xlab("Temporal CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","pink3","black","orange3","gray","yellow2","darkgray","red"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus","Other", "2 Resources","Multiple Resources","Resource+Other","Multiple Resources+Other"))
 
 
 
@@ -129,33 +151,55 @@ lastyr<-anpp_spatial%>%
   mutate(maxyr=max(calendar_year))%>%
   filter(maxyr==calendar_year)
 
-cont<-lastyr%>%
+cont_spat<-lastyr%>%
   filter(plot_mani==0)%>%
   mutate(cont_sp_cv=anpp_sp_cv)%>%
   ungroup()%>%
   select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
   select(-treatment)
 
-trt<-lastyr%>%
+trt_spat<-lastyr%>%
   filter(plot_mani>0)
 
-tograph1<-merge(cont, trt, by=c("site_project_comm","calendar_year"))
+tograph1_spat<-merge(cont_spat, trt_spat, by=c("site_project_comm","calendar_year"))
 
-tograph<-merge(tograph1, trtint, by=c("site_project_comm","treatment"))
+tograph_spat<-merge(tograph1_spat, trtint, by=c("site_project_comm","treatment"))
 
-ggplot(data=tograph, aes(x=cont_sp_cv, y=anpp_sp_cv))+
-  geom_point(aes(color=trt_type))+
+ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
+  geom_point(aes(color=trt_type2))+
   geom_abline(slope=1, intercept=0)+
   geom_smooth(method="lm")
 
-tograph_log1<-merge(logRRsp, cont, by=c("site_project_comm","calendar_year"))
-tograph_log<-merge(tograph_log1, trtint, by=c("site_project_comm","treatment"))
+tograph_log1_spat<-merge(logRRsp, cont_spat, by=c("site_project_comm","calendar_year"))
+tograph_log_spat<-merge(tograph_log1_spat, trtint, by=c("site_project_comm","treatment"))
 
-ggplot(data=tograph_log, aes(x=cont_sp_cv, y=mlogrr))+
-  geom_point(aes(color=trt_type))+
+ggplot(data=tograph_log_spat, aes(x=cont_sp_cv, y=mlogrr))+
+  geom_point(aes(color=trt_type2))+
   geom_smooth(method="lm")
 
+###stats
+# do the lines differ from a slope of 1?
 
+temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp)
+my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+my.df <- summary(temp.lm)$df[2]
+
+
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df, lower.tail=(t_value_one<0)) # two sided test
+
+temp.lm.null<-lm(anpp_temp_cv~1+offset(cont_temp_cv), data=tograph_temp)
+
+anova(temp.lm, temp.lm.null)
+
+#mixed-model
+temp_effect <- lmer(anpp_temp_cv ~ cont_temp_cv +
+                      trt_type3+
+             (cont_temp_cv | site_code / project_name / community_type),
+           data = tograph_temp)
+summary(temp_effect)
+ranef(temp_effect) # Estimates for the random effects 
+fixef(temp_effect) # Estimate (slopes) 
 
 ####SEM analsyis
 sem<-read.csv('SEM_allyr.csv')
