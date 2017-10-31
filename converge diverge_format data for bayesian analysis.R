@@ -28,11 +28,7 @@ div <- merge(read.csv('DiversityMetrics_May2017.csv'), expInfo, by=c('exp_year',
   filter(treatment_year!=0)
 
 #anpp data
-<<<<<<< HEAD
 anpp<-read.csv("ANPP_Oct2017.csv")%>%
-=======
-anpp<-read.csv("ANPP_OCT2017.csv")%>%
->>>>>>> 455efdf31caabc67e5a48e71fa15195d60f20a05
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -283,16 +279,13 @@ anppcdre002<-merge(anppCompare, expInfo, by=c('exp_year', 'treatment', 'plot_man
 anppCompareExp<-rbind(anppCompareExp1, anppcdre002, anppcdre001)
 
 ForANPPAnalysis<-merge(anppCompareExp, SiteExp, by=c("site_code","project_name","community_type"))
-<<<<<<< HEAD
-=======
-  write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
+
+write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
   
 ForANPPAnalysis9yr<-ForANPPAnalysis%>%
   filter(treatment_year<10)
 write.csv(ForANPPAnalysis9yr, "ForBayesianAnalysisANPP_9yr_Dec2016.csv")
->>>>>>> 455efdf31caabc67e5a48e71fa15195d60f20a05
 
-write.csv(ForANPPAnalysis, "ForBayesianAnalysisANPP_Oct2017.csv")
 
 ###looking at stability
 
