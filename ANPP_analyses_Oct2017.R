@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ggplot2)
 library(lme4)
+library(car)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -44,6 +45,10 @@ sev<-dat2%>%
   mutate(treatment_year= ifelse(calendar_year==2004, 10, ifelse(calendar_year==2005, 11, ifelse(calendar_year==2006, 12, ifelse(calendar_year==2007, 13, ifelse(calendar_year==2008, 14, ifelse(calendar_year==2009, 15, ifelse(calendar_year==2010, 16, ifelse(calendar_year==2011, 17, 18)))))))))
 
 all_anpp_dat<-rbind(sev, nosev)
+
+sites<-all_anpp_dat%>%
+  select(site_project_comm)%>%
+  unique()
 
 # ggplot(data=all_anpp_dat, aes(anpp))+
 #   geom_histogram()+
@@ -200,6 +205,29 @@ temp_effect <- lmer(anpp_temp_cv ~ cont_temp_cv +
 summary(temp_effect)
 ranef(temp_effect) # Estimates for the random effects 
 fixef(temp_effect) # Estimate (slopes) 
+
+
+#precip analysis
+#this will drop experiments at sites KLU, DL, IMGERS, a total of 3 experiments
+
+precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_fromPrism.csv")%>%
+  mutate(site_code=ï..site_code)%>%
+  select(-ï..site_code)
+
+anpp_precip<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
+  mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
+  group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment)%>%
+  summarize(anpp=mean(anpp))
+
+ggplot(data=anpp_precip, aes(x=ppt_mm, y=anpp, group=treatment, color=trt))+
+  geom_point()+
+  geom_smooth(method="lm", se=F)+
+  facet_wrap(~site_project_comm, ncol=8, scales = "free")
+
+summary(lm(anpp~ppt_mm+treatment, data=subset(anpp_precip, site_project_comm=="KNZ_pplots_0")))
+
+
+
 
 ####SEM analsyis
 sem<-read.csv('SEM_allyr.csv')
