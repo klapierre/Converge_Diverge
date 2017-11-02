@@ -20,6 +20,9 @@ theme_set(theme_bw(12))
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
+site_info<-read.csv("SiteExperimentDetails_March2016.csv")%>%
+  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
+  select(site_project_comm, MAP)
 
 anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
   select(-X)%>%
@@ -313,6 +316,10 @@ grid.arrange(arrangeGrob(temp_rr+theme(legend.position="none"),
 #precip analysis
 #this will drop experiments at sites KLU, DL, IMGERS, a total of 3 experiments because only have data from US sites
 
+#drop irrigation treatments becuase it is confusing to add water and then test against precip OR maybe just KNZ because not the same amount of water each year.
+
+#look at average change in sensitivity by treatments.
+
 anpp_precip<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
   group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
@@ -325,6 +332,8 @@ ggplot(data=anpp_precip, aes(x=ppt_mm, y=anpp, group=treatment, color=trt))+
   geom_smooth(method="lm", se=F)+
   facet_wrap(~site_project_comm, ncol=8, scales = "free")
 
+
+##get slopes for each treatment including controls
 spc<-unique(anpp_precip$spc_trt)
 
 lm.slopes<-data.frame()
@@ -336,7 +345,6 @@ for (i in 1:length(spc)){
  test.lm<-lm(anpp~ppt_mm, data=subset)
   
   output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
-                      trt=unique(subset$trt), 
                       treatment=unique(subset$treatment), 
                       plot_mani=unique(subset$plot_mani), 
                       est=summary(test.lm)$coef["ppt_mm", c("Estimate")], 
@@ -345,46 +353,82 @@ for (i in 1:length(spc)){
   
   lm.slopes<-rbind(lm.slopes, output.lm)
 }
-  
-treat.lm<-data.frame()
 
-for (i in 1:length(spc)){
+##test for sig diff between trt-control slopes
+##there are so few differences that not going to pay attention to this.
+
+spc2<-unique(anpp_precip$site_project_comm)
+
+test.lm<-data.frame()
+
+for (i in 1:length(spc2)){
   subset<-anpp_precip%>%
-    filter(site_project_comm==spc[i])%>%
-    filter(plot_mani!=0)
+    filter(site_project_comm==spc2[i])
   
   control<-subset%>%
     filter(plot_mani==0)
   
-  c.lm<-lm(anpp~ppt_mm, data=control)
-  
-  cont.lm<-data.frame(site_project_comm=unique(control$site_project_comm), 
-                      trt=unique(control$trt), 
-                      treatment=unique(control$treatment), 
-                      plot_mani=unique(control$plot_mani), 
-                      est=summary(c.lm)$coef["ppt_mm", c("Estimate")], 
-                      st.er=summary(c.lm)$coef["ppt_mm", c("Std. Error")], 
-                      p.val=summary(c.lm)$coef["ppt_mm","Pr(>|t|)"])
-  
-  control.lm<-rbind(control.lm, cont.lm)
-}
   treat<-subset%>%
-    filter(plot_mani!=0)
+  filter(plot_mani!=0)
+
+trt_list<-unique(treat$treatment)
+
+for (i in 1:length(trt_list)){
   
-  trt_list<-unique(treat$treatment)
+  subset2<-treat%>%
+    filter(treatment==trt_list[i])
+
+  trt<-trt_list[i]
   
-  for (i in 1:length(trt_list)){
-    
-    subset2<-treat%>%
-      filter(treatment==trt_list[i])
-    
   ct<-rbind(subset2, control)
   
   ct.lm<-lm(anpp~ppt_mm*trt, data=ct)
-     
-  }
   
+  output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
+                        treatment=trt, 
+                        est=summary(ct.lm)$coef["ppt_mm:trtT", c("Estimate")],
+                        val=summary(ct.lm)$coef["ppt_mm:trtT","Pr(>|t|)"])
+  
+  test.lm<-rbind(test.lm, output.lm)
 }
+
+}
+
+#graphing this
+c.slope<-lm.slopes%>%
+  filter(plot_mani==0)%>%
+  mutate(c_est=est, c_se=st.er)%>%
+  select(site_project_comm, c_est, c_se)
+
+t.slope<-lm.slopes%>%
+  filter(plot_mani!=0)%>%
+  select(-p.val)
+
+slopes_tograph1<-merge(c.slope, t.slope, by="site_project_comm")
+slopes_tograph2<-merge(slopes_tograph1, trtint, by=c("site_project_comm","treatment"))
+slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
+  mutate(diff=c_est-est,
+         pc=(est-c_est)/c_est)#if control has a low slope this makes huge variation
+
+#graphing pc
+ggplot(data=slopes_tograph, aes(x=MAP, y=pc))+
+  geom_point(aes(color=trt_type3), size=3)+
+  ylab("Percent Change in Slopes")+
+  xlab("Site MAP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_manual(name="Treatment", values=c("lightblue","green","blue","pink3","black","red","gray","purple","darkgray","red"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus","Other", "2 Resources","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+
+#graphing diff
+ggplot(data=slopes_tograph, aes(x=MAP, y=diff))+
+  geom_point(aes(color=trt_type3), size=3)+
+  ylab("Difference in Slopes")+
+  xlab("Site MAP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_manual(name="Treatment", values=c("lightblue","green","blue","pink3","black","red","gray","purple","darkgray","red"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus","Other", "2 Resources","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+
+
+
+
 
 
 # figure for SEM paper ----------------------------------------------------
