@@ -1024,36 +1024,39 @@ print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 
 ###treatment, experiment, and site level driver effects from bayesian output (Figure 2)
 #mean plots --------------------------------------------------------
-meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='mean'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.2)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   ylim(-1.15, 1.15) +
   geom_hline(aes(yintercept=0)) +
   coord_flip()
 
-meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='mean'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.2, 1.2) +
   coord_flip()
 
-meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='mean'&predictor!='overall'), aes(x=predictor, y=median)) +
+meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='mean'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
@@ -1061,36 +1064,39 @@ meanQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic
   coord_flip()
 
 #dispersion plots --------------------------------------------------------
-dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+dispersionIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='dispersion'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.3, 1.15) +
   coord_flip()
 
-dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+dispersionSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='dispersion'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.2, 1.2) +
   coord_flip()
 
-dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='dispersion'&predictor!='overall'), aes(x=predictor, y=median)) +
+dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='dispersion'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
@@ -1098,36 +1104,39 @@ dispersionQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='qua
   coord_flip()
 
 #richness plots --------------------------------------------------------
-richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+richnessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='richness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.15, 1.15) +
   coord_flip()
 
-richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+richnessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='richness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.2, 1.2) +
   coord_flip()
 
-richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='richness'&predictor!='overall'), aes(x=predictor, y=median)) +
+richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='richness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
@@ -1135,36 +1144,39 @@ richnessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadr
   coord_flip()
 
 #evenness plots --------------------------------------------------------
-evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+evennessIntPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='intercept'&variable=='evenness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.15, 1.15) +
   coord_flip()
 
-evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+evennessSlopePlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='linear'&variable=='evenness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
   ylim(-1.2, 1.2) +
   coord_flip()
 
-evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='evenness'&predictor!='overall'), aes(x=predictor, y=median)) +
+evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadratic'&variable=='evenness'), aes(x=predictor, y=median)) +
   geom_point(size=3) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.1)) +
-  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2'),
-                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations')) +
+  scale_x_discrete(limits=c('MAT', 'MAP', 'ANPP', 'rrich', 'plot mani 5', 'plot mani 4', 'plot mani 3', 'plot mani 2', 'overall'),
+                   labels=c('MAT', 'MAP', 'ANPP', 'Gamma Diversity', '5 Manipulations', '4 Manipulations', '3 Manipulations', '2 Manipulations', 'Overall')) +
   theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  geom_vline(aes(xintercept=8.5), linetype='dashed') +
   geom_vline(aes(xintercept=4.5), linetype='dashed') +
   geom_vline(aes(xintercept=2.5), linetype='dashed') +
   geom_hline(aes(yintercept=0)) +
@@ -1173,19 +1185,19 @@ evennessQuadPlot <- ggplot(data=subset(chainsCommunitySummary, parameter=='quadr
 
 #plot all together --------------------------------------------------------
 pushViewport(viewport(layout=grid.layout(4,3))) 
-print(meanIntPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(meanSlopePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(meanQuadPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-print(dispersionIntPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(dispersionSlopePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-print(dispersionQuadPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
-print(richnessIntPlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
-print(richnessSlopePlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 2))
-print(richnessQuadPlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 3))
-print(evennessIntPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 1))
-print(evennessSlopePlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 2))
-print(evennessQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
-#export at 2400x2000
+print(meanIntPlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 1))
+print(meanSlopePlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 2))
+print(meanQuadPlot, vp=viewport(layout.pos.row = 3, layout.pos.col = 3))
+print(dispersionIntPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 1))
+print(dispersionSlopePlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 2))
+print(dispersionQuadPlot, vp=viewport(layout.pos.row = 4, layout.pos.col = 3))
+print(richnessIntPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(richnessSlopePlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(richnessQuadPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(evennessIntPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(evennessSlopePlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(evennessQuadPlot, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
+#export at 2500x2000
 
 
 
