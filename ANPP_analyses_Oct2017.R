@@ -7,7 +7,7 @@ library(gtools)
 library(gtable)
 library(grid)
 
-#setwd('~/Dropbox/converge_diverge/datasets/LongForm')
+setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw(12)) 
@@ -22,7 +22,7 @@ anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
 
 site_info<-read.csv("SiteExperimentDetails_March2016.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, MAP)
+  select(site_project_comm, MAP, MAT)
 
 anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
   select(-X)%>%
@@ -35,9 +35,12 @@ trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, treatment, trt_type, trt_type2, trt_type3, trt_type4)
 
+precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_fromPrism.csv')
+
 precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_fromPrism.csv")%>%
   mutate(site_code=ï..site_code)%>%
   select(-ï..site_code)
+
 
 # clean up anp data --------------------------------------------------------
 
@@ -205,7 +208,7 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 spat<-
 ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
@@ -216,7 +219,7 @@ ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 legend=gtable_filter(ggplot_gtable(ggplot_build(spat)), "guide-box") 
 grid.draw(legend)
@@ -252,7 +255,7 @@ ggplot(data=tograph_spat_all, aes(x=treatment_year, y=logrr))+
   geom_abline(slope=0, intercept=0, size=1)+
   xlab("Treatment Year")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 
 
@@ -294,7 +297,7 @@ temp_rr<-
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 
 spat_rr<-
@@ -304,7 +307,7 @@ ggplot(data=tograph_log_spat, aes(x=cont_sp_cv, y=mlogrr))+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 
 
@@ -413,44 +416,68 @@ t.slope<-lm.slopes%>%
 slopes_tograph1<-merge(c.slope, t.slope, by="site_project_comm")
 slopes_tograph2<-merge(slopes_tograph1, trtint, by=c("site_project_comm","treatment"))
 slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
-  mutate(diff=est-c_est)
+  mutate(diff=est-c_est)%>%
+  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
 
 #graphing diff
-dif_mat<-
-ggplot(data=slopes_tograph, aes(x=MAP, y=diff))+
+
+ggplot(data=slopes_tograph, aes(x=MAT, y=diff))+
   geom_point(aes(color=trt_type4), size=3)+
   ylab("Difference in Slopes")+
   xlab("Site MAP")+
-  geom_smooth(method="lm", color="black", se=F)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))
+  scale_color_manual(name="Treatment", values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","gray"), breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))
 
 slopes_bar<-slopes_tograph%>%
   group_by(trt_type4)%>%
   summarise(mdiff=mean(diff),
             ndiff=length(diff),
             sddiff=sd(diff))%>%
-  mutate(sediff=sddiff/sqrt(ndiff))%>%
-  mutate(order=ifelse(trt_type4=="CO2",1, ifelse(trt_type4=="Irrigation", 2, ifelse(trt_type4=="Nitrogen",3, ifelse(trt_type4=="Phosphorus",4, ifelse(trt_type4=="Other",5, ifelse(trt_type4=="2 Resources",6,ifelse(trt_type4=="Nutrients",7,ifelse(trt_type4=="Resource+Other",8,9)))))))))%>%
-  arrange(order)
+  mutate(sediff=sddiff/sqrt(ndiff))
 
-diff_bar<-
-ggplot(data=slopes_bar, aes(x=trt_type4, y=mdiff))+
+
+ggplot(data=slopes_bar, aes(x=trt_type, y=mdiff, fill=trt_type))+
   geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9))+
+  geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
   ylab("Difference in Slopes")+
-  scale_x_discrete(name="Treatment", breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Multiple Resources","Resource+Other","Multiple Resources+Other"))+
+  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  scale_fill_manual(values=c("purple","green","blue","black","red","darkorange","darkgray","pink3","lightgray"))+
+  scale_x_discrete(name="Treatment", breaks=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"),labels=c("CO2","Irrigation","Nitrogen","Phosphorus", "Other", "2 Resources","Nutrients","Resource+Other","Multiple Resources+Other"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  theme(axis.text.x=element_text(angle=45, hjust=1))
-
-
-grid.arrange(diff_bar, dif_mat, ncol=2)
-
+  theme(legend.position = "none")
+    
+###states
 #do t-test do the slopes differ from zero?
-summary(aov(diff~trt_type4, data=slopes_tograph))
+summary(MAP_diff <- lmer(diff ~ trt_type4+
+                   (1 | site_code/project_name/community_type),
+                 data = slopes_tograph))
+Anova(MAP_diff)
 
-#regression of map with diff
-summary(lm(diff~MAP, data=slopes_tograph))
+nit<-subset(slopes_tograph, trt_type4=="Nitrogen")
+t.test(nit$diff, mu=0)
+co2<-subset(slopes_tograph, trt_type4=="CO2")
+t.test(co2$diff, mu=0)
+twores<-subset(slopes_tograph, trt_type4=="2 Resources")
+t.test(twores$diff, mu=0)
+irr<-subset(slopes_tograph, trt_type4=="Irrigation")
+t.test(irr$diff, mu=0)
+multo<-subset(slopes_tograph, trt_type4=="Multiple Resources+Other")
+t.test(multo$diff, mu=0)
+nut<-subset(slopes_tograph, trt_type4=="Nutrients")
+t.test(nut$diff, mu=0)
+other<-subset(slopes_tograph, trt_type4=="Other")
+t.test(other$diff, mu=0)
+phos<-subset(slopes_tograph, trt_type4=="Nitrogen")
+t.test(phos$diff, mu=0)
+ro<-subset(slopes_tograph, trt_type4=="Resource+Other")
+t.test(ro$diff, mu=0)
+
+#regression of map with diff !not working!
+MAP_diff <- lmer(diff ~ MAP +
+                   trt_type4+
+                      (MAP | site_code / project_name / community_type),
+                    data = slopes_tograph)
+summary(MAP_diff)
 
 # figure for SEM paper ----------------------------------------------------
 
