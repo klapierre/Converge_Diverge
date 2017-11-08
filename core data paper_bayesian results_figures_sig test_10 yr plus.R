@@ -382,7 +382,7 @@ dispersionPlot <- ggplot(data=data.frame(x=c(0,0))) +
   scale_x_continuous(limits=c(0,19), breaks=seq(0,19,5), labels=seq(1,20,5)) +
   # scale_y_continuous(limits=c(-5,5), breaks=seq(-2,2,0.1)) +
   xlab('Standardized Year') +
-  ylab('Dispersion Change') +
+  ylab('Dispersion Difference') +
   annotate('text', x=0, y=0.4, label='(b)', size=10, hjust='left')
 
 dispersionPlot <- dispersionPlot + 
