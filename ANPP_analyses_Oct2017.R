@@ -326,11 +326,22 @@ grid.arrange(arrangeGrob(temp_rr+theme(legend.position="none"),
 
 #look at average change in sensitivity by treatments.
 
-anpp_precip<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
+anpp_precip_sites<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
+  mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
+  group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
+  summarize(anpp=mean(anpp))%>%
+  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
+  group_by(site_project_comm, treatment)%>%
+  summarize(len=length(calendar_year))%>%
+  filter(len>10)
+
+anpp_precip_subset<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
   group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
   summarize(anpp=mean(anpp))%>%
   mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))
+
+anpp_precip<-merge(anpp_precip_sites, anpp_precip_subset, by=c("site_project_comm","treatment"))
 
 
 ggplot(data=anpp_precip, aes(x=ppt_mm, y=anpp, group=treatment, color=trt))+
