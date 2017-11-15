@@ -15,7 +15,7 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_ANPP_Oct2017.csv')%>%
+expInfo <- read.csv('ExperimentInformation_May2017.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, sep='::'))%>%
   select(-X)
 
@@ -23,7 +23,10 @@ anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
 #diversity data
-div <- merge(read.csv('DiversityMetrics_May2017.csv'), expInfo, by=c('exp_year', 'treatment', 'plot_mani'))%>%
+div <- read.csv('DiversityMetrics_May2017.csv')%>%
+  separate(exp_year, c('site_code', 'project_name','community_type', 'calendar_year'), sep='::')%>%
+  mutate(calendar_year=as.integer(calendar_year))%>%
+  left_join(expInfo)%>%
   select(-X)%>%
   filter(treatment_year!=0)
 
@@ -36,30 +39,30 @@ anpp<-read.csv("ANPP_Oct2017.csv")%>%
 SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
   select(-X)
 
-turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
-  separate(col=exp_code, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::')%>%
-  left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment', 'calendar_year'), all=T)%>%
-  filter(pulse==0&project_name!='e001'&project_name!='e002')
-turnoverCDRe001 <- turnover%>%filter(project_name=='e001'&treatment!=2&treatment!=3&treatment!=4&treatment!=5&treatment!=7)
-turnoverCDRe002 <- turnover%>%filter(project_name=='e002'&treatment!='2_f_u_n'&treatment=='3_f_u_n'&treatment=='4_f_u_n'&treatment=='5_f_u_n'&treatment=='7_f_u_n')
-turnoverAll<-rbind(turnover, turnoverCDRe001, turnoverCDRe002)%>%
-  left_join(SiteExp, by=c('site_code', 'project_name', 'community_type'))
-
-#full dataset
-write.csv(turnoverAll, "turnover_all years_Mar2017.csv")
-
-#9 yr or less
-turnover9yr <- turnoverAll%>%
-  filter(treatment_year<10)
-
-##18% of our our data is from CDR and KNZ
-
-write.csv(turnover9yr, "turnover_9yr_May2017.csv")
-
-ggplot(turnover9yr, aes(x=treatment_year, y=appearance/total, color=plot_mani)) +
-  geom_point()
-ggplot(turnover9yr, aes(x=treatment_year, y=disappearance/total, color=plot_mani)) +
-  geom_point()
+# turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
+#   separate(col=exp_code, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::')%>%
+#   left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment', 'calendar_year'), all=T)%>%
+#   filter(pulse==0&project_name!='e001'&project_name!='e002')
+# turnoverCDRe001 <- turnover%>%filter(project_name=='e001'&treatment!=2&treatment!=3&treatment!=4&treatment!=5&treatment!=7)
+# turnoverCDRe002 <- turnover%>%filter(project_name=='e002'&treatment!='2_f_u_n'&treatment=='3_f_u_n'&treatment=='4_f_u_n'&treatment=='5_f_u_n'&treatment=='7_f_u_n')
+# turnoverAll<-rbind(turnover, turnoverCDRe001, turnoverCDRe002)%>%
+#   left_join(SiteExp, by=c('site_code', 'project_name', 'community_type'))
+# 
+# #full dataset
+# # write.csv(turnoverAll, "turnover_all years_Mar2017.csv")
+# 
+# #9 yr or less
+# turnover9yr <- turnoverAll%>%
+#   filter(treatment_year<10)
+# 
+# ##18% of our our data is from CDR and KNZ
+# 
+# # write.csv(turnover9yr, "turnover_9yr_May2017.csv")
+# 
+# ggplot(turnover9yr, aes(x=treatment_year, y=appearance/total, color=plot_mani)) +
+#   geom_point()
+# ggplot(turnover9yr, aes(x=treatment_year, y=disappearance/total, color=plot_mani)) +
+#   geom_point()
 
 
 
@@ -67,7 +70,7 @@ ggplot(turnover9yr, aes(x=treatment_year, y=disappearance/total, color=plot_mani
 
 #subset out controls and treatments
 divControls <- subset(div, subset=(plot_mani==0))%>%
-  select(exp_year, dispersion, H, S, SimpEven)
+  select(exp_year, dispersion, H, S, SimpEven, calendar_year, treatment_year)
   names(divControls)[names(divControls)=='dispersion'] <- 'ctl_dispersion'
   names(divControls)[names(divControls)=='H'] <- 'ctl_H'
   names(divControls)[names(divControls)=='S'] <- 'ctl_S'
@@ -87,7 +90,8 @@ divTrt<-rbind(divTrt1, divCDRe002, divCDRe001)
 
 ##16% of our data is from CDR and 10% is from KNZ
 #merge controls and treatments
-divCompare <- merge(divControls, divTrt, by=c('exp_year'))%>%
+divCompare <- divControls%>%
+  left_join(divTrt)%>%
 #calculate change in disperion, H, S, and evenness
   mutate(dispersion_change=dispersion-ctl_dispersion, 
          H_change=H-ctl_H, 
@@ -165,7 +169,7 @@ SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
 #full dataset
-write.csv(ForAnalysis, "ForBayesianAnalysis_May2017.csv")
+# write.csv(ForAnalysis, "ForBayesianAnalysis_May2017.csv")
 
 #8 yr or less
 ForAnalysis8yr <- ForAnalysis%>%
@@ -173,10 +177,10 @@ ForAnalysis8yr <- ForAnalysis%>%
 
 ##18% of our our data is from CDR and KNZ
 
-write.csv(ForAnalysis8yr, "ForBayesianAnalysis_8yr_May2017.csv")
+# write.csv(ForAnalysis8yr, "ForBayesianAnalysis_8yr_May2017.csv")
 
 
-#Plot of 9 year data used in paper.
+#Plot of 8 year data used in paper.
 theme_set(theme_bw(16))
 d2<-qplot(dispersion_change, data=ForAnalysis8yr, geom="histogram")+
   ggtitle("Within Treatment Change")+
@@ -217,7 +221,7 @@ resource8 <- ForAnalysis8yr%>%
   filter(project_name!='MEGARICH', sum==1)%>%
   mutate(resource=ifelse(n1==1, 'n', ifelse(p1==1, 'p', ifelse(other_nut==1, 'other_nut', ifelse(CO2_1==1, 'CO2', ifelse(irr==1, 'irrigation', 'drought'))))))
 
-write.csv(resource8, 'ForBayesianAnalysis_singleresource_May2017.csv')
+# write.csv(resource8, 'ForBayesianAnalysis_singleresource_May2017.csv')
   
   
   
@@ -226,13 +230,32 @@ write.csv(resource8, 'ForBayesianAnalysis_singleresource_May2017.csv')
 #9+ year datasets (all years)
 ForAnalysis9yr <- ForAnalysis%>%
   filter(experiment_length>8)
-write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9plusyr_May2017.csv")
+# write.csv(ForAnalysis9yr, "ForBayesianAnalysis_9plusyr_May2017.csv")
 
-# #absolute value
-# ForAnalysisAbsValue <- ForAnalysis9yr%>%
-#   mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
+#absolute value
+ForAnalysisAbsValue <- ForAnalysis9yr%>%
+  mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
 # write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
 
+
+
+###getting the treatment interaction types
+trtType <- ForAnalysis%>%
+  left_join(expInfo)%>%
+  #create drought and irrigation categories
+  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))%>%
+  #create categorical treatment type column
+  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', ifelse(n==0&drought==0&irrigation==0&p==0&k==0&CO2==0, 'other', 'resource+other'))))))))))))))))%>%
+  #drop experiments that we can't run the analyses on
+  filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
+  #keep just relevent column names for this analysis
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length)%>%
+  #keep final year only
+  group_by(site_code, project_name, community_type, treatment)%>%
+  filter(treatment_year==max(treatment_year))%>%
+  ungroup()
+
+# write.csv(trtType, 'treatment interactions_11152017.csv')
 
 
 
