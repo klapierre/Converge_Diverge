@@ -35,9 +35,9 @@ trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, treatment, trt_type5, trt_type4, trt_type)
 
-precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_fromPrism.csv')
+precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
 
-precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_fromPrism.csv")%>%
+precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_PrecipData.csv")%>%
   mutate(site_code=ï..site_code)%>%
   select(-ï..site_code)
 
@@ -54,7 +54,7 @@ precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongFor
 dat2<-merge(anpp_expInfo, anpp, by=c("site_code","project_name","community_type","treatment"))%>%
   select(-nutrients, -light, -carbon, -water, -other_manipulation, -max_trt, -public, -factorial, -block)%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|site_code=="CDR"&anpp>3000|project_name=="BGP"&anpp>2240|project_name=="IRG"&anpp>1500,1,0))%>%
+  mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|site_code=="CDR"&anpp>3000|project_name=="BGP"&anpp>2240|project_name=="IRG"&anpp>1500|project_name=="RHPs"&calendar_year==2003, 1, 0))%>%
   filter(delete!=1)
 
 #site_project_comm=="maerc_fireplots_0"&anpp>3500
@@ -70,9 +70,14 @@ sev<-dat2%>%
 all_anpp_dat<-rbind(sev, nosev)
 
 sites<-all_anpp_dat%>%
-  select(site_project_comm, treatment, plot_mani)%>%
-  unique()%>%
-  filter(plot_mani!=0)
+  group_by(site_project_comm, calendar_year, treatment, plot_mani)%>%
+  summarize(anpp=mean(anpp))%>%
+  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
+  group_by(site_project_comm, treatment)%>%
+  summarize(len=length(calendar_year))%>%
+  ungroup()%>%
+  select(site_project_comm, len)%>%
+  unique()
 
 ggplot(data=all_anpp_dat, aes(anpp))+
   geom_histogram()+
@@ -333,13 +338,20 @@ anpp_precip_sites<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year")
   mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
   group_by(site_project_comm, treatment)%>%
   summarize(len=length(calendar_year))%>%
+  ungroup()%>%
+  select(site_project_comm, len)%>%
+  unique()
+  
   filter(len>10)
 
 anpp_precip_subset<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
   group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
   summarize(anpp=mean(anpp))%>%
-  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))
+  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
+  ungroup()%>%
+  select(site_project_comm)%>%
+  unique()
 
 anpp_precip<-merge(anpp_precip_sites, anpp_precip_subset, by=c("site_project_comm","treatment"))
 
