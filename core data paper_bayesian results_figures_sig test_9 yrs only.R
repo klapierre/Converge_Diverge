@@ -2477,12 +2477,18 @@ print(meanH2OPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 
 ###comparing different resource manipulation types (Figure 3)
 #get means and sd to backtransform
-trtInteractionsData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\treatment interactions_09072017.csv')%>%
+trtInteractionsData <- read.csv('treatment interactions_11152017.csv')%>%
   summarize(mean_mean_change=mean(mean_change), sd_mean_change=sd(mean_change), mean_dispersion_change=mean(dispersion_change), sd_dispersion_change=sd(dispersion_change), mean_richness_change=mean(S_PC), sd_richness_change=sd(S_PC), mean_evenness_change=mean(SimpEven_change), sd_evenness_change=sd(SimpEven_change))
+
+#get counts
+trtInteractionsCount <- read.csv('treatment interactions_11152017.csv')%>%
+  group_by(trt_type)%>%
+  summarise(count=length(mean_change))%>%
+  ungroup()
 
 
 #mean change
-trtmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_mean_posteriors.csv', comment.char='#')*0.1471785+0.3233751
+trtmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_mean_posteriors.csv', comment.char='#')*0.1645314+0.3341639
 trtmeanMean <- as.data.frame(colMeans(trtmean))%>%
   add_rownames('parameter')
 names(trtmeanMean)[names(trtmeanMean) == 'colMeans(trtmean)'] <- 'mean'
@@ -2497,12 +2503,12 @@ meantrtPlotFinal <- ggplot(data=subset(trtmeanOverall, parameter!='CO2...Irr'&pa
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Overall Community Difference') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr', 'Other', 'Res...Other'), labels=c(expression(paste(CO[2], '(8)')), 'Drought (13)', 'Irrigation (28)', 'N (72)', 'P (22)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (33)', 'N*P*K (18)', 'N*P*K*Irr (2)', 'other (81)', 'R*other (133)')) +
   annotate('text', x=0.5, y=0.6, label='(c)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #dispersion
-trtdispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_disp_posteriors.csv', comment.char='#')*0.09374439+0.003188805
+trtdispersion <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_disp_posteriors.csv', comment.char='#')*0.09661412+0.004211247
 trtdispersionMean <- as.data.frame(colMeans(trtdispersion))%>%
   add_rownames('parameter')
 names(trtdispersionMean)[names(trtdispersionMean) == 'colMeans(trtdispersion)'] <- 'mean'
@@ -2517,12 +2523,12 @@ dispersiontrtPlotFinal <- ggplot(data=subset(trtdispersionOverall, parameter!='C
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Dispersion Difference') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr', 'Other', 'Res...Other'), labels=c(expression(paste(CO[2], '(8)')), 'Drought (13)', 'Irrigation (28)', 'N (72)', 'P (22)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (33)', 'N*P*K (18)', 'N*P*K*Irr (2)', 'other (81)', 'R*other (133)')) +
   annotate('text', x=0.5, y=0.2, label='(d)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #richness
-trtrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_richness_posteriors.csv', comment.char='#')*0.2397557-0.04606815
+trtrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_richness_posteriors.csv', comment.char='#')*0.2518764-0.06504351
 trtrichnessMean <- as.data.frame(colMeans(trtrichness))%>%
   add_rownames('parameter')
 names(trtrichnessMean)[names(trtrichnessMean) == 'colMeans(trtrichness)'] <- 'mean'
@@ -2537,12 +2543,12 @@ richnesstrtPlotFinal <- ggplot(data=subset(trtrichnessOverall, parameter!='CO2..
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Richness Difference') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr', 'Other', 'Res...Other'), labels=c(expression(paste(CO[2], '(8)')), 'Drought (13)', 'Irrigation (28)', 'N (72)', 'P (22)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (33)', 'N*P*K (18)', 'N*P*K*Irr (2)', 'other (81)', 'R*other (133)')) +
   annotate('text', x=0.5, y=0.5, label='(a)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
 #evenness
-trtevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_simp_posteriors.csv', comment.char='#')*0.1003621+0.01021106
+trtevenness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\trt_simp_posteriors.csv', comment.char='#')*0.09968657+0.01221669
 trtevennessMean <- as.data.frame(colMeans(trtevenness))%>%
   add_rownames('parameter')
 names(trtevennessMean)[names(trtevennessMean) == 'colMeans(trtevenness)'] <- 'mean'
@@ -2557,7 +2563,7 @@ evennesstrtPlotFinal <- ggplot(data=subset(trtevennessOverall, parameter!='CO2..
   geom_errorbar(aes(ymin=mean-1.96*sd, ymax=mean+1.96*sd), width=0.2) +
   scale_y_continuous(name='Evenness Difference') +
   xlab('') +
-  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr'), labels=c(expression(paste(CO[2], '(5)')), 'Drought (13)', 'Irrigation (24)', 'N (58)', 'P (16)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (27)', 'N*P*K (18)', 'N*P*K*Irr (2)')) +
+  scale_x_discrete(limits=c('CO2', 'Drought', 'Irrigation', 'N', 'P', 'CO2...N', 'N...Drought', 'N...Irr', 'N...P', 'N...P...K', 'N...P...K...Irr', 'Other', 'Res...Other'), labels=c(expression(paste(CO[2], '(8)')), 'Drought (13)', 'Irrigation (28)', 'N (72)', 'P (22)', expression(paste(CO[2],'*N (3)')), 'N*Dro (2)', 'N*Irr (8)', 'N*P (33)', 'N*P*K (18)', 'N*P*K*Irr (2)', 'other (81)', 'R*other (133)')) +
   annotate('text', x=0.5, y=0.15, label='(b)', size=12, hjust='left') +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
 
