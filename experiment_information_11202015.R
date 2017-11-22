@@ -807,7 +807,7 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(resource_mani=ifelse(treatment=='N0F0'|treatment=='N0F1', 0, 3))%>%
+  mutate(resource_mani=ifelse(treatment=='N0F0'|treatment=='N0F1', 0, 1))%>%
   mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
@@ -835,7 +835,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, ifelse(treatment=='N0B1', 1, 3))))%>%
-  mutate(resource_mani=ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 3, 0)))%>%
+  mutate(resource_mani=ifelse(treatment=='N1B0',1, ifelse(treatment=='N1B1', 1, 0)))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
@@ -1237,7 +1237,7 @@ herbdiv<-read.csv("NIN_herbdiv.csv")%>%
          plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF'|treatment=='3NF', 1, ifelse(treatment=='4NF', 2, ifelse(treatment=='2F'|treatment=='3F', 4, ifelse(treatment=='4F', 5, ifelse(treatment=='1F'|treatment=='5NF', 3, 6)))))))%>%
-  mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 3))%>%
+  mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
