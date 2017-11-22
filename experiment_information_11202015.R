@@ -835,7 +835,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, ifelse(treatment=='N0B1', 1, 3))))%>%
-  mutate(resource_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 4, 1))))%>%
+  mutate(resource_mani=ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 3, 0)))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
