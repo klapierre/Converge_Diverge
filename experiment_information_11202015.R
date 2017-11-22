@@ -215,7 +215,7 @@ lind<-read.delim("BAY_LIND.txt")%>%
          plant_mani=1,  
          plant_trt=ifelse(treatment=='ref_rich16'|treatment=='rain_rich16', 0, 1),
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8'|treatment=='rain_rich16', 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
