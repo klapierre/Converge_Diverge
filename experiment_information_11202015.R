@@ -20,6 +20,7 @@ library(dplyr)
 #### successional and plant_mani are binary variables
 ####   if successional=1, then all plots were disturbed in some way prior to the experiment start
 #   if plant_mani=1, then some or all species are planted into the plots at the start of the experiment; this can vary by treatment within a site (but most sites it is a 1 for all plots)
+# plant_trt=1, the treatment manipulates the plants directly in some way; plant_trt is a binary variable for experiments that manipulate plants as a treatment (e.g., seed addition, removal of some species); that is, manipulation of the plants for some treatments but not others (not e.g., seeding all plots at the start of the experiment)
 #### cessation is a binary variable for each treatment and year combination, and is 1 when the treatment has been stopped - DROPPING CESSATION
 # plot_mani is the total number of factors manipulated compared to the control (i.e., if all plots are burned plot_mani does not increase, but if treatment plots are burned when controls are not, then plot_mani increases by 1)
 # resource_mani is a binary variable to subset out the treatments that do not directly manipulate a resource (e.g., only increased temperature)
@@ -47,7 +48,8 @@ watering<-read.delim("ANG_watering.txt")%>%
          other_trt=ifelse(treatment=='W', 'winter water addition', ifelse(treatment=='S', 'spring water addition', 0)), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='W', 1, ifelse(treatment=='S', 1, 0)))%>%
   mutate(resource_mani=1)%>%
@@ -74,6 +76,7 @@ mat2<-read.delim("ARC_mat2.txt")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NP', 2, 0))%>%
   mutate(resource_mani=1)%>%
@@ -100,6 +103,7 @@ mnt<-read.delim("ARC_mnt.txt")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NP', 2, 0))%>%
   mutate(resource_mani=1)%>%
@@ -126,6 +130,7 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
          trt_details=ifelse(treatment=='non-clonal_CO', 'non-clonal species', ifelse(treatment=='mixed_LP', 'large nutrient patches', ifelse(treatment=='non-clonal_LP', 'non-clonal species, large nutrient patches', ifelse(treatment=='mixed_SP', 'small nutrient patches', ifelse(treatment=='non-clonal_SP', 'non-clonal species, small nutrient patches', ifelse(treatment=='non-clonal_UN', 'non-clonal species', 0)))))),
          successional=1, 
          plant_mani=1, 
+         plant_trt=ifelse(treatment=='non-clonal_CO'|treatment=='non-clonal_LP'|treatment=='non-clonal_SP'|treatment=='non-clonal_UN', 1, 0),
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='non-clonal_UN'|treatment=='non-clonal_LP'|treatment=='non-clonal_SP', 2, ifelse(treatment=='non-clonal_CO'|treatment=='mixed_LP'|treatment=='mixed_SP'|treatment=='mixed_UN', 1, 0)))%>%
   mutate(resource_mani=ifelse(treatment=='non-clonal_CO', 0, 1))%>%
@@ -152,6 +157,7 @@ exp1<-read.delim("ASGA_Exp1.txt")%>%
          trt_details=ifelse(treatment=='2_0_PA'|treatment=='1_0_PA'|treatment=='2_1_PA'|treatment=='1_1_PA', 'nutrient patches', 0),
          successional=ifelse(treatment=='2_0_CO'|treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN', 1, 0),
          plant_mani=ifelse(treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='1_1_CO'|treatment=='1_1_PA'|treatment=='1_1_UN', 1, 0),
+         plant_trt=ifelse(treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='1_1_CO'|treatment=='1_1_PA'|treatment=='1_1_UN', 1, 0),
          pulse=ifelse(treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_0_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='2_1_CO', 1, 0))%>%
   mutate(plot_mani=ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='1_0_PA'|treatment=='1_0_UN'|treatment=='1_1_CO'|treatment=='2_0_CO', 1, ifelse(treatment=='1_1_PA'|treatment=='1_1_UN'|treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_1_CO', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='2_0_CO'|treatment=='1_1_CO'|treatment=='2_1_CO', 0, 1))%>%
@@ -178,6 +184,7 @@ nitphos<-read.csv("AZI_NitPhos.csv")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0P0', 0, ifelse(treatment=="N1P0", 1, ifelse(treatment=="N2P0", 1, ifelse(treatment=="N3P0", 1, 2)))))%>%
   mutate(resource_mani=1)%>%
@@ -205,7 +212,8 @@ lind<-read.delim("BAY_LIND.txt")%>%
          other_trt=0,
          trt_details=ifelse(treatment=='ref_rich1'|treatment=='rain_rich1', '1 sp', ifelse(treatment=='ref_rich2'|treatment=='rain_rich2', '2 sp', ifelse(treatment=='ref_rich4'|treatment=='rain_rich4', '4 sp', ifelse(treatment=='ref_rich8'|treatment=='rain_rich8', '8 sp', '16 sp')))),
          successional=1, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=ifelse(treatment=='ref_rich16'|treatment=='rain_rich16', 0, 1),
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 0, 1))%>%
@@ -231,7 +239,8 @@ events<-read.delim("Bt_EVENT2.txt")%>%
          other_trt=ifelse(treatment=='CM-N1', 'reduced precip variability', ifelse(treatment=='D1-N1', 'early drought', ifelse(treatment=='D2-N1', 'late drought', 0))), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CA-N1', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -257,7 +266,8 @@ pq<-read.delim("BUX_PQ.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='warm'|treatment=='dry'|treatment=='wet', 1, ifelse(treatment=='control', 0, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='warm', 0, 1))%>%
@@ -282,7 +292,8 @@ pennings<-read.delim("CAR_Pennings.txt")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='NPK', 3, 0))%>%
   mutate(resource_mani=1)%>%
@@ -307,7 +318,8 @@ rmapc<-read.delim("CAU_RMAPC.txt")%>%
          other_trt=ifelse(treatment=='Ca', "lime added", 0), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Cont', 0, ifelse(treatment=='NP', 2, 1)))%>%
   mutate(resource_mani=1)%>%
@@ -333,7 +345,8 @@ biocon<-read.delim("CDR_biocon.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='X_X', 0, ifelse(treatment=='N_C', 2, 1)))%>%
   mutate(resource_mani=1)%>%
@@ -359,7 +372,8 @@ e001<-read.csv("CDR_e001.csv")%>%
          other_trt=ifelse(treatment=='9', 0, "mirconutrients and lime added"), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1', 4, ifelse(treatment=='9', 0, 5)))%>%
   mutate(resource_mani=1)%>%
@@ -384,7 +398,8 @@ e002<-read.delim("CDR_e002.txt")%>%
          other_trt=ifelse(treatment=='9_f_u_n', 0, "micronutrients and lime added"),
          trt_details=0,
          successional=1, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1_f_u_n', 4, ifelse(treatment=='9_f_u_n', 0, 5)))%>%
   mutate(resource_mani=1)%>%
@@ -411,7 +426,8 @@ megarich<-read.delim("CEH_Megarich.txt")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='AcAt', 0, ifelse(treatment=='EcEt', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='AcEt', 0, 1))%>%
@@ -437,7 +453,8 @@ imagine<-read.delim("CLE_imagine.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='T', 1, ifelse(treatment=='TD', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
@@ -463,7 +480,8 @@ culardoch<-read.delim("CUL_culardoch.txt")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0,
+        plant_mani=0, 
+        plant_trt=0,
         pulse=ifelse(treatment=='burn'|treatment=='burnclip'|treatment=='N10burn'|treatment=='N10burnclip'|treatment=='N20burn'|treatment=='N20burnclip'|treatment=='N50burn'|treatment=='N50burnclip', 1, 0))%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N10'|treatment=='N20'|treatment=='N50'|treatment=='burn'|treatment=='clip', 1, ifelse(treatment=='N10burnclip'|treatment=='N20burnclip'|treatment=='N50burnclip', 3, 2))))%>%
   mutate(resource_mani=ifelse(treatment=='burn'|treatment=='clip'|treatment=='burnclip', 0, 1))%>%
@@ -489,7 +507,8 @@ gap2<-read.delim("DCGS_gap2.txt")%>%
          other_trt=ifelse(treatment=='_018', '18 ft opening', ifelse(treatment=='_033', '33 ft opening', ifelse(treatment=='_066', '66 ft opening', ifelse(treatment=='_100', '100 ft opening', ifelse(treatment=='_150', '150 ft opening', 0))))),
          trt_details=0,
          successional=0, 
-         plant_mani=0,
+         plant_mani=0, 
+         plant_trt=0,
          pulse=1)%>%
   mutate(plot_mani=ifelse(treatment=='_000', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -515,7 +534,8 @@ nsfc<-read.delim("DL_NSFC.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='WN', 2, 1)))%>%
   mutate(resource_mani=1)%>%
@@ -541,7 +561,8 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='warming', 1, ifelse(treatment=='nutrient addition', 3, 4))))%>%
   mutate(resource_mani=ifelse(treatment=='warming', 0, 1))%>%
@@ -567,7 +588,8 @@ face<-read.delim("GVN_FACE.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='E', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -593,7 +615,8 @@ nde<-read.csv("IMGERS_NDE.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=="N0M0", 0, ifelse(treatment=="N1M0"|treatment=='N0M1'|treatment=="N1M0"|treatment=="N2M0"|treatment=="N3M0"|treatment=="N4M0"|treatment=="N5M0"|treatment=="N6M0"|treatment=="N7M0"|treatment=="N8M0", 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=="N0M1", 0, 1))%>%
@@ -619,7 +642,8 @@ yu<-read.delim("IMGERS_Yu.txt")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0', 0, ifelse(treatment=='N1', 2, 3)))%>%
   mutate(resource_mani=1)%>%
@@ -644,7 +668,8 @@ study119<-read.delim("JRN_Study119.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='T', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -671,7 +696,8 @@ study278<-read.delim("JRN_study278.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='P3N0', 0, ifelse(treatment=='P1N0'|treatment=='P2N0'|treatment=='P3N1'|treatment=='P4N0'|treatment=='P5N0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
@@ -697,7 +723,8 @@ gce<-read.delim("JSP_GCE2.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='amb', 0, ifelse(treatment=='N'|treatment=='R'|treatment=='H'|treatment=='C', 1, ifelse(treatment=='HRN'|treatment=='CRN'|treatment=='CHN'|treatment=='CHR', 3, ifelse(treatment=='CHRN', 4, 2)))))%>%
   mutate(resource_mani=ifelse(treatment=='H', 0, 1))%>%
@@ -723,7 +750,8 @@ wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='U CC', 0, ifelse(treatment=='U CH', 1, ifelse(treatment=='U CD', 1, ifelse(treatment=='U WC', 1, ifelse(treatment=='C CC', 1, ifelse(treatment=='C WH', 3, ifelse(treatment=='C WD', 3, 2))))))))%>%
   mutate(resource_mani=ifelse(treatment=='U WC', 0, ifelse(treatment=='C CC', 0, ifelse(treatment=='C WC', 0, 1))))%>%
@@ -748,7 +776,10 @@ t7<-read.delim("KBS_T7.txt")%>%
          management=1,
          other_trt=ifelse(treatment=='T1F0'|treatment=='T1F1', 'tilled', 0),
          trt_details=0,
-         successional=1, plant_mani=0, pulse=0)%>%
+         successional=1, 
+         plant_mani=0,  
+         plant_trt=0,
+         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='T0F0', 0, ifelse(treatment=='T1F1', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='T1F0', 0, 1))%>%
   mutate(max_trt=1)%>%
@@ -773,7 +804,8 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          trt_details=0,
          other_trt=0, 
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(resource_mani=ifelse(treatment=='N0F0'|treatment=='N0F1', 0, 3))%>%
   mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
@@ -799,7 +831,8 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          other_trt=ifelse(treatment=='N0B1'|treatment=='N1B1', "fungicide added", 0), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B1', 4, ifelse(treatment=='N0B1', 1, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='N0B0', 0, ifelse(treatment=='N1B0',3, ifelse(treatment=='N1B1', 4, 1))))%>%
@@ -825,7 +858,8 @@ bgp<-read.delim("KNZ_BGP.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='u_u_c', 0, ifelse(treatment=='u_u_n'|treatment=='u_u_p'|treatment=='u_m_c'|treatment=='b_u_c', 1, ifelse(treatment=='b_u_b'|treatment=='b_m_n'|treatment=='b_m_p'|treatment=='u_m_b', 3, ifelse(treatment=='b_u_n'|treatment=='b_u_p'|treatment=='u_u_b'|treatment=='u_m_n'|treatment=='u_m_p'|treatment=='b_m_c', 2, 4)))))%>%
   mutate(resource_mani=ifelse(treatment=='u_m_c'|treatment=='b_u_c'|treatment=='b_m_c', 0, 1))%>%
@@ -850,7 +884,8 @@ irg<-read.delim("KNZ_IRG.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0,
+         plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='i', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -875,7 +910,8 @@ gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Open_Ungrazed', 0, ifelse(treatment=="Rainout_Grazed",2,1)))%>%
   mutate(resource_mani=ifelse(treatment=="Open_Grazed",0,1))%>%
@@ -901,7 +937,8 @@ pplots<-read.csv("KNZ_PPLOTS.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N1P0', 0, ifelse(treatment=='N1P1'|treatment=='N1P2'|treatment=='N1P3'|treatment=='N2P0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
@@ -927,7 +964,8 @@ ramps<-read.csv("KNZ_Ramps.csv")%>%
          other_trt=ifelse(treatment=='delayed_control'|treatment=="delayed_heated",'increased precip vari', 'ambient'), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='ambient_control', 0, ifelse(treatment=='delayed_heated', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='ambient_heated', 0, 1))%>%
@@ -954,7 +992,9 @@ rhps<-read.delim("KNZ_RHPs.txt")%>%
          other_trt=ifelse(treatment=='stone'|treatment=='stone+N', 'shallow soil', 0),
          trt_details=0,
          successional=1, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='stone+N', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='stone', 0, 1))%>%
@@ -979,7 +1019,8 @@ e6<-read.delim("KUFS_E6.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0P0S0', 0, ifelse(treatment=='N4P0S0'|treatment=='N8P0S0'|treatment=='N16P0S0'|treatment=='N0P8S0', 1, 2)))%>%
   mutate(resource_mani=1)%>%
@@ -1004,7 +1045,8 @@ clip<-read.delim("LATNJA_CLIP.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CONTROL', 0, ifelse(treatment=='TN', 3, ifelse(treatment=='T',1,2))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
@@ -1030,7 +1072,8 @@ pme<-read.csv("LEFT_PME.csv")%>%
          other_trt=ifelse(treatment=='control', 'ambient precip', ifelse(treatment=='winwet', 'increase winter precip', ifelse(treatment=='winwet_sumdry','increase winter precip, decrease summer precip', ifelse(treatment=='winwet_sumwet', 'increase winter and summer precip', 'decrease winter precip increase summer precip')))), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, 1))%>%#We are considering this to be 1 manipulation, even when they manipulated precip in the winter and summer .
   mutate(resource_mani=1)%>%
@@ -1056,7 +1099,8 @@ herbwood<-read.delim("LG_HerbWood.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='W', 1, ifelse(treatment=='F', 3, 4))))%>%
   mutate(resource_mani=1)%>%
@@ -1082,7 +1126,8 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
          other_trt=0,
          trt_details=ifelse(treatment=='snpu'|treatment=='snuu'|treatment=='supu'|treatment=='suuu', 'summer burn', ifelse(treatment=='wnpg'|treatment=='wnpu'|treatment=='wnug'|treatment=='wnuu'|treatment=='wupg'|treatment=='wupu'|treatment=='wuug'|treatment=='wuuu', 'winter burn', 0)),
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=="wuug", 0, ifelse(treatment=="wnug"|treatment=="wupg"|treatment=="wuuu", 1, ifelse(treatment=="suuu"|treatment=='uuuu'|treatment=='wnpg'|treatment=='wnuu'|treatment=="wupu", 2, ifelse(treatment=='snuu'|treatment=='supu'|treatment=='unuu'|treatment=='uupu'|treatment=='wnpu',3, 4)))))%>%
   mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu', 0, 1))%>%
@@ -1108,7 +1153,8 @@ mwatfer<-read.csv("MNR_watfer.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='W', 1, ifelse(treatment=='F', 3, 4))))%>%
   mutate(resource_mani=1)%>%
@@ -1133,7 +1179,8 @@ wet<-read.delim("NANT_wet.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0N0P', 0, ifelse(treatment=='1N1P', 2, 1)))%>%
   mutate(resource_mani=1)%>%
@@ -1159,7 +1206,8 @@ gb<-read.delim("NGBER_gb.txt")%>%
          other_trt=ifelse(treatment=='AMBIENT', 'ambient rainfall', ifelse(treatment=='CURRENT', 'current pattern', ifelse(treatment=='SPRING', 'spring addition', 'winter addition'))), 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='AMBIENT', 0, 1))%>%
   mutate(resource_mani=ifelse(treatment=='CURRENT', 0, 1))%>%
@@ -1185,7 +1233,8 @@ herbdiv<-read.csv("NIN_herbdiv.csv")%>%
          other_trt=0,
          trt_details=ifelse(treatment=='2NF'|treatment=='2F', 'aboveground exclosure', ifelse(treatment=='3NF'|treatment=='3F', 'insecticide', ifelse(treatment=='4NF'|treatment=='4F', 'aboveground exclosure/insecticide', ifelse(treatment=='5NF'|treatment=='5F', 'above/below exclosure/insecticide', 0)))), 
          successional=0, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF'|treatment=='3NF', 1, ifelse(treatment=='4NF', 2, ifelse(treatment=='2F'|treatment=='3F', 4, ifelse(treatment=='4F', 5, ifelse(treatment=='1F'|treatment=='5NF', 3, 6)))))))%>%
   mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 3))%>%
@@ -1212,7 +1261,8 @@ ccd<-read.delim("NTG_CCD.txt")%>%
          other_trt=0,
          trt_details=ifelse(treatment=='CH-'|treatment=='CHA'|treatment=='WH-'|treatment=='CH+'|treatment=='WHA'|treatment=='WH+', 'high intensity defoliation', ifelse(treatment=='CL-'|treatment=='CLA'|treatment=='CL+'|treatment=='WL-'|treatment=='WLA'|treatment=='WL+', 'low intensity defoliation', 0)),
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='CN-'|treatment=='CN+'|treatment=='WNA', 1,ifelse(treatment=='CNA', 0,ifelse(treatment=='CH-'|treatment=='CH+'|treatment=='CL-'|treatment=='CL+'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA'|treatment=='WN-'|treatment=='WN+', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA', 0, 1))%>%
@@ -1238,7 +1288,8 @@ nfert<-read.delim("NWT_246NFert.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='x', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -1263,7 +1314,8 @@ bowman<-read.delim("NWT_bowman.txt")%>%
          other_trt=0,
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Control', 0, ifelse(treatment=='NP', 2, 1)))%>%
   mutate(resource_mani=1)%>%
@@ -1289,7 +1341,8 @@ snow<-read.delim("NWT_snow.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='XXX', 0, ifelse(treatment=='XXW'|treatment=='XNX'|treatment=='PXX', 1, ifelse(treatment=='XNW'|treatment=='PXW'|treatment=='PNX', 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='XXW', 0, 1))%>%
@@ -1315,7 +1368,8 @@ oface<-read.delim("ORNL_FACE.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='elevated', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -1341,7 +1395,8 @@ tide<-read.delim("PIE_Tide.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='Enriched', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -1367,7 +1422,8 @@ interaction<-read.delim("RIO_interaction.txt")%>%
          other_trt=0,
          trt_details=ifelse(treatment=='N0W1'|treatment=='N1W1', 'small precip pulse', ifelse(treatment=='N0W2'|treatment=='N1W2', 'large precip pulse', 0)),
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N1W0'|treatment=='N0W1'|treatment=='N0W2', 1, 2)))%>%
   mutate(resource_mani=1)%>%
@@ -1393,7 +1449,8 @@ lucero<-read.csv("SCL_Lucero.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N1', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -1419,7 +1476,8 @@ ter<-read.csv("SCL_TER.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='OO', 0, ifelse(treatment=="CF",2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=="CO", 0, 1))%>%
@@ -1445,7 +1503,8 @@ cxn<-read.csv("SERC_CXN.csv")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='t1', 0, ifelse(treatment=='t4',2,1)))%>%
   mutate(resource_mani=1)%>%
@@ -1470,7 +1529,8 @@ tmece<-read.csv("SERC_TMECE.csv")%>%
         other_trt=0, 
         trt_details=0,
         successional=0, 
-        plant_mani=0, 
+        plant_mani=0,  
+        plant_trt=0,
         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='A', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -1496,7 +1556,8 @@ snfert<-read.delim("SEV_NFert.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='F', 1, 0))%>%
   mutate(resource_mani=1)%>%
@@ -1521,7 +1582,8 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='N'|treatment=='P'|treatment=='T', 1, ifelse(treatment=='TPN', 3, 2))))%>%
   mutate(resource_mani=ifelse(treatment=='T', 0, 1))%>%
@@ -1546,7 +1608,8 @@ grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=0, 
-         plant_mani=0, 
+         plant_mani=0,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -1572,7 +1635,8 @@ uk<-read.delim("SKY_UK.txt")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=1, 
+         plant_mani=1,  
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='HP', 2, 1)))%>%
   mutate(resource_mani=ifelse(treatment=='H', 0, 1))%>%
@@ -1597,7 +1661,8 @@ nitrogen<-read.csv("SR_Nitrogen.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=ifelse(treatment=='1_CONTROL'|treatment=='1_NITROGEN',1,0), 
+         plant_mani=ifelse(treatment=='1_CONTROL'|treatment=='1_NITROGEN',1,0),  
+         plant_trt=ifelse(treatment=='1_CONTROL'|treatment=='1_NITROGEN',1,0),
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0_CONTROL', 0, ifelse(treatment=='1_NITROGEN',2,1)))%>%
   mutate(resource_mani=ifelse(treatment=='1_CONTROL',0,1))%>%
@@ -1622,7 +1687,9 @@ water<-read.csv("SR_Water.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0), pulse=0)%>%
+         plant_mani=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0), 
+         plant_trt=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0),
+         pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0_CONTROL_1', 0, ifelse(treatment=='1_WATER_0',3,ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=='0_WATER_1',1,2))))%>%
   mutate(resource_mani=ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=="1_CONTROL_0",0,1))%>%
   mutate(max_trt=1)%>%
@@ -1648,6 +1715,7 @@ gane<-read.delim("SVA_GANE.txt")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='LN'|treatment=='HN'|treatment=='P', 1, 2)))%>%
   mutate(resource_mani=1)%>%
@@ -1674,6 +1742,7 @@ tface<-read.csv("TAS_FACE.csv")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='UnwarmedControl', 0, ifelse(treatment=='WarmedFACE',2,1)))%>%
   mutate(resource_mani=ifelse(treatment=='WarmedControl',0,1))%>%
@@ -1700,6 +1769,7 @@ lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
          trt_details=0, 
          successional=0, 
          plant_mani=ifelse(treatment=='ghc'|treatment=='ghn'|treatment=='nhc'|treatment=='nhn',1,0), 
+         plant_trt=ifelse(treatment=='ghc'|treatment=='ghn'|treatment=='nhc'|treatment=='nhn',1,0),
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='gcc',0,ifelse(treatment=='ghc'|treatment=='gsc'|treatment=='ncc',1, ifelse(treatment=='nhc'|treatment=='nsc',2,ifelse(treatment=="gcn",3,ifelse(treatment=='nhn'|treatment=='nsn',5,4))))))%>%
   mutate(resource_mani=ifelse(treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 1))%>%
@@ -1726,6 +1796,7 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
          trt_details=0,
          successional=0, 
          plant_mani=0, 
+         plant_trt=0,
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0', 0, 1))%>%
   mutate(resource_mani=1)%>%
@@ -1737,8 +1808,8 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
 ###merge all datasets
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
-#kim's
-write.csv(combine, 'C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_May2017.csv')
+#kim's desktop
+write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Nov2017.csv')
 
 #meghan's
 write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Dec2016.csv")
