@@ -1,5 +1,4 @@
-library(tidyr)
-library(dplyr)
+library(tidyverse)
 library(ggplot2)
 library(gridExtra)
 library(grid)
@@ -132,37 +131,6 @@ e2<-qplot(SimpEven_change, data=divCompare, geom="histogram")+
 
 grid.arrange( m, d2,s1, e2, ncol=2)
 
-# #without cdr
-# divCompareTest <- divCompare%>%
-#   filter(site_code!='CDR')
-# 
-# theme_set(theme_bw(16))
-# d2<-qplot(dispersion_change, data=divCompareTest, geom="histogram")+
-#   ggtitle("Within Treatment Change")+
-#   xlab("Trt Disp - Cont Disp")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# m<-qplot(mean_change, data=divCompareTest, geom="histogram")+
-#   ggtitle("Among Treatment Change")+
-#   xlab(" Distance between Centriods")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# s1<-qplot(S_PC, data=divCompareTest, geom="histogram")+
-#   ggtitle("Richness Percent Change")+
-#   xlab("Percent Change in Richness")+
-#   geom_vline(xintercept = 0, size=2)
-# # s2<-qplot(S_change, data=divCompare, geom="histogram")+
-# #   ggtitle("richness change")
-# 
-# # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
-# #   ggtitle("even percent change")
-# e2<-qplot(SimpEven_change, data=divCompareTest, geom="histogram")+
-#   ggtitle("Evenness Change")+
-#   xlab("Trt Evenness - Cont Evenness")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# grid.arrange( m, d2,s1, e2, ncol=2)
-
 
 ###merging with experiment (treatment) information
 SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
@@ -209,41 +177,6 @@ e2<-qplot(SimpEven_change, data=ForAnalysis8yr, geom="histogram")+
   geom_vline(xintercept = 0, size=2)
 
 grid.arrange( m, d2,s1, e2, ncol=2)
-
-
-# #look at pre-trt data
-# pre <- ForAnalysis8yr%>%
-#   filter(site_code=='KUFS'|site_code=='GVN'|site_code=='dcgs'|site_code=='JSP'|site_code=='BAY'|site_code=='CEH'|site_code=='PIE'|site_code=='KAEFS'|project_name=='pplots'|project_name=='snow')
-# 
-# theme_set(theme_bw(16))
-# d2<-qplot(dispersion_change, data=subset(pre, treatment_year==1), geom="histogram")+
-#   ggtitle("Within Treatment Change")+
-#   xlab("Trt Disp - Cont Disp")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# m<-qplot(mean_change, data=subset(pre, treatment_year==1), geom="histogram")+
-#   ggtitle("Among Treatment Change")+
-#   xlab(" Distance between Centriods")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# s1<-qplot(S_PC, data=subset(pre, treatment_year==1), geom="histogram")+
-#   ggtitle("Richness Percent Change")+
-#   xlab("Percent Change in Richness")+
-#   geom_vline(xintercept = 0, size=2)
-# # s2<-qplot(S_change, data=divCompare, geom="histogram")+
-# #   ggtitle("richness change")
-# 
-# # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
-# #   ggtitle("even percent change")
-# e2<-qplot(SimpEven_change, data=subset(pre, treatment_year==1), geom="histogram")+
-#   ggtitle("Evenness Change")+
-#   xlab("Trt Evenness - Cont Evenness")+
-#   geom_vline(xintercept = 0, size=2)
-# 
-# grid.arrange( m, d2,s1, e2, ncol=2)
-# 
-# ggplot(data=pre, aes(x=treatment_year, y=mean_change)) +
-#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=site_code))
 
 #9+ year datasets (all years)
 ForAnalysis9yr <- ForAnalysis%>%
