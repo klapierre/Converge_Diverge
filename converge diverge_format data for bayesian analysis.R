@@ -23,7 +23,7 @@ anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
 #diversity data
-div <- read.csv('DiversityMetrics_May2017.csv')%>%
+div <- read.csv('DiversityMetrics_Nov2017.csv')%>%
   separate(exp_year, c('site_code', 'project_name','community_type', 'calendar_year'), sep='::')%>%
   mutate(calendar_year=as.integer(calendar_year))%>%
   left_join(expInfo)%>%
@@ -39,35 +39,7 @@ anpp<-read.csv("ANPP_Oct2017.csv")%>%
 SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   select(-X)
 
-# turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
-#   separate(col=exp_code, into=c('site_code', 'project_name', 'community_type', 'treatment'), sep='::')%>%
-#   left_join(expInfo, by=c('site_code', 'project_name', 'community_type', 'treatment', 'calendar_year'), all=T)%>%
-#   filter(pulse==0&project_name!='e001'&project_name!='e002')
-# turnoverCDRe001 <- turnover%>%filter(project_name=='e001'&treatment!=2&treatment!=3&treatment!=4&treatment!=5&treatment!=7)
-# turnoverCDRe002 <- turnover%>%filter(project_name=='e002'&treatment!='2_f_u_n'&treatment=='3_f_u_n'&treatment=='4_f_u_n'&treatment=='5_f_u_n'&treatment=='7_f_u_n')
-# turnoverAll<-rbind(turnover, turnoverCDRe001, turnoverCDRe002)%>%
-#   left_join(SiteExp, by=c('site_code', 'project_name', 'community_type'))
-# 
-# #full dataset
-# # write.csv(turnoverAll, "turnover_all years_Mar2017.csv")
-# 
-# #9 yr or less
-# turnover9yr <- turnoverAll%>%
-#   filter(treatment_year<10)
-# 
-# ##18% of our our data is from CDR and KNZ
-# 
-# # write.csv(turnover9yr, "turnover_9yr_May2017.csv")
-# 
-# ggplot(turnover9yr, aes(x=treatment_year, y=appearance/total, color=plot_mani)) +
-#   geom_point()
-# ggplot(turnover9yr, aes(x=treatment_year, y=disappearance/total, color=plot_mani)) +
-#   geom_point()
-
-
-
 ###calculate change in dispersion, H, S, and evenness
-
 #subset out controls and treatments
 divControls <- subset(div, subset=(plot_mani==0))%>%
   select(exp_year, dispersion, H, S, SimpEven, calendar_year, treatment_year)
@@ -99,10 +71,6 @@ divCompare <- divControls%>%
          S_PC=(S-ctl_S)/ctl_S, 
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
   select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
-# 
-##comparing change vs percent change
-# d1<-qplot(dispersion_PC, data=divCompare, geom="histogram")+
-#   ggtitle("dispersion percent change")
 
 theme_set(theme_bw(16))
 d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
@@ -189,108 +157,222 @@ ForAnalysisAbsValue <- ForAnalysis9yr%>%
 # write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
 
 
-
-###getting the treatment interaction types
-trtType <- ForAnalysis%>%
-  left_join(expInfo)%>%
-  #create drought and irrigation categories
-  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))%>%
-  #create categorical treatment type column
-  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', ifelse(n==0&drought==0&irrigation==0&p==0&k==0&CO2==0, 'other', 'resource+other'))))))))))))))))%>%
-  #drop experiments that we can't run the analyses on
-  filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
-  #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length, resource_other)%>%
-  #keep final year only
-  group_by(site_code, project_name, community_type, treatment)%>%
-  filter(treatment_year==max(treatment_year))%>%
-  ungroup()
+# ###getting the treatment interaction types -- used for past analyses and ANPP analysis
+# trtType <- ForAnalysis%>%
+#   left_join(expInfo)%>%
+#   #create drought and irrigation categories
+#   mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))%>%
+#   #create categorical treatment type column
+#   mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', ifelse(n==0&drought==0&irrigation==0&p==0&k==0&CO2==0, 'other', 'resource+other'))))))))))))))))%>%
+#   #drop experiments that we can't run the analyses on
+#   filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
+#   #keep just relevent column names for this analysis
+#   select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length, resource_other)%>%
+#   #keep final year only
+#   group_by(site_code, project_name, community_type, treatment)%>%
+#   filter(treatment_year==max(treatment_year))%>%
+#   ungroup()
 
 # write.csv(trtType, 'treatment interactions_11152017.csv')
 
 ###getting resource*non-resource interactions
-trtTypeRes <- ForAnalysis%>%
+###4 analyses: (1) single resource, (2) single non-resource, (3) 2-way interactions, (4) 3+ way interactions
+#analysis 1: single resource
+singleResource <- ForAnalysis%>%
+  select(-plot_mani)%>%
   left_join(expInfo)%>%
-  #create drought and irrigation categories
-  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))%>%
+  #filter pretrt data
+  filter(treatment_year!=0)%>%
+  #filter just single resource manipulations
+  filter(resource_mani==1, plot_mani==1)%>%
+  #set CEH Megarich nutrient values to 0 (added to all megaliths, not a treatment)
+  mutate(n2=ifelse(site_code=='CEH', 0, n), p2=ifelse(site_code=='CEH', 0, p), k2=ifelse(site_code=='CEH', 0, k))%>%
+  #drop lime added, as only one trt does this
+  filter(other_trt!='lime added')%>%
   #create categorical treatment type column
-  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', ifelse(n==0&drought==0&irrigation==0&p==0&k==0&CO2==0, 'other', 'resource+other'))))))))))))))))%>%
-  #create resource*other trt column
-  mutate(resource_other=ifelse(resource_mani!=0&other_trt!=0, 'R*other', ifelse(resource_mani!=0&mow_clip==1, 'R*mow_clip', ifelse(resource_mani==1&burn==1, 'R*burn', ifelse(resource_mani!=0&herb_removal==1, 'R*herbrem', ifelse(resource_mani!=0&temp>0, 'R*temp', ifelse(resource_mani!=0&plant_mani==1, 'R*plant_mani', ifelse(resource_mani==0, 'non-resource', ifelse(resource_mani!=0&plot_mani>1, 'R*R', ifelse(project_name=='e001', 'CDR', ifelse(project_name=='e002', 'CDR', 'single-resource')))))))))))%>%
-  #create column of non-resource manipulations; NOTE: this does not account for trts with multiple at the same time, they are overwritten by last one, so only use this column when dropping plot mani>1
-  mutate(nonresource=ifelse(mow_clip==1, 'mow_clip', ifelse(burn==1, 'burn', ifelse(herb_removal==1, 'herbrem', ifelse(temp>0, 'temp', ifelse(plant_mani==1, 'plant_mani', 'other'))))))%>%
-  #drop experiments that we can't run the analyses on
-  filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
-  #drop precip variability treatments
-  filter(other_trt!='reduced precip variability'&other_trt!='increased precip variability'&other_trt!='increase winter precip, decrease summer precip'&other_trt!='decrease winter precip, increase summer precip')%>%
+  mutate(trt_type=ifelse(n2>0, 'N', ifelse(p2>0, 'P', ifelse(k2>0, 'K', ifelse(precip<0, 'drought', ifelse(precip>0, 'irr', ifelse(CO2>0, 'CO2', 'precip_vari')))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, resource_other, nonresource, plot_mani, resource_mani, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
 
-#only run to the select line in making trtTypeRes to allow next lines to work
-temp <- trtTypeRes%>%
-  select(site_code, project_name, treatment, trt_type, resource_other, nonresource, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani)%>%
-  group_by(site_code, project_name, treatment, trt_type, resource_other, nonresource)%>%
-  unique()%>%
-  ungroup()
+singleResource8yr <- singleResource%>%
+  filter(treatment_year<9)
+#write.csv(singleResource8yr, 'ForAnalysis_singleResource8yr.csv')
+singleResourceAbs <- singleResource%>%
+  mutate(S_PC_abv=abs(S_PC))%>%
+  select(-S_PC)
+#write.csv(singleResourceAbs, 'ForAnalysis_singleResourceAbs.csv')
+singleResource9yr <- singleResource%>%
+  filter(experiment_length>8)
+#write.csv(singleResource9yr, 'ForAnalysis_singleResource9yr.csv')
 
-# write.csv(temp, 'treatment_resource_nonresource.csv')
+# ##check the treatment designations are correct; only works if you don't run select line in previous step
+# temp <- singleResource%>%
+#   select(site_code, project_name, treatment, trt_type, n, p, k, CO2, precip, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani)%>%
+#   group_by(site_code, project_name, treatment, trt_type)%>%
+#   unique()%>%
+#   ungroup()
+
+#analysis 2: single non-resource
+singleNonresource <- ForAnalysis%>%
+  left_join(expInfo)%>%
+  #filter pretrt data
+  filter(treatment_year!=0)%>%
+  #filter just single resource manipulations
+  filter(resource_mani==0, plot_mani==1)%>%
+  #drop tilled, stone, and fungicide as only one trt each do these; drop 'current pattern' of rainfall, as this is basically a control
+  filter(other_trt!='tilled', other_trt!='shallow soil', other_trt!='fungicide added', other_trt!='current pattern')%>%
+  #create categorical treatment type column
+  mutate(trt_type=ifelse(burn==1, 'burn', ifelse(mow_clip==1, 'mow_clip', ifelse(herb_removal==1, 'herb_rem', ifelse(temp>0, 'temp', ifelse(plant_trt==1, 'plant_mani', 'other'))))))%>%
+  #keep just relevent column names for this analysis
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+
+singleNonresource8yr <- singleNonresource%>%
+  filter(treatment_year<9)
+#write.csv(singleNonresource8yr, 'ForAnalysis_singleNonresource8yr.csv')
+singleNonresourceAbs <- singleNonresource%>%
+  mutate(S_PC_abv=abs(S_PC))%>%
+  select(-S_PC)
+#write.csv(singleNonresourceAbs, 'ForAnalysis_singleNonresourceAbs.csv')
+singleNonresource9yr <- singleNonresource%>%
+  filter(experiment_length>8)
+#write.csv(singleNonresource9yr, 'ForAnalysis_singleNonresource9yr.csv')
+
+###check the treatment designations are correct; only works if you don't run select line in previous step
+# temp <- singleNonresource%>%
+#   select(site_code, project_name, treatment, trt_type, n, p, k, CO2, precip, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani)%>%
+#   group_by(site_code, project_name, treatment, trt_type)%>%
+#   unique()%>%
+#   ungroup()
+  
+#analysis 3: 2-way interactions
+twoWay <- ForAnalysis%>%
+  left_join(expInfo)%>%
+  #filter pretrt data
+  filter(treatment_year!=0)%>%
+  #filter just single resource manipulations
+  filter(plot_mani==2)%>%
+  #drop tilled, stone, and fungicide as only one trt each do these; drop 'current pattern' of rainfall, as this is basically a control
+  filter(other_trt!='tilled', other_trt!='shallow soil', other_trt!='fungicide added', other_trt!='current pattern')%>%
+  #create categorical treatment type column
+  mutate(trt_type=ifelse(resource_mani==1&burn==1, 'R*burn', ifelse(resource_mani==1&mow_clip==1, 'R*mow_clip', ifelse(resource_mani==1&herb_removal==1, 'R*herb_rem', ifelse(resource_mani==1&temp>0, 'R*temp', ifelse(resource_mani==1&plant_trt==1, 'R*plant_mani', ifelse(resource_mani==1&other_trt!=0, 'R*other', ifelse(n>0&p>0, 'R*R', ifelse(n>0&CO2>0, 'R*R', ifelse(n>0&precip!=0, 'R*R', ifelse(p>0&k>0, 'R*R', ifelse(CO2>0&precip!=0, 'R*R', 'N*N'))))))))))))%>%
+  #keep just relevent column names for this analysis
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+
+twoWay8yr <- twoWay%>%
+  filter(treatment_year<9)
+#write.csv(twoWay8yr, 'ForAnalysis_twoWay8yr.csv')
+twoWayAbs <- twoWay%>%
+  mutate(S_PC_abv=abs(S_PC))%>%
+  select(-S_PC)
+#write.csv(twoWayAbs, 'ForAnalysis_twoWayAbs.csv')
+twoWay9yr <- twoWay%>%
+  filter(experiment_length>8)
+#write.csv(twoWay9yr, 'ForAnalysis_twoWay9yr.csv')
+
+# ##check the treatment designations are correct; only works if you don't run select line in previous step
+# temp <- twoWay%>%
+#   select(site_code, project_name, treatment, trt_type, n, p, k, CO2, precip, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani, resource_mani)%>%
+#   group_by(site_code, project_name, treatment, trt_type)%>%
+#   unique()%>%
+#   ungroup()
+
+
+#analysis 4: 3+ way interactions
+threeWay <- ForAnalysis%>%
+  left_join(expInfo)%>%
+  #filter pretrt data
+  filter(treatment_year!=0)%>%
+  #filter just single resource manipulations
+  filter(plot_mani>2, plot_mani<6)%>%
+  #drop tilled, stone, and fungicide as only one trt each do these; drop 'current pattern' of rainfall, as this is basically a control
+  filter(other_trt!='tilled', other_trt!='shallow soil', other_trt!='fungicide added', other_trt!='current pattern')%>%
+  #create categorical treatment type column
+  mutate(trt_type=ifelse(burn==0&mow_clip==0&herb_removal==0&temp==0&plant_trt==0, 'all_resource', ifelse(n==0&p==0&k==0&CO2==0&precip==0, 'all_nonresource', 'both')))%>%
+  #keep just relevent column names for this analysis
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+
+threeWay8yr <- threeWay%>%
+  filter(treatment_year<9)
+#write.csv(threeWay8yr, 'ForAnalysis_threeWay8yr.csv')
+threeWayAbs <- threeWay%>%
+  mutate(S_PC_abv=abs(S_PC))%>%
+  select(-S_PC)
+#write.csv(threeWayAbs, 'ForAnalysis_threeWayAbs.csv')
+threeWay9yr <- threeWay%>%
+  filter(experiment_length>8)
+#write.csv(threeWay9yr, 'ForAnalysis_threeWay9yr.csv')
+
+###check the treatment designations are correct; only works if you don't run select line in previous step
+# temp <- threeWay%>%
+#   select(site_code, project_name, treatment, trt_type, n, p, k, CO2, precip, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani, resource_mani)%>%
+#   group_by(site_code, project_name, treatment, trt_type)%>%
+#   unique()%>%
+#   ungroup()
+
 
 #mean change
-#notes: remove KBS because tilling has a big effect and it is the only tilled experiment
-singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
+singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=mean_change)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Mean Change') +
+  xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Mean Change') +
+singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Mean Change') +
+twoWayFig <- ggplot(data=twoWay, aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-pushViewport(viewport(layout=grid.layout(1,3)))
+threeWayFig <- ggplot(data=threeWay, aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Mean Difference') +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+pushViewport(viewport(layout=grid.layout(2,2)))
 print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(twoWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#export at 1200x1200
 
 #richness
-#notes: remove KBS because tilling has a big effect and it is the only tilled experiment
-singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
+singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=S_PC)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Richness Change') +
+  xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Richness Change') +
+singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
-  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-  xlab('Treatment Year') + ylab('Richness Change') +
+twoWayFig <- ggplot(data=twoWay, aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
 
-pushViewport(viewport(layout=grid.layout(1,3)))
+threeWayFig <- ggplot(data=threeWay, aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  xlab('Treatment Year') + ylab('Richness Difference') +
+  scale_y_continuous(limits=c(-1,1.3)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+pushViewport(viewport(layout=grid.layout(2,2)))
 print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
-
+print(twoWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
+print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+#export at 1200x1200
 
 # #dispersion
 # #notes: remove KBS because tilling has a big effect and it is the only tilled experiment
