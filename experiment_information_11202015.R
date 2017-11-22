@@ -17,6 +17,7 @@ library(dplyr)
 # nutrients, light, carbon, water, and other are binary variables for the entire experiment (whether one of these factors was manipulated)
 # n-other_trt are variables describing the specific treatment amounts or categories
 #### if all plots were burned (at any frequency (<20yrs) over the course of the experiment or at the site where the experiment takes place), fenced to remove herbivores (at any point in time where the experiment takes place), or mowed/clipped, then the variable gets a 0 for all plots, but management=1. SEE Experiment_List for Details. Otherwise they match treatments.
+##herb_removal is fencing to remove herbivores, EXCEPT for MAERC fireplots, where it is grazers being added
 #### successional and plant_mani are binary variables
 ####   if successional=1, then all plots were disturbed in some way prior to the experiment start
 #   if plant_mani=1, then some or all species are planted into the plots at the start of the experiment; this can vary by treatment within a site (but most sites it is a 1 for all plots)
@@ -1121,7 +1122,7 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
          temp=0,
          mow_clip=0,
          burn=ifelse(treatment=='uuuu'|treatment=='uupu'|treatment=='unpu'|treatment=='unuu', 0, 1),
-         herb_removal=ifelse(treatment=='wnpg'|treatment=='wnug'|treatment=='wupg'|treatment=='wuug', 0, 1), 
+         herb_removal=ifelse(treatment=='wnpg'|treatment=='wnug'|treatment=='wupg'|treatment=='wuug', 1, 0), 
          management=0,
          other_trt=0,
          trt_details=ifelse(treatment=='snpu'|treatment=='snuu'|treatment=='supu'|treatment=='suuu', 'summer burn', ifelse(treatment=='wnpg'|treatment=='wnpu'|treatment=='wnug'|treatment=='wnuu'|treatment=='wupg'|treatment=='wupu'|treatment=='wuug'|treatment=='wuuu', 'winter burn', 0)),
@@ -1129,8 +1130,8 @@ fireplots<-read.delim("MAERC_fireplots.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=="wuug", 0, ifelse(treatment=="wnug"|treatment=="wupg"|treatment=="wuuu", 1, ifelse(treatment=="suuu"|treatment=='uuuu'|treatment=='wnpg'|treatment=='wnuu'|treatment=="wupu", 2, ifelse(treatment=='snuu'|treatment=='supu'|treatment=='unuu'|treatment=='uupu'|treatment=='wnpu',3, 4)))))%>%
-  mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='wnpg', 4, ifelse(treatment=='unpu'|treatment=='snpu'|treatment=='wnpu'|treatment=='wupg'|treatment=='wnug', 3, ifelse(treatment=='uupu'|treatment=='unuu'|treatment=='suuu'|treatment=='wuuu', 1, ifelse(treatment=='uuuu', 0, 2)))))%>%
+  mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu'|treatment=='wuug', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
