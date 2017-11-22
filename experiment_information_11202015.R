@@ -1676,10 +1676,10 @@ water<-read.csv("SR_Water.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment, community_type)%>%
   mutate(nutrients=0, light=0, carbon=0, water=1, other_manipulation=1,
          n=0,
-         p=ifelse(treatment=='0_WATER_0'|treatment=='0_WATER_1'|treatment=='1_WATER_0'|treatment=='1_WATER_1', 34.1,0),
+         p=0,
          k=0, 
          CO2=0, 
-         precip=0, 
+         precip=ifelse(treatment=='0_WATER_0'|treatment=='0_WATER_1'|treatment=='1_WATER_0'|treatment=='1_WATER_1', 34.1,0), 
          temp=0,
          mow_clip=0, 
          burn=0, 
