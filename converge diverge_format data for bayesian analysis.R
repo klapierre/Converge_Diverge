@@ -2,6 +2,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
+library(grid)
 
 #kim's laptop
 setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
@@ -15,7 +16,7 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_May2017.csv')%>%
+expInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, sep='::'))%>%
   select(-X)
 
@@ -36,7 +37,7 @@ anpp<-read.csv("ANPP_Oct2017.csv")%>%
   filter(treatment_year!=0)
 
 #appearance/disappearance data
-SiteExp<-read.csv("SiteExperimentDetails_March2016.csv")%>%
+SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   select(-X)
 
 # turnover <- read.csv('appear_disappear_Mar2017.csv')%>%
@@ -80,6 +81,7 @@ divTrt1 <- div%>%
   #plus filtering to get only treatments
   filter(pulse==0, plot_mani>0, project_name!="e001"&project_name!="e002")
 
+#removing a subset of CDR treatments to prevent the majority of data being from CDR; keeping lowest, highest, and 10 gm-2 (level most comparable to other studies)
 divCDRe001<-div%>%
   filter(site_code=="CDR"&treatment==1|treatment==6|treatment==8|treatment==9,plot_mani>0)
 divCDRe002<-div%>%
@@ -209,23 +211,39 @@ e2<-qplot(SimpEven_change, data=ForAnalysis8yr, geom="histogram")+
 grid.arrange( m, d2,s1, e2, ncol=2)
 
 
-
-#8 year, single resource manipulations only
-resource8 <- ForAnalysis8yr%>%
-  left_join(expInfo)%>%
-  #filter out anything with more than one resource manipulated
-  filter(plot_mani<2)%>%
-  #make resources binary
-  mutate(n1=ifelse(n>0, 1, 0), p1=ifelse(p>0, 1, 0), other_nut=ifelse(k>0, 1, ifelse(other_trt=='mirconutrients and lime added', 1, ifelse(other_trt=='lime added', 1, 0))), CO2_1=ifelse(CO2>0, 1, 0), irr=ifelse(precip>1, 1, 0), drought=ifelse(precip<0, 1, 0), sum=n1+p1+other_nut+CO2_1+irr+drought)%>%
-  #drop megarich because they add NPK to all megaliths, so no true resource control
-  filter(project_name!='MEGARICH', sum==1)%>%
-  mutate(resource=ifelse(n1==1, 'n', ifelse(p1==1, 'p', ifelse(other_nut==1, 'other_nut', ifelse(CO2_1==1, 'CO2', ifelse(irr==1, 'irrigation', 'drought'))))))
-
-# write.csv(resource8, 'ForBayesianAnalysis_singleresource_May2017.csv')
-  
-  
-  
-
+# #look at pre-trt data
+# pre <- ForAnalysis8yr%>%
+#   filter(site_code=='KUFS'|site_code=='GVN'|site_code=='dcgs'|site_code=='JSP'|site_code=='BAY'|site_code=='CEH'|site_code=='PIE'|site_code=='KAEFS'|project_name=='pplots'|project_name=='snow')
+# 
+# theme_set(theme_bw(16))
+# d2<-qplot(dispersion_change, data=subset(pre, treatment_year==1), geom="histogram")+
+#   ggtitle("Within Treatment Change")+
+#   xlab("Trt Disp - Cont Disp")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# m<-qplot(mean_change, data=subset(pre, treatment_year==1), geom="histogram")+
+#   ggtitle("Among Treatment Change")+
+#   xlab(" Distance between Centriods")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# s1<-qplot(S_PC, data=subset(pre, treatment_year==1), geom="histogram")+
+#   ggtitle("Richness Percent Change")+
+#   xlab("Percent Change in Richness")+
+#   geom_vline(xintercept = 0, size=2)
+# # s2<-qplot(S_change, data=divCompare, geom="histogram")+
+# #   ggtitle("richness change")
+# 
+# # e1<-qplot(SimpEven_PC, data=divCompare, geom="histogram")+
+# #   ggtitle("even percent change")
+# e2<-qplot(SimpEven_change, data=subset(pre, treatment_year==1), geom="histogram")+
+#   ggtitle("Evenness Change")+
+#   xlab("Trt Evenness - Cont Evenness")+
+#   geom_vline(xintercept = 0, size=2)
+# 
+# grid.arrange( m, d2,s1, e2, ncol=2)
+# 
+# ggplot(data=pre, aes(x=treatment_year, y=mean_change)) +
+#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=site_code))
 
 #9+ year datasets (all years)
 ForAnalysis9yr <- ForAnalysis%>%
@@ -249,7 +267,7 @@ trtType <- ForAnalysis%>%
   #drop experiments that we can't run the analyses on
   filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length)%>%
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length, resource_other)%>%
   #keep final year only
   group_by(site_code, project_name, community_type, treatment)%>%
   filter(treatment_year==max(treatment_year))%>%
@@ -257,7 +275,117 @@ trtType <- ForAnalysis%>%
 
 # write.csv(trtType, 'treatment interactions_11152017.csv')
 
+###getting resource*non-resource interactions
+trtTypeRes <- ForAnalysis%>%
+  left_join(expInfo)%>%
+  #create drought and irrigation categories
+  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))%>%
+  #create categorical treatment type column
+  mutate(trt_type=ifelse(plot_mani==2&n>0&drought<0, 'N+drought', ifelse(plot_mani==2&n>0&irrigation>0, 'N+irr', ifelse(plot_mani==2&n>0&p>0, 'N+P', ifelse(plot_mani==2&p>0&k>0, 'P+K', ifelse(plot_mani==2&n>0&CO2>0, 'N+CO2', ifelse(plot_mani==2&CO2>0&irrigation>0, 'CO2+irr', ifelse(plot_mani==3&n>0&p>0&k>0, 'N+P+K', ifelse(plot_mani==3&n>0&CO2>0&irrigation>0, 'N+CO2+irr', ifelse(plot_mani==4&n>0&p>0&k>0&irrigation>0, 'N+P+K+irr', ifelse(plot_mani==1&n>0, 'N', ifelse(plot_mani==1&p>0, 'P', ifelse(plot_mani==1&irrigation>0, 'irr', ifelse(plot_mani==1&drought<0, 'drought', ifelse(plot_mani==1&CO2>0, 'CO2', ifelse(n==0&drought==0&irrigation==0&p==0&k==0&CO2==0, 'other', 'resource+other'))))))))))))))))%>%
+  #create resource*other trt column
+  mutate(resource_other=ifelse(resource_mani!=0&other_trt!=0, 'R*other', ifelse(resource_mani!=0&mow_clip==1, 'R*mow_clip', ifelse(resource_mani==1&burn==1, 'R*burn', ifelse(resource_mani!=0&herb_removal==1, 'R*herbrem', ifelse(resource_mani!=0&temp>0, 'R*temp', ifelse(resource_mani!=0&plant_mani==1, 'R*plant_mani', ifelse(resource_mani==0, 'non-resource', ifelse(resource_mani!=0&plot_mani>1, 'R*R', ifelse(project_name=='e001', 'CDR', ifelse(project_name=='e002', 'CDR', 'single-resource')))))))))))%>%
+  #create column of non-resource manipulations; NOTE: this does not account for trts with multiple at the same time, they are overwritten by last one, so only use this column when dropping plot mani>1
+  mutate(nonresource=ifelse(mow_clip==1, 'mow_clip', ifelse(burn==1, 'burn', ifelse(herb_removal==1, 'herbrem', ifelse(temp>0, 'temp', ifelse(plant_mani==1, 'plant_mani', 'other'))))))%>%
+  #drop experiments that we can't run the analyses on
+  filter(plot_mani<6, treatment_year!=0, anpp!='NA')%>%
+  #drop precip variability treatments
+  filter(other_trt!='reduced precip variability'&other_trt!='increased precip variability'&other_trt!='increase winter precip, decrease summer precip'&other_trt!='decrease winter precip, increase summer precip')%>%
+  #keep just relevent column names for this analysis
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, resource_other, nonresource, plot_mani, resource_mani, mean_change, dispersion_change, SimpEven_change, S_PC, experiment_length)
 
+#only run to the select line in making trtTypeRes to allow next lines to work
+temp <- trtTypeRes%>%
+  select(site_code, project_name, treatment, trt_type, resource_other, nonresource, other_trt, mow_clip, burn, herb_removal, temp, plant_mani, plot_mani)%>%
+  group_by(site_code, project_name, treatment, trt_type, resource_other, nonresource)%>%
+  unique()%>%
+  ungroup()
+
+# write.csv(temp, 'treatment_resource_nonresource.csv')
+
+#mean change
+#notes: remove KBS because tilling has a big effect and it is the only tilled experiment
+singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Mean Change') +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Mean Change') +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Mean Change') +
+  scale_y_continuous(limits=c(0,1)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+
+#richness
+#notes: remove KBS because tilling has a big effect and it is the only tilled experiment
+singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Richness Change') +
+  scale_y_continuous(limits=c(-1,1.3)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Richness Change') +
+  scale_y_continuous(limits=c(-1,1.3)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'&treatment_year<9), aes(x=treatment_year, y=S_PC)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
+  # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+  xlab('Treatment Year') + ylab('Richness Change') +
+  scale_y_continuous(limits=c(-1,1.3)) +
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+
+pushViewport(viewport(layout=grid.layout(1,3)))
+print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+
+
+# #dispersion
+# #notes: remove KBS because tilling has a big effect and it is the only tilled experiment
+# singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
+#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+#   xlab('Treatment Year') + ylab('Dispersion Change') +
+#   scale_y_continuous(limits=c(-0.5,0.4)) +
+#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+# 
+# singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
+#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
+#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+#   xlab('Treatment Year') + ylab('Dispersion Change') +
+#   scale_y_continuous(limits=c(-0.5,0.4)) +
+#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+# 
+# resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
+#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
+#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
+#   xlab('Treatment Year') + ylab('Dispersion Change') +
+#   scale_y_continuous(limits=c(-0.5,0.4)) +
+#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+# 
+# pushViewport(viewport(layout=grid.layout(1,3)))
+# print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+# print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+# print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 # ANPP data ---------------------------------------------------------------
 
