@@ -192,18 +192,18 @@ singleResource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(n2>0, 'N', ifelse(p2>0, 'P', ifelse(k2>0, 'K', ifelse(precip<0, 'drought', ifelse(precip>0, 'irr', ifelse(CO2>0, 'CO2', 'precip_vari')))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
 
-singleResource8yr <- singleResource%>%
-  filter(treatment_year<9)
-#write.csv(singleResource8yr, 'ForAnalysis_singleResource8yr.csv')
-singleResourceAbs <- singleResource%>%
-  mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
-#write.csv(singleResourceAbs, 'ForAnalysis_singleResourceAbs.csv')
-singleResource9yr <- singleResource%>%
-  filter(experiment_length>8)
-#write.csv(singleResource9yr, 'ForAnalysis_singleResource9yr.csv')
+# singleResource8yr <- singleResource%>%
+#   filter(treatment_year<9)
+# # write.csv(singleResource8yr, 'ForAnalysis_singleResource8yr.csv')
+# singleResourceAbs <- singleResource%>%
+#   mutate(S_PC_abv=abs(S_PC))%>%
+#   select(-S_PC)
+# # write.csv(singleResourceAbs, 'ForAnalysis_singleResourceAbs.csv')
+# singleResource9yr <- singleResource%>%
+#   filter(experiment_length>8)
+# # write.csv(singleResource9yr, 'ForAnalysis_singleResource9yr.csv')
 
 # ##check the treatment designations are correct; only works if you don't run select line in previous step
 # temp <- singleResource%>%
@@ -224,18 +224,18 @@ singleNonresource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(burn==1, 'burn', ifelse(mow_clip==1, 'mow_clip', ifelse(herb_removal==1, 'herb_rem', ifelse(temp>0, 'temp', ifelse(plant_trt==1, 'plant_mani', 'other'))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
 
-singleNonresource8yr <- singleNonresource%>%
-  filter(treatment_year<9)
-#write.csv(singleNonresource8yr, 'ForAnalysis_singleNonresource8yr.csv')
-singleNonresourceAbs <- singleNonresource%>%
-  mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
-#write.csv(singleNonresourceAbs, 'ForAnalysis_singleNonresourceAbs.csv')
-singleNonresource9yr <- singleNonresource%>%
-  filter(experiment_length>8)
-#write.csv(singleNonresource9yr, 'ForAnalysis_singleNonresource9yr.csv')
+# singleNonresource8yr <- singleNonresource%>%
+#   filter(treatment_year<9)
+# # write.csv(singleNonresource8yr, 'ForAnalysis_singleNonresource8yr.csv')
+# singleNonresourceAbs <- singleNonresource%>%
+#   mutate(S_PC_abv=abs(S_PC))%>%
+#   select(-S_PC)
+# # write.csv(singleNonresourceAbs, 'ForAnalysis_singleNonresourceAbs.csv')
+# singleNonresource9yr <- singleNonresource%>%
+#   filter(experiment_length>8)
+# # write.csv(singleNonresource9yr, 'ForAnalysis_singleNonresource9yr.csv')
 
 ###check the treatment designations are correct; only works if you don't run select line in previous step
 # temp <- singleNonresource%>%
@@ -255,19 +255,21 @@ twoWay <- ForAnalysis%>%
   filter(other_trt!='tilled', other_trt!='shallow soil', other_trt!='fungicide added', other_trt!='current pattern')%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(resource_mani==1&burn==1, 'R*burn', ifelse(resource_mani==1&mow_clip==1, 'R*mow_clip', ifelse(resource_mani==1&herb_removal==1, 'R*herb_rem', ifelse(resource_mani==1&temp>0, 'R*temp', ifelse(resource_mani==1&plant_trt==1, 'R*plant_mani', ifelse(resource_mani==1&other_trt!=0, 'R*other', ifelse(n>0&p>0, 'R*R', ifelse(n>0&CO2>0, 'R*R', ifelse(n>0&precip!=0, 'R*R', ifelse(p>0&k>0, 'R*R', ifelse(CO2>0&precip!=0, 'R*R', 'N*N'))))))))))))%>%
+  #drop R*herb_removal (single rep)
+  filter(trt_type!='R*herb_rem')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
 
-twoWay8yr <- twoWay%>%
-  filter(treatment_year<9)
-#write.csv(twoWay8yr, 'ForAnalysis_twoWay8yr.csv')
-twoWayAbs <- twoWay%>%
-  mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
-#write.csv(twoWayAbs, 'ForAnalysis_twoWayAbs.csv')
-twoWay9yr <- twoWay%>%
-  filter(experiment_length>8)
-#write.csv(twoWay9yr, 'ForAnalysis_twoWay9yr.csv')
+# twoWay8yr <- twoWay%>%
+#   filter(treatment_year<9)
+# # write.csv(twoWay8yr, 'ForAnalysis_twoWay8yr.csv')
+# twoWayAbs <- twoWay%>%
+#   mutate(S_PC_abv=abs(S_PC))%>%
+#   select(-S_PC)
+# # write.csv(twoWayAbs, 'ForAnalysis_twoWayAbs.csv')
+# twoWay9yr <- twoWay%>%
+#   filter(experiment_length>8)
+# # write.csv(twoWay9yr, 'ForAnalysis_twoWay9yr.csv')
 
 # ##check the treatment designations are correct; only works if you don't run select line in previous step
 # temp <- twoWay%>%
@@ -288,19 +290,21 @@ threeWay <- ForAnalysis%>%
   filter(other_trt!='tilled', other_trt!='shallow soil', other_trt!='fungicide added', other_trt!='current pattern')%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(burn==0&mow_clip==0&herb_removal==0&temp==0&plant_trt==0, 'all_resource', ifelse(n==0&p==0&k==0&CO2==0&precip==0, 'all_nonresource', 'both')))%>%
+  #drop single all-nonresource treatment (NIN herbdiv 5NF)
+  filter(trt_type!='all_nonresource')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
 
-threeWay8yr <- threeWay%>%
-  filter(treatment_year<9)
-#write.csv(threeWay8yr, 'ForAnalysis_threeWay8yr.csv')
-threeWayAbs <- threeWay%>%
-  mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
-#write.csv(threeWayAbs, 'ForAnalysis_threeWayAbs.csv')
-threeWay9yr <- threeWay%>%
-  filter(experiment_length>8)
-#write.csv(threeWay9yr, 'ForAnalysis_threeWay9yr.csv')
+# threeWay8yr <- threeWay%>%
+#   filter(treatment_year<9)
+# # write.csv(threeWay8yr, 'ForAnalysis_threeWay8yr.csv')
+# threeWayAbs <- threeWay%>%
+#   mutate(S_PC_abv=abs(S_PC))%>%
+#   select(-S_PC)
+# # write.csv(threeWayAbs, 'ForAnalysis_threeWayAbs.csv')
+# threeWay9yr <- threeWay%>%
+#   filter(experiment_length>8)
+# # write.csv(threeWay9yr, 'ForAnalysis_threeWay9yr.csv')
 
 ###check the treatment designations are correct; only works if you don't run select line in previous step
 # temp <- threeWay%>%
@@ -308,6 +312,20 @@ threeWay9yr <- threeWay%>%
 #   group_by(site_code, project_name, treatment, trt_type)%>%
 #   unique()%>%
 #   ungroup()
+
+
+#combine for analysis - one big model, 19 trt types
+allAnalysis <- rbind(singleResource, singleNonresource, twoWay, threeWay)
+allAnalysis8yr <- allAnalysis%>%
+  filter(treatment_year<9)
+# write.csv(allAnalysis8yr, 'ForAnalysis_allAnalysis8yr.csv')
+allAnalysisAbs <- allAnalysis%>%
+  mutate(S_PC_abv=abs(S_PC))%>%
+  select(-S_PC)
+# write.csv(threeWayAbs, 'ForAnalysis_allAnalysisAbs.csv')
+allAnalysis9yr <- allAnalysis%>%
+  filter(experiment_length>8)
+# write.csv(allAnalysis9yr, 'ForAnalysis_allAnalysis9yr.csv')
 
 
 #mean change
