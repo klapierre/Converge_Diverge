@@ -70,13 +70,13 @@ sev<-dat2%>%
 all_anpp_dat<-rbind(sev, nosev)
 
 sites<-all_anpp_dat%>%
-  group_by(site_project_comm, calendar_year, treatment, plot_mani)%>%
+  group_by(site_project_comm,site_code, calendar_year, treatment, plot_mani)%>%
   summarize(anpp=mean(anpp))%>%
   mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
-  group_by(site_project_comm, treatment)%>%
+  group_by(site_project_comm, site_code, treatment)%>%
   summarize(len=length(calendar_year))%>%
   ungroup()%>%
-  select(site_project_comm, len)%>%
+  select(site_code)%>%
   unique()
 
 ggplot(data=all_anpp_dat, aes(anpp))+
