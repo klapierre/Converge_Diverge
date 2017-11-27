@@ -120,6 +120,48 @@ anpp_yearly<-anpp_site_data%>%
   group_by(prcp.id, year, site_code)%>%
   summarize(precip=sum(prcp.prcp)/10)
 
+write.csv(anpp_yearly, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\yearly_precip.csv")
+
 ###i went through and flagged sites for which there is okay data (btwn 1-3 years of missing data or probably when less than 90% of the data were not there, and bad data, most of the data is missing and good data. This is called close_stations_R2.
 
-##for not I am giving up on this for the ANPP paper and using prizm for the US sites and emailing around for the 3 non-us locations.
+####for the ANPP paper
+anpp.precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\yearly_precip.csv")%>%
+  select(-prcp.id, -X)%>%
+  filter(site_code=="ANG"|site_code=="CDR"|site_code=="KNZ"|site_code=="maerc"|site_code=="NWT")
+
+sev<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\sev_black grama_00-12.csv")%>%
+  group_by(year)%>%
+  summarize(precip=sum(precp))%>%
+  mutate(site_code='SEV')
+
+dl<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\DL_NSFC.csv")%>%
+  mutate(year=ï..year)%>%
+  select(year, precip, site_code)
+
+imgers<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\IMGERS.csv")%>%
+  mutate(year=ï..year)%>%
+  select(year, precip, site_code)
+
+kbs<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\KBS_weather.csv")%>%
+  group_by(year)%>%
+  summarize(precip=sum(precipitation_mm))%>%
+  mutate(site_code='KBS')
+
+klu1<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\KLU-monthly.csv")%>%
+  group_by(Year)%>%
+  summarize(precip=sum(Total.Precip..mm.))%>%
+  mutate(site_code='KLU', year=Year)%>%
+  select(-Year)%>%
+  filter(year!=2007)
+
+klu2<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\KLU-2007.csv")%>%
+  group_by(Year)%>%
+  summarize(precip=sum(Total.Precip..mm.))%>%
+  mutate(site_code='KLU', year=Year)%>%
+  select(-Year)
+
+klu3<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\KLU-2009.csv")%>%
+  group_by(Year)%>%
+  summarize(precip=sum(Total.Precip..mm.))%>%
+  mutate(site_code='KLU', year=Year)%>%
+  select(-Year)
