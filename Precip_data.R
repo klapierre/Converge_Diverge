@@ -63,6 +63,9 @@ closest_stations<-dist4%>%
 touse<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\close_stations.csv")%>%
   filter(use!=0)
 
+touse<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/close_stations.csv")%>%
+  filter(use!=0)
+
 token <-'qyXXjlaezYAyeQyiMoKPbIYEQYgCfrch'
 options(noaakey=token)
 
@@ -84,6 +87,7 @@ ppt.all$day<-day(ppt.all$prcp.date)
 
 write.csv(ppt.all, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\precip_data.csv")
 ppt.all<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\precip_data.csv")
+ppt.all<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/precip_data.csv")
 
 ##drop failed quality control data
 ppt.all2<-ppt.all%>%
@@ -104,6 +108,17 @@ check1<-ppt.all2%>%
   summarize(num=length(prcp.prcp))%>%
   filter(num>330)
 
+anppsites<-touse%>%
+  filter(name=="ANG"|name=="CDR"|name=="KNZ"|name=="maerc"|name=="NWT")%>%
+  mutate(site_code=name, prcp.id=station)%>%
+  select(site_code, prcp.id)
+
+anpp_sites_data1<-merge(anppsites, ppt.all2, by="prcp.id")#get data for only anpp datasets
+anpp_site_data<-merge(anpp_sites_data1, check1, by=c("prcp.id","year"))#filter only years with 90% of data
+
+anpp_yearly<-anpp_site_data%>%
+  group_by(prcp.id, year, site_code)%>%
+  summarize(precip=sum(prcp.prcp)/10)
 
 ###i went through and flagged sites for which there is okay data (btwn 1-3 years of missing data or probably when less than 90% of the data were not there, and bad data, most of the data is missing and good data. This is called close_stations_R2.
 
