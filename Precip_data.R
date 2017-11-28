@@ -126,8 +126,7 @@ write.csv(anpp_yearly, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\L
 
 ####for the ANPP paper
 anpp.precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\yearly_precip.csv")%>%
-  select(-prcp.id, -X)%>%
-  filter(site_code=="ANG"|site_code=="CDR"|site_code=="KNZ"|site_code=="maerc"|site_code=="NWT")
+  select(-prcp.id, -X)
 
 sev<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\sev_black grama_00-12.csv")%>%
   group_by(year)%>%
@@ -165,3 +164,46 @@ klu3<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\
   summarize(precip=sum(Total.Precip..mm.))%>%
   mutate(site_code='KLU', year=Year)%>%
   select(-Year)
+klu<-rbind(klu1, klu2, klu3)%>%
+  ungroup
+
+
+serc1<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\SERC\\SERC_Precip_1976-2000.csv")%>%
+  mutate(year=ï..year,site_code="SERC")%>%
+  group_by(year, site_code)%>%
+  summarize(precip=sum(precip_mm, na.rm=T))
+serc2<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\SERC\\SERC_Precip_2002_2016.csv")%>%
+  mutate(site_code="SERC")%>%
+  group_by(year, site_code)%>%
+  summarize(precip=sum(precip_mm, na.rm=T))%>%
+  filter(year!=2017)
+serc3<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\site specific\\SERC\\SERC_PRECIP2000-2009.csv")%>%
+  mutate(year=ï..year,site_code="SERC")%>%
+  group_by(year, site_code)%>%
+  summarize(precip=sum(precip_mm, na.rm=T))%>%
+  filter(year!=2000)
+
+serc_test1<-rbind(serc1, serc2)
+serc_test2<-rbind(serc1, serc3)
+serc_test<-merge(serc_test1, serc3, by="year", all=T)
+serc_test3<-merge(serc_test1, serc3, by="year")
+##use serc1 and serc3 data as is. 
+## for serc2 model the precip data to make it higher
+
+lm(precip.y~precip.x, data=serc_test3)
+serc2.2<-serc2%>%
+  mutate(precip_corr=precip*1.258+82.33)%>%
+  select(-precip)%>%
+  mutate(precip=precip_corr)%>%
+  select(-precip_corr)%>%
+  filter(year>2009)
+
+serc<-rbind(serc_test2, serc2.2)%>%
+  ungroup%>%
+  mutate(site_code=as.factor(site_code))%>%
+  mutate(year=as.integer(year))%>%
+  mutate(precip=as.numeric(precip))
+
+
+precip.all<-rbind(anpp.precip, serc, klu, sev, kbs, imgers, dl)
+write.csv(precip.all,"C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\real_precip_anppSites.csv" )
