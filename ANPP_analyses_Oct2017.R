@@ -6,6 +6,7 @@ library(gridExtra)
 library(gtools)
 library(gtable)
 library(grid)
+library(lmerTest)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -20,7 +21,7 @@ theme_set(theme_bw(12))
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
-site_info<-read.csv("SiteExperimentDetails_March2016.csv")%>%
+site_info<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, MAP, MAT)
 
@@ -35,11 +36,16 @@ trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, treatment, trt_type5, trt_type4, trt_type)
 
-precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
+#no longer using prism data
+# precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
+# 
+# precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_PrecipData.csv")%>%
+#   mutate(site_code=ï..site_code)%>%
+#   select(-ï..site_code)
 
-precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_PrecipData.csv")%>%
-  mutate(site_code=ï..site_code)%>%
-  select(-ï..site_code)
+precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\real_precip_anppSites.csv")%>%
+  mutate(calendar_year=year, precip_mm=precip)%>%
+  select(-year, -X, -precip)
 
 
 # clean up anp data --------------------------------------------------------
@@ -57,7 +63,14 @@ dat2<-merge(anpp_expInfo, anpp, by=c("site_code","project_name","community_type"
   mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|site_code=="CDR"&anpp>3000|project_name=="BGP"&anpp>2240|project_name=="IRG"&anpp>1500|project_name=="RHPs"&calendar_year==2003, 1, 0))%>%
   filter(delete!=1)
 
-#site_project_comm=="maerc_fireplots_0"&anpp>3500
+##NOTE KBS tilling treatments did not start until 1990, 2 years after the start of the N additions and control data.
+# kbs<-dat2%>%
+#   filter(site_code=="KBS")%>%
+#   group_by(treatment, calendar_year)%>%
+#   summarise(anpp=mean(anpp))%>%
+#   ungroup%>%
+#   group_by(treatment)%>%
+#   summarize(n=length(calendar_year))
 
 nosev<-dat2%>%
   filter(site_project_comm!="SEV_Nfert_0")
@@ -74,10 +87,8 @@ sites<-all_anpp_dat%>%
   summarize(anpp=mean(anpp))%>%
   mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
   group_by(site_project_comm, site_code, treatment)%>%
-  summarize(len=length(calendar_year))%>%
-  ungroup()%>%
-  select(site_code)%>%
-  unique()
+  summarize(len=length(calendar_year))
+ 
 
 ggplot(data=all_anpp_dat, aes(anpp))+
   geom_histogram()+
@@ -106,6 +117,13 @@ lastyr<-anpp_spatial%>%
   group_by(site_project_comm)%>%
   mutate(maxyr=max(calendar_year))%>%
   filter(maxyr==calendar_year)
+
+other_year<-anpp_spatial%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  group_by(site_project_comm)%>%
+  mutate(otheryr=max(calendar_year)-4)%>%
+  filter(otheryr==calendar_year)
+
 
 #Calculate temporal
 anpp_temp_cv<-all_anpp_dat%>%
@@ -202,6 +220,44 @@ my.df <- summary(spat.lm)$df[2]
 t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # yes p < 0.001
+
+###test another year for spatial data
+cont_spat<-other_year%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_sp_cv=anpp_sp_cv)%>%
+  ungroup()%>%
+  select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
+  select(-treatment)
+
+trt_spat<-other_year%>%
+  filter(plot_mani>0)
+tograph1_otherspat<-merge(cont_spat, trt_spat, by=c("site_project_comm","calendar_year"))
+
+tograph_ottherspat<-merge(tograph1_spat, trtint, by=c("site_project_comm","treatment"))
+
+spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=tograph_ottherspat)
+my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+my.df <- summary(spat.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+# yes p < 0.001
+
+#Does the spatail or temporal CV of control explain variation of treatment?
+summary(lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp))
+# temp<-lmer(anpp_temp_cv ~ cont_temp_cv +
+#                       (cont_temp_cv | site_code / project_name / community_type),
+#                     data = tograph_temp)# this allows for slopes and intercetps to vary by experiemnt
+# summary(temp)
+# anova(temp)
+#yes it does
+
+summary(lm(anpp_sp_cv~cont_sp_cv, data=tograph_spat))
+# spat<-lmer(anpp_sp_cv ~ cont_sp_cv +
+#                (cont_sp_cv | site_code / project_name / community_type),
+#              data = tograph_spat)
+# summary(spat)
+# anova(spat)
+#yes it does.
 
 ###graphing this
 temp<-
@@ -324,39 +380,19 @@ grid.arrange(arrangeGrob(temp_rr+theme(legend.position="none"),
 
 # precipitation analysis --------------------------------------------------
 
-#precip analysis
-#this will drop experiments at sites KLU, DL, IMGERS, a total of 3 experiments because only have data from US sites
+#precip analysis #1986 in CDR has no precip data, this one year is being dropped.
 
 #drop irrigation treatments becuase it is confusing to add water and then test against precip OR maybe just KNZ because not the same amount of water each year.
 
 #look at average change in sensitivity by treatments.
 
-anpp_precip_sites<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
+anpp_precip<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
-  group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
+  group_by(site_project_comm, trt, calendar_year, precip_mm, treatment, plot_mani)%>%
   summarize(anpp=mean(anpp))%>%
-  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
-  group_by(site_project_comm, treatment)%>%
-  summarize(len=length(calendar_year))%>%
-  ungroup()%>%
-  select(site_project_comm, len)%>%
-  unique()
-  
-  filter(len>10)
+  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))
 
-anpp_precip_subset<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
-  mutate(trt=ifelse(plot_mani==0,"C","T"))%>%
-  group_by(site_project_comm, trt, calendar_year, ppt_mm, treatment, plot_mani)%>%
-  summarize(anpp=mean(anpp))%>%
-  mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))%>%
-  ungroup()%>%
-  select(site_project_comm)%>%
-  unique()
-
-anpp_precip<-merge(anpp_precip_sites, anpp_precip_subset, by=c("site_project_comm","treatment"))
-
-
-ggplot(data=anpp_precip, aes(x=ppt_mm, y=anpp, group=treatment, color=trt))+
+ggplot(data=anpp_precip, aes(x=precip_mm, y=anpp, group=treatment, color=trt))+
   geom_point()+
   geom_smooth(method="lm", se=F)+
   facet_wrap(~site_project_comm, ncol=8, scales = "free")
@@ -368,13 +404,13 @@ lm.slopes<-data.frame()
 for (i in 1:length(spc)){
   subset<-anpp_precip%>%
     filter(spc_trt==spc[i])
- test.lm<-lm(anpp~ppt_mm, data=subset)
+ test.lm<-lm(anpp~precip_mm, data=subset)
   output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
                       treatment=unique(subset$treatment), 
                       plot_mani=unique(subset$plot_mani), 
-                      est=summary(test.lm)$coef["ppt_mm", c("Estimate")], 
-                      st.er=summary(test.lm)$coef["ppt_mm", c("Std. Error")], 
-                      p.val=summary(test.lm)$coef["ppt_mm","Pr(>|t|)"])
+                      est=summary(test.lm)$coef["precip_mm", c("Estimate")], 
+                      st.er=summary(test.lm)$coef["precip_mm", c("Std. Error")], 
+                      p.val=summary(test.lm)$coef["precip_mm","Pr(>|t|)"])
   lm.slopes<-rbind(lm.slopes, output.lm)
 }
 
@@ -396,11 +432,11 @@ for (i in 1:length(trt_list)){
     filter(treatment==trt_list[i])
   trt<-trt_list[i]
   ct<-rbind(subset2, control)
-  ct.lm<-lm(anpp~ppt_mm*trt, data=ct)
+  ct.lm<-lm(anpp~precip_mm*trt, data=ct)
   output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
                         treatment=trt, 
-                        est=summary(ct.lm)$coef["ppt_mm:trtT", c("Estimate")],
-                        val=summary(ct.lm)$coef["ppt_mm:trtT","Pr(>|t|)"])
+                        est=summary(ct.lm)$coef["precip_mm:trtT", c("Estimate")],
+                        val=summary(ct.lm)$coef["precip_mm:trtT","Pr(>|t|)"])
   test.lm<-rbind(test.lm, output.lm)
 }
 }
@@ -458,35 +494,52 @@ grid.newpage()
 v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
 v2<-viewport(width = 0.4, height = 0.4, x = .3, y = 0.3) #plot area for the inset map
 print(map,vp=v1) 
-print(bar,vp=v2)    
-###states
+print(bar,vp=v2)  
+
+
+###stats
 #do t-test do the slopes differ from zero?
 summary(MAP_diff <- lmer(diff ~ trt_type5+
                    (1 | site_code/project_name/community_type),
                  data = slopes_tograph))
 Anova(MAP_diff)
+
 co2<-subset(slopes_tograph, trt_type5=="CO2 (5)")
 t.test(co2$diff, mu=0)
+
 irr<-subset(slopes_tograph, trt_type5=="Irrigation (Irg) (7)")
 t.test(irr$diff, mu=0)
+
 nit<-subset(slopes_tograph, trt_type5=="Nitrogen (N) (13)")
 t.test(nit$diff, mu=0)
+
 phos<-subset(slopes_tograph, trt_type5=="Phosphorus (7)")
 t.test(phos$diff, mu=0)
+
 temp<-subset(slopes_tograph, trt_type5=="Temperature (Temp) (4)")
 t.test(temp$diff, mu=0)
+
 other<-subset(slopes_tograph, trt_type5=="Non-Resource (N-R) (7)")
 t.test(other$diff, mu=0)
+
 nco2<-subset(slopes_tograph, trt_type5=="N+CO2 (2)")
 t.test(nco2$diff, mu=0)
+
 nirg<-subset(slopes_tograph, trt_type5=="N+Irg (3)")
 t.test(nirg$diff, mu=0)
+
 Ntemp<-subset(slopes_tograph, trt_type5=="N+Temp (2)")
 t.test(Ntemp$diff, mu=0)
+
+irgtemp<-subset(slopes_tograph, trt_type5=="Irg+Temp (2)")
+t.test(irgtemp$diff, mu=0)
+
 nuts<-subset(slopes_tograph, trt_type5=="Multiple Nutrients (35)")
 t.test(nuts$diff, mu=0)
+
 nirgtemp<-subset(slopes_tograph, trt_type5=="N+Irg+Temp (2)")
 t.test(nirgtemp$diff, mu=0)
+
 nutrn<-subset(slopes_tograph, trt_type5=="Nutrients+N-R (6)")
 t.test(nutrn$diff, mu=0)
 
