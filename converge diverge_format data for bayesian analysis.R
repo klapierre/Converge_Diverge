@@ -319,10 +319,10 @@ allAnalysis <- rbind(singleResource, singleNonresource, twoWay, threeWay)
 allAnalysis8yr <- allAnalysis%>%
   filter(treatment_year<9)
 # write.csv(allAnalysis8yr, 'ForAnalysis_allAnalysis8yr.csv')
-allAnalysisAbs <- allAnalysis%>%
+allAnalysisAbs <- allAnalysis8yr%>%
   mutate(S_PC_abv=abs(S_PC))%>%
   select(-S_PC)
-# write.csv(threeWayAbs, 'ForAnalysis_allAnalysisAbs.csv')
+# write.csv(allAnalysisAbs, 'ForAnalysis_allAnalysisAbs.csv')
 allAnalysis9yr <- allAnalysis%>%
   filter(experiment_length>8)
 # write.csv(allAnalysis9yr, 'ForAnalysis_allAnalysis9yr.csv')
