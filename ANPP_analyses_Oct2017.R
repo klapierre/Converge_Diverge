@@ -11,7 +11,7 @@ library(lmerTest)
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
-theme_set(theme_bw(12)) 
+theme_set(theme_bw(14)) 
 
 #read in data
 
@@ -95,7 +95,7 @@ ggplot(data=all_anpp_dat, aes(anpp))+
   facet_wrap(~site_project_comm, ncol=4, scales="free")
 
 
-write.csv(all_anpp_dat, "ANPP_6yrs_Oct2017.csv")
+#write.csv(all_anpp_dat, "ANPP_6yrs_Oct2017.csv")
 # 
 # anpp_trts<-all_anpp_dat%>%
 #   select(site_project_comm, treatment)%>%
@@ -222,18 +222,18 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 # yes p < 0.001
 
 ###test another year for spatial data
-cont_spat<-other_year%>%
+cont_spatother<-other_year%>%
   filter(plot_mani==0)%>%
   mutate(cont_sp_cv=anpp_sp_cv)%>%
   ungroup()%>%
   select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
   select(-treatment)
 
-trt_spat<-other_year%>%
+trt_spatother<-other_year%>%
   filter(plot_mani>0)
-tograph1_otherspat<-merge(cont_spat, trt_spat, by=c("site_project_comm","calendar_year"))
+tograph1_otherspat<-merge(cont_spatother, trt_spatother, by=c("site_project_comm","calendar_year"))
 
-tograph_ottherspat<-merge(tograph1_spat, trtint, by=c("site_project_comm","treatment"))
+tograph_ottherspat<-merge(tograph1_otherspat, trtint, by=c("site_project_comm","treatment"))
 
 spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=tograph_ottherspat)
 my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
@@ -242,8 +242,10 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # yes p < 0.001
 
+#DECIDED THAT THIS IS NOT AN APPROPRIATE ANALYSIS FOR THIS.
+
 #Does the spatail or temporal CV of control explain variation of treatment?
-summary(lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp))
+#summary(lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp))
 # temp<-lmer(anpp_temp_cv ~ cont_temp_cv +
 #                       (cont_temp_cv | site_code / project_name / community_type),
 #                     data = tograph_temp)# this allows for slopes and intercetps to vary by experiemnt
@@ -251,7 +253,7 @@ summary(lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp))
 # anova(temp)
 #yes it does
 
-summary(lm(anpp_sp_cv~cont_sp_cv, data=tograph_spat))
+#summary(lm(anpp_sp_cv~cont_sp_cv, data=tograph_spat))
 # spat<-lmer(anpp_sp_cv ~ cont_sp_cv +
 #                (cont_sp_cv | site_code / project_name / community_type),
 #              data = tograph_spat)
@@ -269,7 +271,7 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 
 spat<-
 ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
@@ -280,8 +282,7 @@ ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
-
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 legend=gtable_filter(ggplot_gtable(ggplot_build(spat)), "guide-box") 
 grid.draw(legend)
 
@@ -316,7 +317,7 @@ ggplot(data=tograph_spat_all, aes(x=treatment_year, y=logrr))+
   geom_abline(slope=0, intercept=0, size=1)+
   xlab("Treatment Year")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 
 
 
@@ -338,6 +339,7 @@ temp_effect <- lmer(mlogrr ~ cont_temp_cv +
                       (cont_temp_cv | site_code / project_name / community_type),
                     data = tograph_log_temp)
 summary(temp_effect)
+anova(temp_effect)
 
 #no effect of tempral CV on LogRR, no t-value greater than 2.
 
@@ -346,7 +348,19 @@ spat_effect <- lmer(mlogrr ~ cont_sp_cv +
                      (cont_sp_cv | site_code / project_name / community_type),
                     data = tograph_log_spat)
 summary(spat_effect)
+anova(spat_effect)
 
+
+#Testing another year for the spatial data
+tograph_log1_otherspat<-merge(logRRsp, cont_spatother, by=c("site_project_comm","calendar_year"))
+tograph_log_otherspat<-merge(tograph_log1_otherspat, trtint, by=c("site_project_comm","treatment"))%>%
+  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
+
+spat_effectother <- lmer(mlogrr ~ cont_sp_cv +
+                      (cont_sp_cv | site_code / project_name / community_type),
+                    data = tograph_log_otherspat)
+summary(spat_effectother)
+anova(spat_effectother)
 
 ##graphing this
 temp_rr<-
@@ -356,7 +370,7 @@ temp_rr<-
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 
 
 spat_rr<-
@@ -366,7 +380,7 @@ ggplot(data=tograph_log_spat, aes(x=cont_sp_cv, y=mlogrr))+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 
 
 legend=gtable_filter(ggplot_gtable(ggplot_build(spat_rr)), "guide-box") 
@@ -417,29 +431,29 @@ for (i in 1:length(spc)){
 ##test for sig diff between trt-control slopes
 ##there are so few differences that not going to pay attention to this.
 
-spc2<-unique(anpp_precip$site_project_comm)
-test.lm<-data.frame()
-for (i in 1:length(spc2)){
-  subset<-anpp_precip%>%
-    filter(site_project_comm==spc2[i])
-  control<-subset%>%
-    filter(plot_mani==0)
-  treat<-subset%>%
-  filter(plot_mani!=0)
-trt_list<-unique(treat$treatment)
-for (i in 1:length(trt_list)){
-  subset2<-treat%>%
-    filter(treatment==trt_list[i])
-  trt<-trt_list[i]
-  ct<-rbind(subset2, control)
-  ct.lm<-lm(anpp~precip_mm*trt, data=ct)
-  output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
-                        treatment=trt, 
-                        est=summary(ct.lm)$coef["precip_mm:trtT", c("Estimate")],
-                        val=summary(ct.lm)$coef["precip_mm:trtT","Pr(>|t|)"])
-  test.lm<-rbind(test.lm, output.lm)
-}
-}
+# spc2<-unique(anpp_precip$site_project_comm)
+# test.lm<-data.frame()
+# for (i in 1:length(spc2)){
+#   subset<-anpp_precip%>%
+#     filter(site_project_comm==spc2[i])
+#   control<-subset%>%
+#     filter(plot_mani==0)
+#   treat<-subset%>%
+#   filter(plot_mani!=0)
+# trt_list<-unique(treat$treatment)
+# for (i in 1:length(trt_list)){
+#   subset2<-treat%>%
+#     filter(treatment==trt_list[i])
+#   trt<-trt_list[i]
+#   ct<-rbind(subset2, control)
+#   ct.lm<-lm(anpp~precip_mm*trt, data=ct)
+#   output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
+#                         treatment=trt, 
+#                         est=summary(ct.lm)$coef["precip_mm:trtT", c("Estimate")],
+#                         val=summary(ct.lm)$coef["precip_mm:trtT","Pr(>|t|)"])
+#   test.lm<-rbind(test.lm, output.lm)
+# }
+# }
 
 #graphing this
 c.slope<-lm.slopes%>%
@@ -457,15 +471,68 @@ slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
   mutate(diff=est-c_est)%>%
   separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
 
+###stats
+#regression of map with diff
+MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph)
+summary(MAP_diff)
+#yes sig effect. p = 0.003
+
+#try without MAERC
+MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"))
+summary(MAP_diff)
+#yes, still sig. p = 0.005
+
+#do t-test do the slopes differ from zero?
+co2<-subset(slopes_tograph, trt_type5=="CO2")
+t.test(co2$diff, mu=0)
+
+irr<-subset(slopes_tograph, trt_type5=="Water (W)")
+t.test(irr$diff, mu=0)
+
+nit<-subset(slopes_tograph, trt_type5=="Nitrogen (N)")
+t.test(nit$diff, mu=0)
+
+phos<-subset(slopes_tograph, trt_type5=="Phosphorus")
+t.test(phos$diff, mu=0)
+
+temp<-subset(slopes_tograph, trt_type5=="Heat (H)")
+t.test(temp$diff, mu=0)
+
+other<-subset(slopes_tograph, trt_type5=="Non-Resource (N-R)")
+t.test(other$diff, mu=0)
+
+nco2<-subset(slopes_tograph, trt_type5=="N+CO2")
+t.test(nco2$diff, mu=0)
+
+nirg<-subset(slopes_tograph, trt_type5=="N+W")
+t.test(nirg$diff, mu=0)
+
+Ntemp<-subset(slopes_tograph, trt_type5=="N+H")
+t.test(Ntemp$diff, mu=0)
+
+irgtemp<-subset(slopes_tograph, trt_type5=="W+H")
+t.test(irgtemp$diff, mu=0)
+
+nuts<-subset(slopes_tograph, trt_type5=="Multiple Nutrients")
+t.test(nuts$diff, mu=0)
+
+nirgtemp<-subset(slopes_tograph, trt_type5=="N+W+H")
+t.test(nirgtemp$diff, mu=0)
+
+nutrn<-subset(slopes_tograph, trt_type5=="Nutrients+N-R")
+t.test(nutrn$diff, mu=0)
+
+
 #graphing diff
 
 map<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=diff))+
   geom_point(aes(color=trt_type5), size=3)+
   ylab("Difference in Slopes")+
+  geom_smooth(method="lm", se=F, color="black")+
   xlab("Site MAP")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_color_manual(name="Treatment", values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"), breaks=c("CO2 (5)","Irrigation (Irg) (7)","Nitrogen (N) (13)","Phosphorus (7)", "Temperature (Temp) (4)", "Non-Resource (N-R) (7)", "N+CO2 (2)","N+Irg (3)","N+Temp (2)",'Irg+Temp (2)',"Multiple Nutrients (35)","N+Irg+Temp (2)","Nutrients+N-R (6)"))
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
 
 slopes_bar<-slopes_tograph%>%
   group_by(trt_type5)%>%
@@ -473,7 +540,7 @@ slopes_bar<-slopes_tograph%>%
             ndiff=length(diff),
             sddiff=sd(diff))%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
-  mutate(trt=ifelse(trt_type5=="CO2 (5)","a",ifelse(trt_type5=="Irrigation (Irg) (7)","b",ifelse(trt_type5=="Nitrogen (N) (13)","c", ifelse(trt_type5=="Phosphorus (7)","d",ifelse(trt_type5=="Temperature (Temp) (4)","e",ifelse(trt_type5=="Non-Resource (N-R) (7)","f",ifelse(trt_type5=="N+CO2 (2)","g",ifelse(trt_type5=="N+Irg (3)","h",ifelse(trt_type5=="N+Temp (2)","i", ifelse(trt_type5=="Irg+Temp (2)","j",ifelse(trt_type5=="Multiple Nutrients (35)","k",ifelse(trt_type5=="N+Irg+Temp (2)","l","m")))))))))))))
+  mutate(trt=ifelse(trt_type5=="CO2","a",ifelse(trt_type5=="Water (W)","b",ifelse(trt_type5=="Nitrogen (N)","c", ifelse(trt_type5=="Phosphorus","d",ifelse(trt_type5=="Heat (H)","e",ifelse(trt_type5=="Non-Resource (N-R)","f",ifelse(trt_type5=="N+CO2","g",ifelse(trt_type5=="N+W","h",ifelse(trt_type5=="N+H","i", ifelse(trt_type5=="W+H","j",ifelse(trt_type5=="Multiple Nutrients","k",ifelse(trt_type5=="N+W+H","l","m")))))))))))))
   
 
 bar<-
@@ -482,7 +549,7 @@ ggplot(data=slopes_bar, aes(x=trt, y=mdiff, fill=trt_type5))+
   geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   theme(axis.text.x=element_text(angle=45, hjust=1))+
-  scale_fill_manual(values=c("green","purple","blue","darkred","darkgreen","lightblue","darkorange","yellow3","red","black","gray","pink3","orange"))+
+  scale_fill_manual(values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"))+
   xlab("Treatment")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_blank(), axis.title.y = element_blank())+
   theme(legend.position = "none")
@@ -496,60 +563,6 @@ v2<-viewport(width = 0.4, height = 0.4, x = .3, y = 0.3) #plot area for the inse
 print(map,vp=v1) 
 print(bar,vp=v2)  
 
-
-###stats
-#do t-test do the slopes differ from zero?
-summary(MAP_diff <- lmer(diff ~ trt_type5+
-                   (1 | site_code/project_name/community_type),
-                 data = slopes_tograph))
-Anova(MAP_diff)
-
-co2<-subset(slopes_tograph, trt_type5=="CO2 (5)")
-t.test(co2$diff, mu=0)
-
-irr<-subset(slopes_tograph, trt_type5=="Irrigation (Irg) (7)")
-t.test(irr$diff, mu=0)
-
-nit<-subset(slopes_tograph, trt_type5=="Nitrogen (N) (13)")
-t.test(nit$diff, mu=0)
-
-phos<-subset(slopes_tograph, trt_type5=="Phosphorus (7)")
-t.test(phos$diff, mu=0)
-
-temp<-subset(slopes_tograph, trt_type5=="Temperature (Temp) (4)")
-t.test(temp$diff, mu=0)
-
-other<-subset(slopes_tograph, trt_type5=="Non-Resource (N-R) (7)")
-t.test(other$diff, mu=0)
-
-nco2<-subset(slopes_tograph, trt_type5=="N+CO2 (2)")
-t.test(nco2$diff, mu=0)
-
-nirg<-subset(slopes_tograph, trt_type5=="N+Irg (3)")
-t.test(nirg$diff, mu=0)
-
-Ntemp<-subset(slopes_tograph, trt_type5=="N+Temp (2)")
-t.test(Ntemp$diff, mu=0)
-
-irgtemp<-subset(slopes_tograph, trt_type5=="Irg+Temp (2)")
-t.test(irgtemp$diff, mu=0)
-
-nuts<-subset(slopes_tograph, trt_type5=="Multiple Nutrients (35)")
-t.test(nuts$diff, mu=0)
-
-nirgtemp<-subset(slopes_tograph, trt_type5=="N+Irg+Temp (2)")
-t.test(nirgtemp$diff, mu=0)
-
-nutrn<-subset(slopes_tograph, trt_type5=="Nutrients+N-R (6)")
-t.test(nutrn$diff, mu=0)
-
-
-#regression of map with diff !not working!
-MAP_diff <- lmer(diff ~ MAP +
-                   trt_type5+
-                      (MAP | site_code / project_name / community_type),
-                    data = slopes_tograph)
-summary(MAP_diff)
 
 
 # overall PC anpp ---------------------------------------------------------
@@ -566,14 +579,14 @@ treatment<-all_anpp_dat_mean%>%
   filter(plot_mani!=0)
 
 fig1<-merge(controls, treatment, by=c("site_project_comm","calendar_year","treatment_year"))%>%
-  mutate(anpp_PC=(c_anpp-anpp)/c_anpp)
+  mutate(anpp_PC=(anpp-c_anpp)/c_anpp)
 fig<-merge(fig1, trtint, by=c("site_project_comm",'treatment'))%>%
   mutate(id=paste(site_project_comm, treatment, sep="::"))
 
 ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
-  geom_smooth(method="lm", formula = y ~  poly(x, 2), size=0.5, color="black", aes(group=id), se=F)+
-  geom_smooth(method="lm", formula = y ~  poly(x, 2), size=2)+
-  geom_point(size=0.1)+
+  geom_smooth(method="lm", formula = y ~  poly(x, 2), size=0.5, color="gray", aes(group=id), se=F)+
+  geom_point(size=0.05, color="gray")+
+  geom_smooth(method="lm", formula = y ~  poly(x, 2), size=1, color="black", se=F)+
   geom_hline(yintercept=0)+
   xlab("Treatment Year")+
   ylab("Proportaional Change in ANPP")+
