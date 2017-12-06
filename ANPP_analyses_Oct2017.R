@@ -57,13 +57,12 @@ precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_prec
 ###select the data to use
 
 #for CDR e001/e002 selecting treatments , 6, 8, 9. For BGP dropping mowing treatments 
-#dropping outliers as well
-# not using maerc fireplots until I can make more sense of the data
+
 
 dat2<-merge(anpp_expInfo, anpp, by=c("site_code","project_name","community_type","treatment"))%>%
   select(-nutrients, -light, -carbon, -water, -other_manipulation, -max_trt, -public, -factorial, -block)%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|site_code=="CDR"&anpp>3000|project_name=="BGP"&anpp>2240|project_name=="IRG"&anpp>1500|project_name=="RHPs"&calendar_year==2003, 1, 0))%>%
+  mutate(delete=ifelse(site_code=="CDR"&treatment==2|site_code=="CDR"&treatment==3|site_code=="CDR"&treatment==4|site_code=="CDR"&treatment==5|site_code=="CDR"&treatment==7|site_code=="CDR"&treatment=="2_f_u_n"|site_code=="CDR"&treatment=="3_f_u_n"|site_code=="CDR"&treatment=="4_f_u_n"|site_code=="CDR"&treatment=="5_f_u_n"|site_code=="CDR"&treatment=="7_f_u_n"|project_name=="BGP"&treatment=="u_m_c"|project_name=="BGP"&treatment=="u_m_b"|project_name=="BGP"&treatment=="u_m_n"|project_name=="BGP"&treatment=="u_m_p"|project_name=="BGP"&treatment=="b_m_c"|project_name=="BGP"&treatment=="b_m_b"|project_name=="BGP"&treatment=="b_m_n"|project_name=="BGP"&treatment=="b_m_p"|project_name=="RHPs"&calendar_year==2003, 1, 0))%>%
   filter(delete!=1)
 
 ##NOTE KBS tilling treatments did not start until 1990, 2 years after the start of the N additions and control data.
@@ -98,7 +97,7 @@ ggplot(data=all_anpp_dat, aes(anpp))+
   facet_wrap(~site_project_comm, ncol=4, scales="free")
 
 
-#write.csv(all_anpp_dat, "ANPP_6yrs_Oct2017.csv")
+#write.csv(all_anpp_dat, "ANPP_6yrs_Dec2017.csv")
 # 
 # anpp_trts<-all_anpp_dat%>%
 #   select(site_project_comm, treatment)%>%
@@ -456,20 +455,12 @@ tograph_log_spat<-merge(tograph_log1_spat, trtint, by=c("site_project_comm","tre
 
 #mixed-model
 #test the relationship between control_temp and effect size
-temp_effect <- lmer(mlogrr ~ cont_temp_cv +
-                      (cont_temp_cv | site_code / project_name / community_type),
-                    data = tograph_log_temp)
+temp_effect <- lm(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
 summary(temp_effect)
-anova(temp_effect)
-
-#no effect of tempral CV on LogRR, no t-value greater than 2.
 
 #test the relationship between control_spat and effect size
-spat_effect <- lmer(mlogrr ~ cont_sp_cv +
-                     (cont_sp_cv | site_code / project_name / community_type),
-                    data = tograph_log_spat)
+spat_effect <- lm(mlogrr ~ cont_sp_cv,  data = tograph_log_spat)
 summary(spat_effect)
-anova(spat_effect)
 
 
 #Testing another year for the spatial data
@@ -489,6 +480,7 @@ temp_rr<-
   geom_point(aes(color=trt_type5), size=2)+
   ylab("Log RR")+
   xlab("Temporal CV Control Plots")+
+  geom_smooth(method="lm", color="black", se=F)+
   ggtitle("Temporal")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
@@ -499,6 +491,7 @@ ggplot(data=tograph_log_spat, aes(x=cont_sp_cv, y=mlogrr))+
   geom_point(aes(color=trt_type5), size=2)+
   ylab("Log RR")+
   xlab("Spatial CV Control Plots")+
+  geom_smooth(method="lm", color="black", se=F)+
   ggtitle("Spatial")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
