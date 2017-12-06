@@ -47,6 +47,9 @@ precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongFor
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
 
+precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_precip_anppSites.csv")%>%
+  mutate(calendar_year=year, precip_mm=precip)%>%
+  select(-year, -X, -precip)
 
 # clean up anp data --------------------------------------------------------
 
@@ -379,23 +382,33 @@ temp_pc<-
 ggplot(data=tograph_temp_bar, aes(x=trt, y=P.C, fill=trt_type5))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=P.C-se, ymax=P.C+se),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
+  ylab("Percent Change of Temporal Stability")+
   theme(axis.text.x=element_text(angle=45, hjust=1))+
   scale_fill_manual(values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"))+
+  scale_x_discrete(labels=c("CO2","Water (W)","Nitrogen (N)","Phosphorus","Heat (H)", "Non-Resource (N-R)","N+CO2","N+W","N+H","W+H","Multiple Nutrients","N+W+H","Nutrents+N-R"))+
   xlab("Treatment")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_blank(), axis.title.y = element_blank())+
-  theme(legend.position = "none")
+  ggtitle("Temporal")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  theme(legend.position = "none")+
+  scale_y_continuous(limits=c(-50, 125))
 
+spat_pc<-
 ggplot(data=tograph_spat_bar, aes(x=trt, y=P.C, fill=trt_type5))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=P.C-se, ymax=P.C+se),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
+  ylab("Percent Change of Spatial Stability")+
   theme(axis.text.x=element_text(angle=45, hjust=1))+
   scale_fill_manual(values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"))+
   xlab("Treatment")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_blank(), axis.title.y = element_blank())+
-  theme(legend.position = "none")
+  scale_x_discrete(labels=c("CO2","Water (W)","Nitrogen (N)","Phosphorus","Heat (H)", "Non-Resource (N-R)","N+CO2","N+W","N+H","W+H","Multiple Nutrients","N+W+H","Nutrents+N-R"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Spatial")+
+  theme(legend.position = "none")+
+  geom_text(x=3, y=118, label="*", size=8)+
+  geom_text(x=11, y=65, label="*", size=8)+
+  scale_y_continuous(limits=c(-50,125))
 
+grid.arrange(temp_pc, spat_pc, ncol=2)
 
 
 
