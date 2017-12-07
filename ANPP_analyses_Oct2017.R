@@ -455,12 +455,19 @@ tograph_log_spat<-merge(tograph_log1_spat, trtint, by=c("site_project_comm","tre
 
 #mixed-model
 #test the relationship between control_temp and effect size
-temp_effect <- lm(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
+temp_effect <- lmer(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
+summary(temp_effect)
+anova(temp_effect)
+
+temp_effect <- lmer(mlogrr ~ cont_temp_cv + (cont_temp_cv | site_code), data = tograph_log_temp)
 summary(temp_effect)
 
 #test the relationship between control_spat and effect size
 spat_effect <- lm(mlogrr ~ cont_sp_cv,  data = tograph_log_spat)
 summary(spat_effect)
+-spat_effect <- lmer(mlogrr ~ cont_sp_cv +
+                       -                     (cont_sp_cv | site_code / project_name / community_type),
+                     -                    data = tograph_log_spat)
 
 
 #Testing another year for the spatial data
