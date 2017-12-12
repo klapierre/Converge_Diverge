@@ -321,7 +321,8 @@ allAnalysis8yr <- allAnalysis%>%
 # write.csv(allAnalysis8yr, 'ForAnalysis_allAnalysis8yr.csv')
 allAnalysisAbs <- allAnalysis%>%
   mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
+  select(-S_PC)%>%
+  filter(treatment_year<9)
 # write.csv(threeWayAbs, 'ForAnalysis_allAnalysisAbs.csv')
 allAnalysis9yr <- allAnalysis%>%
   filter(experiment_length>8)
