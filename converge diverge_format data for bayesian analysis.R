@@ -1,3 +1,7 @@
+library(lme4)
+library(sjPlot)
+library(lsmeans)
+library(lmerTest)
 library(tidyverse)
 library(ggplot2)
 library(gridExtra)
@@ -316,43 +320,75 @@ threeWay <- ForAnalysis%>%
 
 #combine for analysis - one big model, 19 trt types
 allAnalysis <- rbind(singleResource, singleNonresource, twoWay, threeWay)
-allAnalysis8yr <- allAnalysis%>%
-  filter(treatment_year<9)
-# write.csv(allAnalysis8yr, 'ForAnalysis_allAnalysis8yr.csv')
-allAnalysisAbs <- allAnalysis%>%
+# write.csv(allAnalysis, 'ForAnalysis_allAnalysis.csv')
+# allAnalysis8yr <- allAnalysis%>%
+#   filter(treatment_year<9)
+# # write.csv(allAnalysis8yr, 'ForAnalysis_allAnalysis8yr.csv')
+# allAnalysisAbs <- allAnalysis8yr%>%
+#   mutate(S_PC_abv=abs(S_PC))%>%
+#   select(-S_PC)
+# write.csv(allAnalysisAbs, 'ForAnalysis_allAnalysisAbs.csv')
+# allAnalysis9yr <- allAnalysis%>%
+#   filter(experiment_length>8)
+# # write.csv(allAnalysis9yr, 'ForAnalysis_allAnalysis9yr.csv')
+
+#subset out datasets with less than 5 temporal data points
+numPoints <- allAnalysis%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+allAnalysisLong <- allAnalysis%>%
+  left_join(numPoints)%>%
+  filter(num_datapoints>4)
+# write.csv(allAnalysisLong, 'ForAnalysis_allAnalysisLong.csv')
+allAnalysisLongAbs <- allAnalysisLong%>%
   mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)%>%
-  filter(treatment_year<9)
-# write.csv(threeWayAbs, 'ForAnalysis_allAnalysisAbs.csv')
-allAnalysis9yr <- allAnalysis%>%
-  filter(experiment_length>8)
-# write.csv(allAnalysis9yr, 'ForAnalysis_allAnalysis9yr.csv')
+  select(-S_PC)
+# write.csv(allAnalysisLongAbs, 'ForAnalysis_allAnalysisLongAbs.csv')
+
+#subset out final year of all data
+allAnalysisFinalYear <- allAnalysis%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  filter(treatment_year==max(treatment_year))
+# write.csv(allAnalysisFinalYear, 'ForAnalysis_allAnalysisFinalYear.csv')
+
 
 
 #mean change
 singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=T, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
 singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=mean_change)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=project_name)) +
   xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position="none", legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
-twoWayFig <- ggplot(data=twoWay, aes(x=treatment_year, y=mean_change)) +
+twoWayFig <- ggplot(data=subset(twoWay, treatment_year<9), aes(x=treatment_year, y=mean_change)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
-threeWayFig <- ggplot(data=threeWay, aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+threeWayFig <- ggplot(data=subset(threeWay, treatment_year<9), aes(x=treatment_year, y=mean_change)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=treatment)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, size=5) +
+  geom_point() +
   xlab('Treatment Year') + ylab('Mean Difference') +
   scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~project_name)
+
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -364,27 +400,35 @@ print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 #richness
 singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=S_PC)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
 singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=S_PC)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
 twoWayFig <- ggplot(data=twoWay, aes(x=treatment_year, y=S_PC)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
 threeWayFig <- ggplot(data=threeWay, aes(x=treatment_year, y=S_PC)) +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
+  geom_point(aes(color=trt_type)) +
   xlab('Treatment Year') + ylab('Richness Difference') +
   scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
+  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
+  facet_wrap(~trt_type)
 
 pushViewport(viewport(layout=grid.layout(2,2)))
 print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -392,6 +436,22 @@ print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 print(twoWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
 print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
 #export at 1200x1200
+
+# #lmer way
+# # #null model
+# # mean_change_null <- lmer(mean_change ~ 1 + (trt_type | site_code / project_name/ community_type), data=(allAnalysis, treatment_year<9))
+# #actual model
+# mean_change_twoWay <- lmer(mean_change ~ trt_type*treatment_year +
+#                         rrich + anpp + MAP + MAT +
+#                         (trt_type | site_code / project_name/ community_type),
+#                         data=twoWay)
+# summary(mean_change_twoWay)
+# anova(mean_change_twoWay)
+# sjp.lmer(mean_change_twoWay, type='fe.std')
+# lsmeans(mean_change_twoWay)
+
+# #compare null and actual models
+# anova(mean_change_null, mean_change_all)
 
 # #dispersion
 # #notes: remove KBS because tilling has a big effect and it is the only tilled experiment
