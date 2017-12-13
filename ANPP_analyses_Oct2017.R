@@ -456,12 +456,12 @@ tograph_log_spat<-merge(tograph_log1_spat, trtint, by=c("site_project_comm","tre
 
 
 #test the relationship between control_temp and effect size
-temp_effect <- lm(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
+temp_effect <- lm(mlogrr ~ cont_temp_cv+trt_type5, data = tograph_log_temp)
 summary(temp_effect)
 
 
 #test the relationship between control_spat and effect size
-spat_effect <- lm(mlogrr ~ cont_sp_cv,  data = tograph_log_spat)
+spat_effect <- lm(mlogrr ~ cont_sp_cv+trt_type5,  data = tograph_log_spat)
 summary(spat_effect)
 
 
@@ -587,8 +587,10 @@ slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
 
 ###stats
 #regression of map with diff
-MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph)
+MAP_diff <- lm(diff ~ MAP+trt_type5,  data = slopes_tograph)
 summary(MAP_diff)
+anova(MAP_diff)
+aov(diff ~ MAP+trt_type5,  data = slopes_tograph)
 #yes sig effect. p = 0.003
 
 #try without MAERC
@@ -641,6 +643,14 @@ t.test(nutrn$diff, mu=0)
 
 map<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=diff))+
+  geom_point(aes(color=trt_type5), size=3)+
+  ylab("Difference in Slopes")+
+  geom_smooth(method="lm", se=F, color="black")+
+  xlab("Site MAP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_color_manual(name="Treatment", values=c("green","orange","darkred","darkgreen","yellow3","lightblue","darkorange","red","black","gray","pink3","purple","blue"), breaks=c("CO2","Water (W)","Nitrogen (N)","Phosphorus", "Heat (H)", "Non-Resource (N-R)", "N+CO2","N+W","N+H",'W+H',"Multiple Nutrients","N+W+H","Nutrients+N-R"))
+
+ggplot(data=subset(slopes_tograph, site_code!="maerc"), aes(x=MAP, y=diff))+
   geom_point(aes(color=trt_type5), size=3)+
   ylab("Difference in Slopes")+
   geom_smooth(method="lm", se=F, color="black")+
