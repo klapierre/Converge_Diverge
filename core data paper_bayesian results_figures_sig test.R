@@ -2,7 +2,8 @@ library(ggplot2)
 library(grid)
 library(tidyverse)
 
-#kim's laptop\datasets\LongForm")
+#kim's laptop
+setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\datasets\LongForm")
 
 #kim's desktop
 setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
