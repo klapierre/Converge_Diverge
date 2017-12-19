@@ -1,15 +1,8 @@
 library(ggplot2)
 library(grid)
-library(mgcv)
-library(lsmeans)
-library(codyn)
-library(plyr)
-library(dplyr)
-library(tidyr)
-library(nlme)
+library(tidyverse)
 
-#kim's laptop
-setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
+#kim's laptop\datasets\LongForm")
 
 #kim's desktop
 setwd("C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
