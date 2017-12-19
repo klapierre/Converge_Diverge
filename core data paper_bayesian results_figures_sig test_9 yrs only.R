@@ -57,7 +57,7 @@ expInfo <- expRaw%>%
 trtInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   select(-X)
 
-rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\for resource type analysis_nov2017\\ForAnalysis_allAnalysis8yr.csv')
+rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\for resource type analysis_nov2017\\ForAnalysis_allAnalysis.csv')
 
 rawData2<- rawData%>%
   left_join(trtInfo)%>%
@@ -107,114 +107,114 @@ studyInfo <- rawData%>%
 ################################################################################
 ################################################################################
 
-# #only run to generate initial chains files
-# #raw chains data --------------------------------------------------------
-# memory.limit(size=50000)
-# chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\trt_8yr\\trt_8yr_cholesky_0.csv', comment.char='#')
-# chains1 <- chains1[-1:-5000,]
-# chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\trt_8yr\\trt_8yr_cholesky_1.csv', comment.char='#')
-# chains2 <- chains2[-1:-5000,]
-# chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\trt_8yr\\trt_8yr_cholesky_2.csv', comment.char='#')
-# chains3 <- chains3[-1:-5000,]
-# chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\trt_8yr\\trt_8yr_cholesky_3.csv', comment.char='#')
-# chains4 <- chains4[-1:-5000,]
-# 
-# chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
-# 
-# 
-# #density plot of chains --------------------------------------------------------
-# plot(density(chainsCommunity$mu.1.1))
-# plot(density(chainsCommunity$mu.1.2))
-# plot(density(chainsCommunity$mu.1.3))
-# 
-# 
-# #get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
-# #mean change are the 1's, richness are the 2's
-# chainsCommunity2 <- chainsCommunity%>%
-#   select(lp__,
-#          #trt_type intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-#          U.1.1.1, U.2.1.1,
-#          U.1.2.1, U.2.2.1,
-#          U.1.3.1, U.2.3.1,
-#          U.1.4.1, U.2.4.1,
-#          U.1.5.1, U.2.5.1,
-#          U.1.6.1, U.2.6.1,
-#          U.1.7.1, U.2.7.1,
-#          U.1.8.1, U.2.8.1,
-#          U.1.9.1, U.2.9.1,
-#          U.1.10.1, U.2.10.1,
-#          U.1.11.1, U.2.11.1,
-#          U.1.12.1, U.2.12.1,
-#          U.1.13.1, U.2.13.1,
-#          U.1.14.1, U.2.14.1,
-#          U.1.15.1, U.2.15.1,
-#          U.1.16.1, U.2.16.1,
-#          U.1.17.1, U.2.17.1,
-#          U.1.18.1, U.2.18.1,
-#          #trt_type linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-#          U.1.1.2, U.2.1.2,
-#          U.1.2.2, U.2.2.2,
-#          U.1.3.2, U.2.3.2,
-#          U.1.4.2, U.2.4.2,
-#          U.1.5.2, U.2.5.2,
-#          U.1.6.2, U.2.6.2,
-#          U.1.7.2, U.2.7.2,
-#          U.1.8.2, U.2.8.2,
-#          U.1.9.2, U.2.9.2,
-#          U.1.10.2, U.2.10.2,
-#          U.1.11.2, U.2.11.2,
-#          U.1.12.2, U.2.12.2,
-#          U.1.13.2, U.2.13.2,
-#          U.1.14.2, U.2.14.2,
-#          U.1.15.2, U.2.15.2,
-#          U.1.16.2, U.2.16.2,
-#          U.1.17.2, U.2.17.2,
-#          U.1.18.2, U.2.18.2,
-#          #trt_type quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
-#          U.1.1.3, U.2.1.3,
-#          U.1.2.3, U.2.2.3,
-#          U.1.3.3, U.2.3.3,
-#          U.1.4.3, U.2.4.3,
-#          U.1.5.3, U.2.5.3,
-#          U.1.6.3, U.2.6.3,
-#          U.1.7.3, U.2.7.3,
-#          U.1.8.3, U.2.8.3,
-#          U.1.9.3, U.2.9.3,
-#          U.1.10.3, U.2.10.3,
-#          U.1.11.3, U.2.11.3,
-#          U.1.12.3, U.2.12.3,
-#          U.1.13.3, U.2.13.3,
-#          U.1.14.3, U.2.14.3,
-#          U.1.15.3, U.2.15.3,
-#          U.1.16.3, U.2.16.3,
-#          U.1.17.3, U.2.17.3,
-#          U.1.18.3, U.2.18.3,
-#          #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
-#          D.1.1.1, D.2.1.1,
-#          D.1.1.2, D.2.1.2,
-#          D.1.1.3, D.2.1.3,
-#          #richness intercept, linear, and quad slopes (center digit): 2=gamma diversity
-#          D.1.2.1, D.2.2.1,
-#          D.1.2.2, D.2.2.2,
-#          D.1.2.3, D.2.2.3,
-#          #MAP intercept, linear, and quad slopes (center digit): 1=MAP
-#          E.1.1.1, E.2.1.1,
-#          E.1.1.2, E.2.1.2,
-#          E.1.1.3, E.2.1.3,
-#          #MAT intercept, linear, and quad slopes (center digit): 2=MAT
-#          E.1.2.1, E.2.2.1,
-#          E.1.2.2, E.2.2.2,
-#          E.1.2.3, E.2.2.3,
-#          #overall intercept, linear, and quad slopes
-#          mu.1.1, mu.2.1,
-#          mu.1.2, mu.2.2,
-#          mu.1.3, mu.2.3)%>%
-#   gather(key=parameter, value=value, U.1.1.1:mu.2.3)%>%
-#   group_by(parameter)%>%
-#   summarise(median=median(value), sd=sd(value))%>%
-#   mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
-# 
-# write.csv(chainsCommunity2, 'bayesian_output_summary_final plots_11292017.csv')
+#only run to generate initial chains files
+#raw chains data --------------------------------------------------------
+memory.limit(size=50000)
+chains1 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\anpp_rich_ints\\simple_mod_effs_coding_interactions_0.csv', comment.char='#')
+chains1 <- chains1[-1:-5000,]
+chains2 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\anpp_rich_ints\\simple_mod_effs_coding_interactions_1.csv', comment.char='#')
+chains2 <- chains2[-1:-5000,]
+chains3 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\anpp_rich_ints\\simple_mod_effs_coding_interactions_2.csv', comment.char='#')
+chains3 <- chains3[-1:-5000,]
+chains4 <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\anpp_rich_ints\\simple_mod_effs_coding_interactions_3.csv', comment.char='#')
+chains4 <- chains4[-1:-5000,]
+
+chainsCommunity <- rbind(chains1, chains2, chains3, chains4)
+
+
+#density plot of chains --------------------------------------------------------
+plot(density(chainsCommunity$effs_G.1.2.68))
+plot(density(chainsCommunity$mu.1.2))
+plot(density(chainsCommunity$mu.1.3))
+
+
+#get values for overall (mean) lines across levels of plot mani --------------------------------------------------------
+#mean change are the 1's, richness are the 2's
+chainsCommunity2 <- chainsCommunity%>%
+  select(lp__,
+         #trt_type intercepts (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+         U.1.1.1, U.2.1.1,
+         U.1.2.1, U.2.2.1,
+         U.1.3.1, U.2.3.1,
+         U.1.4.1, U.2.4.1,
+         U.1.5.1, U.2.5.1,
+         U.1.6.1, U.2.6.1,
+         U.1.7.1, U.2.7.1,
+         U.1.8.1, U.2.8.1,
+         U.1.9.1, U.2.9.1,
+         U.1.10.1, U.2.10.1,
+         U.1.11.1, U.2.11.1,
+         U.1.12.1, U.2.12.1,
+         U.1.13.1, U.2.13.1,
+         U.1.14.1, U.2.14.1,
+         U.1.15.1, U.2.15.1,
+         U.1.16.1, U.2.16.1,
+         U.1.17.1, U.2.17.1,
+         U.1.18.1, U.2.18.1,
+         #trt_type linear slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+         U.1.1.2, U.2.1.2,
+         U.1.2.2, U.2.2.2,
+         U.1.3.2, U.2.3.2,
+         U.1.4.2, U.2.4.2,
+         U.1.5.2, U.2.5.2,
+         U.1.6.2, U.2.6.2,
+         U.1.7.2, U.2.7.2,
+         U.1.8.2, U.2.8.2,
+         U.1.9.2, U.2.9.2,
+         U.1.10.2, U.2.10.2,
+         U.1.11.2, U.2.11.2,
+         U.1.12.2, U.2.12.2,
+         U.1.13.2, U.2.13.2,
+         U.1.14.2, U.2.14.2,
+         U.1.15.2, U.2.15.2,
+         U.1.16.2, U.2.16.2,
+         U.1.17.2, U.2.17.2,
+         U.1.18.2, U.2.18.2,
+         #trt_type quad slopes (center digit): 1=plot mani 2, 2=plot mani 3, 3=plot mani 4, 4=plot mani 5
+         U.1.1.3, U.2.1.3,
+         U.1.2.3, U.2.2.3,
+         U.1.3.3, U.2.3.3,
+         U.1.4.3, U.2.4.3,
+         U.1.5.3, U.2.5.3,
+         U.1.6.3, U.2.6.3,
+         U.1.7.3, U.2.7.3,
+         U.1.8.3, U.2.8.3,
+         U.1.9.3, U.2.9.3,
+         U.1.10.3, U.2.10.3,
+         U.1.11.3, U.2.11.3,
+         U.1.12.3, U.2.12.3,
+         U.1.13.3, U.2.13.3,
+         U.1.14.3, U.2.14.3,
+         U.1.15.3, U.2.15.3,
+         U.1.16.3, U.2.16.3,
+         U.1.17.3, U.2.17.3,
+         U.1.18.3, U.2.18.3,
+         #ANPP intercept, linear, and quad slopes (center digit): 1=anpp
+         D.1.1.1, D.2.1.1,
+         D.1.1.2, D.2.1.2,
+         D.1.1.3, D.2.1.3,
+         #richness intercept, linear, and quad slopes (center digit): 2=gamma diversity
+         D.1.2.1, D.2.2.1,
+         D.1.2.2, D.2.2.2,
+         D.1.2.3, D.2.2.3,
+         #MAP intercept, linear, and quad slopes (center digit): 1=MAP
+         E.1.1.1, E.2.1.1,
+         E.1.1.2, E.2.1.2,
+         E.1.1.3, E.2.1.3,
+         #MAT intercept, linear, and quad slopes (center digit): 2=MAT
+         E.1.2.1, E.2.2.1,
+         E.1.2.2, E.2.2.2,
+         E.1.2.3, E.2.2.3,
+         #overall intercept, linear, and quad slopes
+         mu.1.1, mu.2.1,
+         mu.1.2, mu.2.2,
+         mu.1.3, mu.2.3)%>%
+  gather(key=parameter, value=value, U.1.1.1:mu.2.3)%>%
+  group_by(parameter)%>%
+  summarise(median=median(value), sd=sd(value))%>%
+  mutate(lower=median-2*sd, upper=median+2*sd, lower_sign=sign(lower), upper_sign=sign(upper), diff=lower_sign-upper_sign, median=ifelse(diff==-2, 0, median))
+
+write.csv(chainsCommunity2, 'bayesian_output_summary_final plots_11292017.csv')
 
 chainsCommunity2 <- read.csv('bayesian_output_summary_final plots_11292017.csv')
 
