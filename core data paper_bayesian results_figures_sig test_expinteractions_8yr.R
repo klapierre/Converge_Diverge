@@ -1124,7 +1124,7 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
   ggtitle('Community Difference') +
-  annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
+  annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left')
 
 richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
   geom_point(size=4) +
@@ -1138,11 +1138,11 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='ric
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
   ggtitle('Richness Difference') +
-  annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left')
+  annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,2)))
-print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
+print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 #export at 1600x1000
 
 
