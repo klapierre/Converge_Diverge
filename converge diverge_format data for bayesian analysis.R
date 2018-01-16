@@ -1,7 +1,5 @@
 library(lme4)
-library(sjPlot)
 library(lsmeans)
-library(lmerTest)
 library(tidyverse)
 library(ggplot2)
 library(gridExtra)
@@ -52,9 +50,12 @@ divControls <- subset(div, subset=(plot_mani==0))%>%
   names(divControls)[names(divControls)=='S'] <- 'ctl_S'
   names(divControls)[names(divControls)=='SimpEven'] <- 'ctl_SimpEven'
 divTrt1 <- div%>%
-  #removing treatments that were low levels of resource manipulation, not manipulating any resource, pulses
-  #plus filtering to get only treatments
+  #filtering to get only non-e002, e001 treatments
   filter(pulse==0, plot_mani>0, project_name!="e001"&project_name!="e002")
+
+#calculate average dispersion among just control plots (this is an estimate of average community dissimilarity, to use as a baseline for dissimilarity change between treatment and control plots)
+summary(divControls$ctl_dispersion) #mean=0.2811, median=0.2778
+
 
 #removing a subset of CDR treatments to prevent the majority of data being from CDR; keeping lowest, highest, and 10 gm-2 (level most comparable to other studies)
 divCDRe001<-div%>%
@@ -116,10 +117,19 @@ ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","communi
 #8 yr or less
 ForAnalysis8yr <- ForAnalysis%>%
   filter(treatment_year<9)
+#subset out datasets with less than 5 temporal data points
+numPoints <- ForAnalysis8yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+ForAnalysis8yrPoints <- ForAnalysis%>%
+  left_join(numPoints)%>%
+  filter(num_datapoints>2)
 
 ##18% of our our data is from CDR and KNZ
 
-# write.csv(ForAnalysis8yr, "ForBayesianAnalysis_8yr_May2017.csv")
+# write.csv(ForAnalysis8yrPoints, "ForBayesianAnalysis_8yr_May2017.csv")
 
 
 #Plot of 8 year data used in paper.
@@ -338,14 +348,49 @@ numPoints <- allAnalysis%>%
   unique()%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(num_datapoints=length(treatment_year))
-allAnalysisLong <- allAnalysis%>%
+allAnalysisAllDatasets <- allAnalysis%>%
   left_join(numPoints)%>%
   filter(num_datapoints>4)
-# write.csv(allAnalysisLong, 'ForAnalysis_allAnalysisLong.csv')
-allAnalysisLongAbs <- allAnalysisLong%>%
-  mutate(S_PC_abv=abs(S_PC))%>%
-  select(-S_PC)
-# write.csv(allAnalysisLongAbs, 'ForAnalysis_allAnalysisLongAbs.csv')
+# write.csv(allAnalysisAllDatasets, 'ForAnalysis_allAnalysisAllDatasets.csv')
+
+#subset out datasets 10 years and shorter
+allAnalysis10yr <- allAnalysisAllDatasets%>%
+  filter(experiment_length<11)
+numPoints10yr <- allAnalysis10yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+allAnalysis10yrPoints <- allAnalysis10yr%>%
+  left_join(numPoints10yr)%>%
+  filter(num_datapoints>4)
+# write.csv(allAnalysis10yrPoints, 'ForAnalysis_allAnalysis10yr.csv')
+
+#subset out datasets 15 years and shorter
+allAnalysis15yr <- allAnalysisAllDatasets%>%
+  filter(experiment_length<16)
+numPoints15yr <- allAnalysis15yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+allAnalysis15yrPoints <- allAnalysis15yr%>%
+  left_join(numPoints15yr)%>%
+  filter(num_datapoints>4)
+# write.csv(allAnalysis15yrPoints, 'ForAnalysis_allAnalysis15yr.csv')
+
+#subset out datasets 20 years and shorter
+allAnalysis20yr <- allAnalysisAllDatasets%>%
+  filter(experiment_length<21)
+numPoints20yr <- allAnalysis20yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+allAnalysis20yrPoints <- allAnalysis20yr%>%
+  left_join(numPoints20yr)%>%
+  filter(num_datapoints>4)
+# write.csv(allAnalysis20yrPoints, 'ForAnalysis_allAnalysis20yr.csv')
 
 #subset out final year of all data
 allAnalysisFinalYear <- allAnalysis%>%
@@ -353,133 +398,6 @@ allAnalysisFinalYear <- allAnalysis%>%
   filter(treatment_year==max(treatment_year))
 # write.csv(allAnalysisFinalYear, 'ForAnalysis_allAnalysisFinalYear.csv')
 
-
-
-#mean change
-singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=T, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Mean Difference') +
-  scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=project_name)) +
-  xlab('Treatment Year') + ylab('Mean Difference') +
-  scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position="none", legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-twoWayFig <- ggplot(data=subset(twoWay, treatment_year<9), aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Mean Difference') +
-  scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-threeWayFig <- ggplot(data=subset(threeWay, treatment_year<9), aes(x=treatment_year, y=mean_change)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=treatment)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, size=5) +
-  geom_point() +
-  xlab('Treatment Year') + ylab('Mean Difference') +
-  scale_y_continuous(limits=c(0,1)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~project_name)
-
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(twoWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1200x1200
-
-#richness
-singleResourceFig <- ggplot(data=singleResource, aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Richness Difference') +
-  scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-singleNonresourceFig <- ggplot(data=singleNonresource, aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Richness Difference') +
-  scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-twoWayFig <- ggplot(data=twoWay, aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Richness Difference') +
-  scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-threeWayFig <- ggplot(data=threeWay, aes(x=treatment_year, y=S_PC)) +
-  geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-  geom_point(aes(color=trt_type)) +
-  xlab('Treatment Year') + ylab('Richness Difference') +
-  scale_y_continuous(limits=c(-1,1.3)) +
-  theme(legend.position=c(0.05,0.95), legend.justification=c(0,1)) +
-  facet_wrap(~trt_type)
-
-pushViewport(viewport(layout=grid.layout(2,2)))
-print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(twoWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(threeWayFig, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1200x1200
-
-# #lmer way
-# # #null model
-# # mean_change_null <- lmer(mean_change ~ 1 + (trt_type | site_code / project_name/ community_type), data=(allAnalysis, treatment_year<9))
-# #actual model
-# mean_change_twoWay <- lmer(mean_change ~ trt_type*treatment_year +
-#                         rrich + anpp + MAP + MAT +
-#                         (trt_type | site_code / project_name/ community_type),
-#                         data=twoWay)
-# summary(mean_change_twoWay)
-# anova(mean_change_twoWay)
-# sjp.lmer(mean_change_twoWay, type='fe.std')
-# lsmeans(mean_change_twoWay)
-
-# #compare null and actual models
-# anova(mean_change_null, mean_change_all)
-
-# #dispersion
-# #notes: remove KBS because tilling has a big effect and it is the only tilled experiment
-# singleResourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==1&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
-#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=trt_type)) +
-#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-#   xlab('Treatment Year') + ylab('Dispersion Change') +
-#   scale_y_continuous(limits=c(-0.5,0.4)) +
-#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
-# 
-# singleNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani==1&resource_mani==0&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
-#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=nonresource)) +
-#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-#   xlab('Treatment Year') + ylab('Dispersion Change') +
-#   scale_y_continuous(limits=c(-0.5,0.4)) +
-#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
-# 
-# resourceNonresourceFig <- ggplot(data=subset(trtTypeRes, plot_mani>1&resource_mani!=0&site_code!='KBS'), aes(x=treatment_year, y=dispersion_change)) +
-#   geom_smooth(method='lm', formula=y~x+I(x^2), se=F, aes(color=resource_other)) +
-#   # geom_smooth(method='lm', formula=y~x+I(x^2), size=3, color='black') +
-#   xlab('Treatment Year') + ylab('Dispersion Change') +
-#   scale_y_continuous(limits=c(-0.5,0.4)) +
-#   theme(legend.position=c(0.05,0.95), legend.justification=c(0,1))
-# 
-# pushViewport(viewport(layout=grid.layout(1,3)))
-# print(singleResourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-# print(singleNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-# print(resourceNonresourceFig, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 # ANPP data ---------------------------------------------------------------
 
