@@ -348,49 +348,29 @@ numPoints <- allAnalysis%>%
   unique()%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(num_datapoints=length(treatment_year))
+#which are dropped? GVN FACE
 allAnalysisAllDatasets <- allAnalysis%>%
   left_join(numPoints)%>%
-  filter(num_datapoints>4)
+  filter(num_datapoints>2)
 # write.csv(allAnalysisAllDatasets, 'ForAnalysis_allAnalysisAllDatasets.csv')
+
+
+
 
 #subset out datasets 10 years and shorter
 allAnalysis10yr <- allAnalysisAllDatasets%>%
   filter(experiment_length<11)
-numPoints10yr <- allAnalysis10yr%>%
-  select(site_code, project_name, community_type, treatment, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(num_datapoints=length(treatment_year))
-allAnalysis10yrPoints <- allAnalysis10yr%>%
-  left_join(numPoints10yr)%>%
-  filter(num_datapoints>4)
-# write.csv(allAnalysis10yrPoints, 'ForAnalysis_allAnalysis10yr.csv')
+# write.csv(allAnalysis10yr, 'ForAnalysis_allAnalysis10yr.csv')
 
 #subset out datasets 15 years and shorter
 allAnalysis15yr <- allAnalysisAllDatasets%>%
   filter(experiment_length<16)
-numPoints15yr <- allAnalysis15yr%>%
-  select(site_code, project_name, community_type, treatment, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(num_datapoints=length(treatment_year))
-allAnalysis15yrPoints <- allAnalysis15yr%>%
-  left_join(numPoints15yr)%>%
-  filter(num_datapoints>4)
-# write.csv(allAnalysis15yrPoints, 'ForAnalysis_allAnalysis15yr.csv')
+# write.csv(allAnalysis15yr, 'ForAnalysis_allAnalysis15yr.csv')
 
 #subset out datasets 20 years and shorter
 allAnalysis20yr <- allAnalysisAllDatasets%>%
   filter(experiment_length<21)
-numPoints20yr <- allAnalysis20yr%>%
-  select(site_code, project_name, community_type, treatment, treatment_year)%>%
-  unique()%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
-  summarise(num_datapoints=length(treatment_year))
-allAnalysis20yrPoints <- allAnalysis20yr%>%
-  left_join(numPoints20yr)%>%
-  filter(num_datapoints>4)
-# write.csv(allAnalysis20yrPoints, 'ForAnalysis_allAnalysis20yr.csv')
+# write.csv(allAnalysis20yr, 'ForAnalysis_allAnalysis20yr.csv')
 
 #subset out final year of all data
 allAnalysisFinalYear <- allAnalysis%>%
