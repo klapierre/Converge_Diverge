@@ -337,12 +337,12 @@ allAnalysis <- rbind(singleResource, singleNonresource, twoWay, threeWay)
 # allAnalysisAbs <- allAnalysis8yr%>%
 #   mutate(S_PC_abv=abs(S_PC))%>%
 #   select(-S_PC)
-# write.csv(allAnalysisAbs, 'ForAnalysis_allAnalysisAbs.csv')
+# # write.csv(allAnalysisAbs, 'ForAnalysis_allAnalysisAbs.csv')
 # allAnalysis9yr <- allAnalysis%>%
 #   filter(experiment_length>8)
 # # write.csv(allAnalysis9yr, 'ForAnalysis_allAnalysis9yr.csv')
 
-#subset out datasets with less than 5 temporal data points
+#subset out datasets with less than 3 temporal data points
 numPoints <- allAnalysis%>%
   select(site_code, project_name, community_type, treatment, treatment_year)%>%
   unique()%>%
@@ -355,21 +355,43 @@ allAnalysisAllDatasets <- allAnalysis%>%
 # write.csv(allAnalysisAllDatasets, 'ForAnalysis_allAnalysisAllDatasets.csv')
 
 
-
-
 #subset out datasets 10 years and shorter
 allAnalysis10yr <- allAnalysisAllDatasets%>%
-  filter(experiment_length<11)
-# write.csv(allAnalysis10yr, 'ForAnalysis_allAnalysis10yr.csv')
+  filter(treatment_year<11)%>%
+  select(-num_datapoints)
+numPoints <- allAnalysis10yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+#which are dropped? GVN FACE, KNZ BGP, SEV Nfert
+allAnalysis10yrPoints <- allAnalysis10yr%>%
+  left_join(numPoints)%>%
+  filter(num_datapoints>2)
+# write.csv(allAnalysis10yrPoints, 'ForAnalysis_allAnalysis10yr.csv')
 
 #subset out datasets 15 years and shorter
 allAnalysis15yr <- allAnalysisAllDatasets%>%
-  filter(experiment_length<16)
+  filter(treatment_year<16)%>%
+  select(-num_datapoints)
+numPoints <- allAnalysis15yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+#nothing would be dropped
 # write.csv(allAnalysis15yr, 'ForAnalysis_allAnalysis15yr.csv')
 
 #subset out datasets 20 years and shorter
 allAnalysis20yr <- allAnalysisAllDatasets%>%
-  filter(experiment_length<21)
+  filter(treatment_year<21)%>%
+  select(-num_datapoints)
+numPoints <- allAnalysis20yr%>%
+  select(site_code, project_name, community_type, treatment, treatment_year)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarise(num_datapoints=length(treatment_year))
+#nothing would be dropped
 # write.csv(allAnalysis20yr, 'ForAnalysis_allAnalysis20yr.csv')
 
 #subset out final year of all data
@@ -378,6 +400,43 @@ allAnalysisFinalYear <- allAnalysis%>%
   filter(treatment_year==max(treatment_year))
 # write.csv(allAnalysisFinalYear, 'ForAnalysis_allAnalysisFinalYear.csv')
 
+
+#a few prelim figures
+allAnalysis8yrFig <- allAnalysis10yrPoints%>%
+  mutate(temp=paste(site_code, project_name, community_type, treatment))%>%
+  filter(treatment_year<8, experiment_length>8)
+eight <- ggplot(data=allAnalysis8yrFig, aes(x=treatment_year, y=mean_change, color=temp)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
+  geom_point() +
+  theme(legend.position='none') +
+  facet_wrap(~temp)
+
+
+allAnalysis10yrFig <- allAnalysis10yrPoints%>%
+  mutate(temp=paste(site_code, project_name, community_type, treatment))%>%
+  filter(experiment_length>8)
+ten <- ggplot(data=allAnalysis10yrFig, aes(x=treatment_year, y=mean_change, color=temp)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
+  geom_point() +
+  theme(legend.position='none') +
+  facet_wrap(~temp)
+
+grid.arrange(eight, ten, ncol=2)
+
+allAnalysis15yrFig <- allAnalysis15yr%>%
+  mutate(temp=paste(site_code, project_name, community_type, treatment))
+ggplot(data=allAnalysis15yrFig, aes(x=treatment_year, y=mean_change, color=temp)) +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
+  theme(legend.position='none')
+
+allAnalysis20yrFig <- allAnalysis20yr%>%
+  mutate(temp=paste(site_code, project_name, community_type, treatment))%>%
+  filter(experiment_length>15)
+ggplot(data=allAnalysis20yrFig, aes(x=treatment_year, y=mean_change)) +
+  geom_point() +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
+  theme(legend.position='none') +
+  facet_wrap(~temp)
 
 # ANPP data ---------------------------------------------------------------
 
