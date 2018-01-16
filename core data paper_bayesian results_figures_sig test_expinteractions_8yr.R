@@ -59,6 +59,12 @@ trtInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
 
 rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\8yr or less\\ForAnalysis_allAnalysisShort.csv')
 
+test <- rawData%>%
+  select(site_code, project_name, community_type, treatment, experiment_length)%>%
+  unique()
+
+hist(test$experiment_length)
+
 rawData2<- rawData%>%
   left_join(trtInfo)%>%
   filter(plot_mani<6, anpp!='NA', treatment_year!=0)%>%

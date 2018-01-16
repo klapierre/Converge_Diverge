@@ -229,35 +229,35 @@ chainsExperiment <- chainsFinal%>%
   arrange(id)%>%
   left_join(trtInfo, by='id')
 
-chainsEquations <- chainsExperiment%>%
-  #get standardized experiment length
-  mutate(alt_length=experiment_length - min_year)%>%
-  mutate(alt_length=ifelse(alt_length>=8, 7, alt_length))%>%
-  mutate(yr9=ifelse(variable=='mean', (intercept+linear*7+quadratic*7^2)*(0.1404912)+(0.2887009), (intercept+linear*7+quadratic*7^2)*(0.2275677)+(-0.03003684)))%>%
-  mutate(yr_final=ifelse(variable=='mean', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.1404912)+(0.2887009),
-                         (intercept+linear*alt_length+quadratic*alt_length^2)*(0.2275677)+(-0.03003684)))%>%
-  mutate(color=ifelse(anpp<281&variable=='mean', '#1104DC44', ifelse(anpp<561&anpp>280&variable=='mean', '#4403AE55', ifelse(anpp<841&anpp>560&variable=='mean', '#77038166', ifelse(anpp>840&variable=='mean', '#DD032688', 'grey')))))%>%
-  mutate(curve1='stat_function(fun=function(x){(',
-         curve2=' + ',
-         curve3='*x + ',
-         curve4=ifelse(variable=='mean', '*x^2)*(0.1404912)+(0.2887009)}, size=2, xlim=c(0,',
-                       '*x^2)*(0.2275677)+(-0.03003684)}, size=2, xlim=c(0,'),
-         curve5='), colour=',
-         curve6=') +',
-         curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, color, curve6, sep=''))%>%
-  mutate(trt_overall=ifelse(trt_type=='CO2'|trt_type=='N'|trt_type=='P'|trt_type=='drought'|trt_type=='irr'|trt_type=='precip_vari', 'single_resource', ifelse(trt_type=='burn'|trt_type=='mow_clip'|trt_type=='herb_rem'|trt_type=='temp'|trt_type=='plant_mani', 'single_nonresource', ifelse(trt_type=='all_resource'|trt_type=='both', 'three_way', 'two_way'))))
-#need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
-# write.csv(chainsEquations,'plot mani_equations_expinteractions_long_01122018.csv', row.names=F)
-
-#summary lines
-chainsEquationsSummary <- chainsEquations%>%
-  group_by(variable, trt_overall)%>%
-  summarise(intercept_mean=mean(intercept), intercept_sd=sd(intercept), linear_mean=mean(linear), linear_sd=sd(linear), quadratic_mean=mean(quadratic), quadratic_sd=sd(quadratic))%>%
-  ungroup()%>%
-  mutate(intercept_high=intercept_mean+1.96*intercept_sd, intercept_low=intercept_mean-1.96*intercept_sd, linear_high=linear_mean+1.96*linear_sd, linear_low=linear_mean-1.96*linear_sd, quadratic_high=quadratic_mean+1.96*quadratic_sd, quadratic_low=quadratic_mean-1.96*quadratic_sd)%>%
-  mutate(intercept_high2=ifelse(intercept_high>0, 1, 0), intercept_low2=ifelse(intercept_low<0, 1, 0), linear_high2=ifelse(linear_high>0, 1, 0), linear_low2=ifelse(linear_low<0, 1, 0), quadratic_high2=ifelse(quadratic_high>0, 1, 0), quadratic_low2=ifelse(quadratic_low<0, 1, 0))%>%
-  mutate(intercept_cross=intercept_high2+intercept_low2, linear_cross=linear_high2+linear_low2, quadratic_cross=quadratic_high2+quadratic_low2)%>%
-  mutate(intercept_final=ifelse(intercept_cross==2, 0, intercept), linear_final=ifelse(linear_cross==2, 0, linear), quadratic_final=ifelse(quadratic_cross==2, 0, quadratic))
+# chainsEquations <- chainsExperiment%>%
+#   #get standardized experiment length
+#   mutate(alt_length=experiment_length - min_year)%>%
+#   mutate(alt_length=ifelse(alt_length>=8, 7, alt_length))%>%
+#   mutate(yr9=ifelse(variable=='mean', (intercept+linear*7+quadratic*7^2)*(0.1404912)+(0.2887009), (intercept+linear*7+quadratic*7^2)*(0.2275677)+(-0.03003684)))%>%
+#   mutate(yr_final=ifelse(variable=='mean', (intercept+linear*alt_length+quadratic*alt_length^2)*(0.1404912)+(0.2887009),
+#                          (intercept+linear*alt_length+quadratic*alt_length^2)*(0.2275677)+(-0.03003684)))%>%
+#   mutate(color=ifelse(anpp<281&variable=='mean', '#1104DC44', ifelse(anpp<561&anpp>280&variable=='mean', '#4403AE55', ifelse(anpp<841&anpp>560&variable=='mean', '#77038166', ifelse(anpp>840&variable=='mean', '#DD032688', 'grey')))))%>%
+#   mutate(curve1='stat_function(fun=function(x){(',
+#          curve2=' + ',
+#          curve3='*x + ',
+#          curve4=ifelse(variable=='mean', '*x^2)*(0.1404912)+(0.2887009)}, size=2, xlim=c(0,',
+#                        '*x^2)*(0.2275677)+(-0.03003684)}, size=2, xlim=c(0,'),
+#          curve5='), colour=',
+#          curve6=') +',
+#          curve=paste(curve1, intercept, curve2, linear, curve3, quadratic, curve4, alt_length, curve5, color, curve6, sep=''))%>%
+#   mutate(trt_overall=ifelse(trt_type=='CO2'|trt_type=='N'|trt_type=='P'|trt_type=='drought'|trt_type=='irr'|trt_type=='precip_vari', 'single_resource', ifelse(trt_type=='burn'|trt_type=='mow_clip'|trt_type=='herb_rem'|trt_type=='temp'|trt_type=='plant_mani', 'single_nonresource', ifelse(trt_type=='all_resource'|trt_type=='both', 'three_way', 'two_way'))))
+# #need to export this, put quotes around the colors, and copy and paste the curve column back into the ggplot code below
+# # write.csv(chainsEquations,'plot mani_equations_expinteractions_long_01122018.csv', row.names=F)
+#
+# #summary lines
+# chainsEquationsSummary <- chainsEquations%>%
+#   group_by(variable, trt_overall)%>%
+#   summarise(intercept_mean=mean(intercept), intercept_sd=sd(intercept), linear_mean=mean(linear), linear_sd=sd(linear), quadratic_mean=mean(quadratic), quadratic_sd=sd(quadratic))%>%
+#   ungroup()%>%
+#   mutate(intercept_high=intercept_mean+1.96*intercept_sd, intercept_low=intercept_mean-1.96*intercept_sd, linear_high=linear_mean+1.96*linear_sd, linear_low=linear_mean-1.96*linear_sd, quadratic_high=quadratic_mean+1.96*quadratic_sd, quadratic_low=quadratic_mean-1.96*quadratic_sd)%>%
+#   mutate(intercept_high2=ifelse(intercept_high>0, 1, 0), intercept_low2=ifelse(intercept_low<0, 1, 0), linear_high2=ifelse(linear_high>0, 1, 0), linear_low2=ifelse(linear_low<0, 1, 0), quadratic_high2=ifelse(quadratic_high>0, 1, 0), quadratic_low2=ifelse(quadratic_low<0, 1, 0))%>%
+#   mutate(intercept_cross=intercept_high2+intercept_low2, linear_cross=linear_high2+linear_low2, quadratic_cross=quadratic_high2+quadratic_low2)%>%
+#   mutate(intercept_final=ifelse(intercept_cross==2, 0, intercept), linear_final=ifelse(linear_cross==2, 0, linear), quadratic_final=ifelse(quadratic_cross==2, 0, quadratic))
 
 ###main figure (Figure 1)
 # mean change panel --------------------------------------------------------

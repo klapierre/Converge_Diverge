@@ -292,7 +292,7 @@ richnessPlot <- richnessPlot +
   #below are the individual treatment lines
 
   #overall line
-  stat_function(fun=function(x){(0 + 0.0722995*x + 0*x^2)*0.2725948 + -0.1113676}, size=5, xlim=c(0,7), colour='black')
+  stat_function(fun=function(x){(0.0509247 + 0*x + 0*x^2)*0.1637558 + 0.1608099}, size=5, xlim=c(0,7), colour='black')
 
 # print(richnessPlot) #export at 1200x1000
 
