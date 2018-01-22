@@ -57,8 +57,7 @@ expInfo <- expRaw%>%
 trtInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   select(-X)
 
-#laptop
-rawData <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\20 yr\\ForAnalysis_allAnalysis20yr.csv')
+rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\20 yr\\ForAnalysis_allAnalysis20yr.csv')
 
 test <- rawData%>%
   select(site_code, project_name, community_type, treatment, experiment_length)%>%
