@@ -6,7 +6,7 @@ library(gridExtra)
 library(grid)
 
 #kim's laptop
-setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
 
 #kim's desktop
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm')
@@ -30,7 +30,9 @@ div <- read.csv('DiversityMetrics_Nov2017.csv')%>%
   mutate(calendar_year=as.integer(calendar_year))%>%
   left_join(expInfo)%>%
   select(-X)%>%
-  filter(treatment_year!=0)
+  filter(treatment_year!=0)%>%
+  #create e^H metric
+  mutate(expH=exp(H))
 
 #anpp data
 anpp<-read.csv("ANPP_Oct2017.csv")%>%
@@ -44,9 +46,9 @@ SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
 ###calculate change in dispersion, H, S, and evenness
 #subset out controls and treatments
 divControls <- subset(div, subset=(plot_mani==0))%>%
-  select(exp_year, dispersion, H, S, SimpEven, calendar_year, treatment_year)
+  select(exp_year, dispersion, expH, S, SimpEven, calendar_year, treatment_year)
   names(divControls)[names(divControls)=='dispersion'] <- 'ctl_dispersion'
-  names(divControls)[names(divControls)=='H'] <- 'ctl_H'
+  names(divControls)[names(divControls)=='expH'] <- 'ctl_expH'
   names(divControls)[names(divControls)=='S'] <- 'ctl_S'
   names(divControls)[names(divControls)=='SimpEven'] <- 'ctl_SimpEven'
 divTrt1 <- div%>%
@@ -70,12 +72,12 @@ divTrt<-rbind(divTrt1, divCDRe002, divCDRe001)
 #merge controls and treatments
 divCompare <- divControls%>%
   left_join(divTrt)%>%
-#calculate change in disperion, H, S, and evenness
+#calculate change in disperion, expH, S, and evenness
   mutate(dispersion_change=dispersion-ctl_dispersion, 
-         H_change=H-ctl_H, 
+         expH_PC=(expH-ctl_expH)/expH, 
          S_PC=(S-ctl_S)/ctl_S, 
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
-  select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, H_change,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
+  select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, expH_PC,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
 
 theme_set(theme_bw(16))
 d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
@@ -167,7 +169,7 @@ ForAnalysis9yr <- ForAnalysis%>%
 
 #absolute value
 ForAnalysisAbsValue <- ForAnalysis9yr%>%
-  mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), H_change=abs(H_change), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
+  mutate(mean_change=abs(mean_change), dispersion_change=abs(dispersion_change), expH_PC=abs(expH_PC), SimpEven_change=abs(SimpEven_change), S_PC=abs(S_PC))
 # write.csv(ForAnalysisAbsValue, "ForBayesianAnalysis_abs value_9yr_Dec2016.csv")
 
 
@@ -206,7 +208,7 @@ singleResource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(n2>0, 'N', ifelse(p2>0, 'P', ifelse(k2>0, 'K', ifelse(precip<0, 'drought', ifelse(precip>0, 'irr', ifelse(CO2>0, 'CO2', 'precip_vari')))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # singleResource8yr <- singleResource%>%
 #   filter(treatment_year<9)
@@ -238,7 +240,7 @@ singleNonresource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(burn==1, 'burn', ifelse(mow_clip==1, 'mow_clip', ifelse(herb_removal==1, 'herb_rem', ifelse(temp>0, 'temp', ifelse(plant_trt==1, 'plant_mani', 'other'))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # singleNonresource8yr <- singleNonresource%>%
 #   filter(treatment_year<9)
@@ -272,7 +274,7 @@ twoWay <- ForAnalysis%>%
   #drop R*herb_removal (single rep)
   filter(trt_type!='R*herb_rem')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # twoWay8yr <- twoWay%>%
 #   filter(treatment_year<9)
@@ -307,7 +309,7 @@ threeWay <- ForAnalysis%>%
   #drop single all-nonresource treatment (NIN herbdiv 5NF)
   filter(trt_type!='all_nonresource')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # threeWay8yr <- threeWay%>%
 #   filter(treatment_year<9)
