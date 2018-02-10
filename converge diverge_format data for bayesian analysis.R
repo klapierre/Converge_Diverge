@@ -74,7 +74,7 @@ divCompare <- divControls%>%
   left_join(divTrt)%>%
 #calculate change in disperion, expH, S, and evenness
   mutate(dispersion_change=dispersion-ctl_dispersion, 
-         expH_PC=(expH-ctl_expH)/expH, 
+         expH_PC=(expH-ctl_expH)/ctl_expH, 
          S_PC=(S-ctl_S)/ctl_S, 
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
   select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, expH_PC,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
