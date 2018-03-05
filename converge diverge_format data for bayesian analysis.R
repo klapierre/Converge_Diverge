@@ -113,6 +113,7 @@ SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
 
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
 
+
 #full dataset
 # write.csv(ForAnalysis, "ForBayesianAnalysis_May2017.csv")
 
@@ -396,11 +397,27 @@ numPoints <- allAnalysis20yr%>%
 #nothing would be dropped
 # write.csv(allAnalysis20yr, 'ForAnalysis_allAnalysis20yr.csv')
 
-#subset out final year of all data
-allAnalysisFinalYear <- allAnalysis%>%
+#subset out 20th or final year of all data
+allAnalysisFinalYear <- allAnalysis20yr%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   filter(treatment_year==max(treatment_year))
 # write.csv(allAnalysisFinalYear, 'ForAnalysis_allAnalysisFinalYear.csv')
+
+
+#get magnitudes
+allAnalysisMag <- allAnalysis20yr%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  filter(treatment_year==max(treatment_year))%>%
+  left_join(expInfo)
+
+Nmag <- allAnalysisMag%>%
+  filter(project_name!='MEGARICH')%>%
+  filter(n>0)
+# write.csv(Nmag, 'ForAnalysis_allAnalysisNmag.csv')
+H2OMag <- allAnalysisMag%>%
+  filter(precip!=0)
+# write.csv(H2OMag, 'ForAnalysis_allAnalysisH2Omag.csv')
+
 
 
 #a few prelim figures
