@@ -19,7 +19,8 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 #experiment information
 expInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, sep='::'))%>%
-  select(-X)
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep='_'))
 
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
@@ -112,6 +113,19 @@ SiteExp<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   select(-X)
 
 ForAnalysis<-merge(divCompare, SiteExp, by=c("site_code","project_name","community_type"))
+
+###read in pairwise multivariate distance
+pair <- read.csv('Bray_Curtis_Ave_dissim_03162018.csv')%>%
+  select(-X)%>%
+  left_join(expInfo)%>%
+  filter(plot_mani==0)%>%
+  select(site_code, project_name, community_type, treatment2, calendar_year, BC_between_diff)%>%
+  mutate(treatment=treatment2)%>%
+  select(-treatment2)
+
+ForAnalysis <- ForAnalysis%>%
+  left_join(ForAnalysis)%>%
+  filter(!is.na(BC_between_diff))
 
 
 #full dataset
@@ -209,7 +223,7 @@ singleResource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(n2>0, 'N', ifelse(p2>0, 'P', ifelse(k2>0, 'K', ifelse(precip<0, 'drought', ifelse(precip>0, 'irr', ifelse(CO2>0, 'CO2', 'precip_vari')))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, BC_between_diff, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # singleResource8yr <- singleResource%>%
 #   filter(treatment_year<9)
@@ -241,7 +255,7 @@ singleNonresource <- ForAnalysis%>%
   #create categorical treatment type column
   mutate(trt_type=ifelse(burn==1, 'burn', ifelse(mow_clip==1, 'mow_clip', ifelse(herb_removal==1, 'herb_rem', ifelse(temp>0, 'temp', ifelse(plant_trt==1, 'plant_mani', 'other'))))))%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, BC_between_diff, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # singleNonresource8yr <- singleNonresource%>%
 #   filter(treatment_year<9)
@@ -275,7 +289,7 @@ twoWay <- ForAnalysis%>%
   #drop R*herb_removal (single rep)
   filter(trt_type!='R*herb_rem')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, BC_between_diff, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # twoWay8yr <- twoWay%>%
 #   filter(treatment_year<9)
@@ -310,7 +324,7 @@ threeWay <- ForAnalysis%>%
   #drop single all-nonresource treatment (NIN herbdiv 5NF)
   filter(trt_type!='all_nonresource')%>%
   #keep just relevent column names for this analysis
-  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
+  select(site_code, project_name, community_type, exp_year, treatment_year, calendar_year, treatment, trt_type, mean_change, BC_between_diff, S_PC, expH_PC, experiment_length, rrich, anpp, MAT, MAP)
 
 # threeWay8yr <- threeWay%>%
 #   filter(treatment_year<9)
@@ -395,7 +409,7 @@ numPoints <- allAnalysis20yr%>%
   group_by(site_code, project_name, community_type, treatment)%>%
   summarise(num_datapoints=length(treatment_year))
 #nothing would be dropped
-# write.csv(allAnalysis20yr, 'ForAnalysis_allAnalysis20yr.csv')
+# write.csv(allAnalysis20yr, 'ForAnalysis_allAnalysis20yr_pairwise.csv')
 
 #subset out 20th or final year of all data
 allAnalysisFinalYear <- allAnalysis20yr%>%
@@ -451,11 +465,16 @@ ggplot(data=allAnalysis15yrFig, aes(x=treatment_year, y=mean_change, color=temp)
 allAnalysis20yrFig <- allAnalysis20yr%>%
   mutate(temp=paste(site_code, project_name, community_type, treatment))%>%
   filter(experiment_length>15)
-ggplot(data=allAnalysis20yrFig, aes(x=treatment_year, y=mean_change)) +
+ggplot(data=allAnalysis20yr, aes(x=treatment_year, y=BC_between_diff, color=trt_type)) +
   geom_point() +
   geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
   theme(legend.position='none') +
-  facet_wrap(~temp)
+  facet_wrap(~trt_type)
+ggplot(data=allAnalysis20yr, aes(x=treatment_year, y=mean_change, color=trt_type)) +
+  geom_point() +
+  geom_smooth(method='lm', formula=y~x+I(x^2), se=F) +
+  theme(legend.position='none') +
+  facet_wrap(~trt_type)
 
 # ANPP data ---------------------------------------------------------------
 
