@@ -80,6 +80,7 @@ divCompare <- divControls%>%
          SimpEven_change=SimpEven-ctl_SimpEven)%>%
   select(exp_year, treatment_year, treatment, plot_mani, mean_change, dispersion_change, expH_PC,  SimpEven_change, S_PC, site_code, project_name, community_type, calendar_year)
 
+
 theme_set(theme_bw(16))
 d2<-qplot(dispersion_change, data=divCompare, geom="histogram")+
   ggtitle("Within Treatment Change")+
@@ -123,9 +124,30 @@ pair <- read.csv('Bray_Curtis_Ave_dissim_03162018.csv')%>%
   mutate(treatment=treatment2)%>%
   select(-treatment2)
 
+compare <- read.csv('BCave_Vs_centdist_03162018.csv')%>%
+  left_join(expInfo)%>%
+  filter(plot_mani==0)%>%
+  select(site_code, project_name, community_type, treatment2, calendar_year, BC_between_diff, centroid_distance_diff)%>%
+  mutate(treatment=treatment2)%>%
+  select(-treatment2)
+
+#average dispersion across trt and control plots by trt
+dispComp <- divControls%>%
+  left_join(divTrt)%>%
+  mutate(dispersion_avg=(dispersion+ctl_dispersion)/2)%>%
+  select(exp_year, site_code, project_name, community_type, calendar_year, treatment_year, treatment, dispersion_avg)%>%
+  left_join(compare)
+
+ggplot(data=dispComp, aes(x=centroid_distance_diff, y=BC_between_diff, color=dispersion_avg)) +
+  geom_point() +
+  scale_colour_gradientn(colours=rainbow(4))
+
+
 ForAnalysis <- ForAnalysis%>%
-  left_join(ForAnalysis)%>%
+  left_join(pair)%>%
   filter(!is.na(BC_between_diff))
+
+
 
 
 #full dataset
