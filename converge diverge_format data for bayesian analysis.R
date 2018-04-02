@@ -447,12 +447,24 @@ allAnalysisMag <- allAnalysis20yr%>%
   left_join(expInfo)
 
 Nmag <- allAnalysisMag%>%
-  filter(project_name!='MEGARICH')%>%
+  filter(!(site_code %in% c('CEH', 'CAR', 'NANT', 'PIE', 'SERC')))%>%
   filter(n>0)
 # write.csv(Nmag, 'ForAnalysis_allAnalysisNmag.csv')
-H2OMag <- allAnalysisMag%>%
-  filter(precip!=0)
-# write.csv(H2OMag, 'ForAnalysis_allAnalysisH2Omag.csv')
+irrMag <- allAnalysisMag%>%
+  filter(precip>0)
+# write.csv(irrMag, 'ForAnalysis_allAnalysisH2Omag_irr.csv')
+droMag <- allAnalysisMag%>%
+  filter(precip<0)
+# write.csv(irrMag, 'ForAnalysis_allAnalysisH2Omag_drought.csv')
+
+#prelim figure
+ggplot(data=subset(Nmag, !(site_code %in% c('CAR', 'NANT', 'PIE', 'SERC'))), aes(x=n, y=mean_change)) +
+  geom_point() +
+  geom_smooth(method='lm')
+
+ggplot(data=subset(Nmag, !(site_code %in% c('CAR', 'NANT', 'PIE', 'SERC'))), aes(x=n, y=S_PC)) +
+  geom_point() +
+  geom_smooth(method='lm')
 
 
 
