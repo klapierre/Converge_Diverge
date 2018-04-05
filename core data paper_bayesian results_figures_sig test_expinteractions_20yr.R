@@ -1215,6 +1215,7 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left') +
   annotate('text', x=9.1, y=-0.425, label='*', size=10, hjust='left') +
   annotate('text', x=7.1, y=-0.17, label='*', size=10, hjust='left')
+###########start here, continue adding astrisks.
 
 richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
   geom_point(size=4) +
