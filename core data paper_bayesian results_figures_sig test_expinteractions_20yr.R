@@ -266,8 +266,8 @@ meanPlot <- ggplot(data=data.frame(x=c(0,0))) +
   coord_cartesian(ylim=c(0,1))  +
   scale_x_continuous(limits=c(0,19), breaks=seq(4,19,5), labels=seq(5,20,5)) +
   ylim(-10,10) +
-xlab('Standardized Experiment Year') +
-  ylab('Overall Community Difference') +
+xlab('Experiment Year') +
+  ylab('Compositional Response') +
   annotate('text', x=0, y=1, label='(b)', size=10, hjust='left')
 
 meanPlot <- meanPlot + 
@@ -695,9 +695,9 @@ meanPlot <- meanPlot +
 richnessPlot <- ggplot(data=data.frame(x=c(0,0))) +
   coord_cartesian(ylim=c(-1.0,2.0))  +
   scale_x_continuous(limits=c(0,19), breaks=seq(4,19,5), labels=seq(5,20,5)) +
-  scale_y_continuous(limits=c(-2,2), breaks=seq(-2,2,1)) +
+  scale_y_continuous(limits=c(-10,10), breaks=seq(-10,10,1)) +
   xlab('') +
-  ylab('Richness Difference') +
+  ylab('Richness Response') +
   annotate('text', x=0, y=2.0, label='(a)', size=10, hjust='left')
 
 richnessPlot <- richnessPlot + 
@@ -1211,8 +1211,10 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
-  ggtitle('Community Difference') +
-  annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left')
+  ggtitle('Compositional Response') +
+  annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left') +
+  annotate('text', x=9.1, y=-0.425, label='*', size=10, hjust='left') +
+  annotate('text', x=7.1, y=-0.17, label='*', size=10, hjust='left')
 
 richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
   geom_point(size=4) +
@@ -1225,7 +1227,7 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='ric
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
-  ggtitle('Richness Difference') +
+  ggtitle('Richness Response') +
   annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,2)))
