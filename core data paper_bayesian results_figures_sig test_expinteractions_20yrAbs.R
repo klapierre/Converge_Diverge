@@ -57,7 +57,7 @@ expInfo <- expRaw%>%
 trtInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   select(-X)
 
-#laptop
+#desktop
 rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\20 yr_abs value\\ForAnalysis_allAnalysis20yr_abs.csv')
 
 test <- rawData%>%
@@ -1221,12 +1221,13 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='ric
   scale_y_continuous(limits=c(-0.8, 0.5), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('rrich_quadratic', 'ANPP_quadratic', 'overall_quadratic', 'rrich_linear', 'ANPP_linear', 'overall_linear', 'rrich_intercept', 'ANPP_intercept', 'overall_intercept'),
                    labels=c('Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_text(size=30), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
-  ggtitle('Richness Difference') +
+  ylab('Standardized Parameter Estimate') +
+  ggtitle('|Richness Response|') +
   annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,2)))
