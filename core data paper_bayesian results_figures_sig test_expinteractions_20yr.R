@@ -1206,7 +1206,8 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   scale_y_continuous(limits=c(-0.8, 0.5), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('rrich_quadratic', 'ANPP_quadratic', 'overall_quadratic', 'rrich_linear', 'ANPP_linear', 'overall_linear', 'rrich_intercept', 'ANPP_intercept', 'overall_intercept'),
                    labels=c('Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
+  ylab('Standardized Parameter Estimate') +
+  theme(axis.title.x=element_text(size=30), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
@@ -1214,8 +1215,9 @@ meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' &
   ggtitle('Compositional Response') +
   annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left') +
   annotate('text', x=9.1, y=-0.425, label='*', size=10, hjust='left') +
-  annotate('text', x=7.1, y=-0.17, label='*', size=10, hjust='left')
-###########start here, continue adding astrisks.
+  annotate('text', x=7.1, y=-0.17, label='*', size=10, hjust='left') +
+  annotate('text', x=6.1, y=0.167, label='*', size=10, hjust='left') +
+  annotate('text', x=4.1, y=0.018, label='*', size=10, hjust='left')
 
 richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
   geom_point(size=4) +
@@ -1223,13 +1225,16 @@ richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='ric
   scale_y_continuous(limits=c(-0.8, 0.5), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('rrich_quadratic', 'ANPP_quadratic', 'overall_quadratic', 'rrich_linear', 'ANPP_linear', 'overall_linear', 'rrich_intercept', 'ANPP_intercept', 'overall_intercept'),
                    labels=c('Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
+  ylab('Standardized Parameter Estimate') +
+  theme(axis.title.x=element_text(size=30), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
   ggtitle('Richness Response') +
-  annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
+  annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left') +
+  annotate('text', x=9.1, y=0.23, label='*', size=10, hjust='left') +
+  annotate('text', x=7.1, y=0.06, label='*', size=10, hjust='left')
 
 pushViewport(viewport(layout=grid.layout(1,2)))
 print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -1240,17 +1245,14 @@ print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
 
 
 ###by magnitude of resource manipulated---------------------------------
-trtDetail <- expRaw%>%
-  select(site_code, project_name, community_type, treatment, n, p, k, CO2, precip, plot_mani)%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarize(n=mean(n), p=mean(p), k=mean(k), CO2=mean(CO2), precip=mean(precip))%>%
-  mutate(drought=ifelse(precip<0, precip, 0), irrigation=ifelse(precip>0, precip, 0))
-
-rawTrt <- rawData%>%
-  left_join(trtDetail)
-
 #N addition (Figure 4)
-Nmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_mean_posteriors.csv', comment.char='#')
+nData <- read.csv('ForAnalysis_allAnalysisNmag.csv')
+
+nDataMean <- nData%>%
+  summarise(mean_mean_change=mean(mean_change), sd_mean_change=sd(mean_change), mean_S_PC=mean(S_PC), sd_S_PC=sd(S_PC))
+
+#mean change
+Nmean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\posteriors_N_MeanChange.csv', comment.char='#')
 NmeanMean <- as.data.frame(colMeans(Nmean))%>%
   add_rownames('parameter')
 names(NmeanMean)[names(NmeanMean) == 'colMeans(Nmean)'] <- 'mean'
@@ -1260,15 +1262,35 @@ names(NmeanSD)[names(NmeanSD) == 'colSd(Nmean)'] <- 'sd'
 NmeanOverall <- NmeanMean%>%
   left_join(NmeanSD)
 
-meanNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=mean_change)) +
-  geom_point(size=5) +
-  # scale_x_log10() +
-  scale_y_continuous(name='Overall Community Difference') +
-  stat_function(fun=function(x){(0.2003873 + 0.003866423*x)}, size=5) +
-  xlab(expression(paste('N added (g', m^-2, ')'))) +
-  annotate('text', x=0.4, y=0.7, label='(c)', size=12, hjust='left')
 
-Nrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\n_richness_posteriors.csv', comment.char='#')
+# #get mean and sd to transform
+# nDataSummary <- nData%>%
+#   summarise(mean_change_mean=mean(mean_change), mean_change_sd=sd(mean_change), richness_mean=mean(S_PC), richness_sd=sd(S_PC), n_mean=mean(n), n_sd=sd(n), MAP_mean=mean(MAP), MAP_sd=sd(MAP))
+
+nDataTransform <- nData%>%
+  #transform mean change
+  mutate(mean_change_transform=((mean_change-mean(mean_change))/sd(mean_change)))%>%
+  #transform proportional richness change
+  mutate(S_PC_transform=((S_PC-mean(S_PC))/sd(S_PC)))%>%
+  #transform N treatment magnitude
+  mutate(n_transform=((n-mean(n))/sd(n)))%>%
+  #transform MAP
+  mutate(MAP_transform=((MAP-mean(MAP))/sd(MAP)))
+
+meanNPlotFinal <- ggplot(data=subset(nData), aes(x=n, y=mean_change, color=MAP)) +
+  geom_point(size=5) +
+  coord_cartesian(ylim=c(0,1)) +
+  scale_y_continuous(name='Compositional Response') +
+  stat_function(fun=function(x){(0.02512656 + 0.40341207*((1000-661.9362)/298.3696) + 0.54133077*(x-9.992142)/9.108662 + 0.28058497*((1000-661.9362)/298.3696)*(x-9.992142)/9.108662)*0.1658319+0.3699378}, size=5, color='#4793CF')  +
+  stat_function(fun=function(x){(0.02512656 + 0.40341207*((600-661.9362)/298.3696) + 0.54133077*(x-9.992142)/9.108662 + 0.28058497*((600-661.9362)/298.3696)*(x-9.992142)/9.108662)*0.1658319+0.3699378}, size=5, color='#2D5E88') +
+  stat_function(fun=function(x){(0.02512656 + 0.40341207*((200-661.9362)/298.3696) + 0.54133077*(x-9.992142)/9.108662 + 0.28058497*((200-661.9362)/298.3696)*(x-9.992142)/9.108662)*0.1658319+0.3699378}, size=5, color='#153049') +
+  xlab(expression(paste('N added (g', m^-2, ')'))) +
+  annotate('text', x=0.4, y=1.0, label='(d)', size=12, hjust='left') +
+  theme(legend.position=c(0.8,0.05), legend.justification=c(0,0), legend.title=element_text(size=24))
+
+
+#richness difference
+Nrichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\posteriors_N_Richness.csv', comment.char='#')
 NrichnessMean <- as.data.frame(colMeans(Nrichness))%>%
   add_rownames('parameter')
 names(NrichnessMean)[names(NrichnessMean) == 'colMeans(Nrichness)'] <- 'mean'
@@ -1278,58 +1300,61 @@ names(NrichnessSD)[names(NrichnessSD) == 'colSd(Nrichness)'] <- 'sd'
 NrichnessOverall <- NrichnessMean%>%
   left_join(NrichnessSD)
 
-richnessNPlotFinal <- ggplot(data=subset(rawTrt, n>0&plot_mani==1), aes(x=n, y=S_PC, color=MAP)) +
+richnessNPlotFinal <- ggplot(data=nData, aes(x=n, y=S_PC, color=MAP)) +
   geom_point(size=5) +
-  # scale_x_log10() +
-  scale_y_continuous(name='Richness Difference') +
-  stat_function(fun=function(x){(0.04821532 - 0.0001258736*1000 - 0.01420553*x + 0.00001198415*1000*x)}, size=5, color='#4793CF') +
-  stat_function(fun=function(x){(0.04821532 - 0.0001258736*600 - 0.01420553*x + 0.00001198415*600*x)}, size=5, color='#2D5E88') +
-  stat_function(fun=function(x){(0.04821532 - 0.0001258736*200 - 0.01420553*x + 0.00001198415*200*x)}, size=5, color='#153049') +
+  coord_cartesian(ylim=c(-0.8,1)) +
+  scale_y_continuous(name='Richness Response') +
+  stat_function(fun=function(x){(-0.005589416 + -0.562241618*(x-9.992142)/9.108662)*0.2548196-0.1338463}, size=5) +
   xlab('') +
-  annotate('text', x=0.4, y=0.7, label='(a)', size=12, hjust='left') +
-  theme(legend.position=c(0.02,0.02), legend.justification=c(0,0))
+  annotate('text', x=1.0, y=1.0, label='(a)', size=12, hjust='left') +
+  theme(legend.position='none')
 
 
-#H2O change (Figure S3)
-H2Omean <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_mean_posteriors.csv', comment.char='#')
-H2OmeanMean <- as.data.frame(colMeans(H2Omean))%>%
-  add_rownames('parameter')
-names(H2OmeanMean)[names(H2OmeanMean) == 'colMeans(H2Omean)'] <- 'mean'
-H2OmeanSD <- as.data.frame(colSd(H2Omean))%>%
-  add_rownames('parameter')
-names(H2OmeanSD)[names(H2OmeanSD) == 'colSd(H2Omean)'] <- 'sd'
-H2OmeanOverall <- H2OmeanMean%>%
-  left_join(H2OmeanSD)
+#drought change
+droData <- read.csv('ForAnalysis_allAnalysisH2Omag_drought.csv')
 
-meanH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=mean_change)) +
+meanDroPlotFinal <- ggplot(data=droData, aes(x=precip, y=mean_change)) +
   geom_point(size=5) +
+  coord_cartesian(ylim=c(0,1)) +
   scale_y_continuous(name='') +
-  stat_function(fun=function(x){(0.1820251 + 0.0002544999*x)}, size=5) +
   xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
-  annotate('text', x=-80, y=0.65, label='(d)', size=12, hjust='left')
+  annotate('text', x=-80, y=1, label='(e)', size=12, hjust='left')
 
-H2Orichness <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\nate_results\\manipulation\\h20_richness_posteriors.csv', comment.char='#')
-H2OrichnessMean <- as.data.frame(colMeans(H2Orichness))%>%
-  add_rownames('parameter')
-names(H2OrichnessMean)[names(H2OrichnessMean) == 'colMeans(H2Orichness)'] <- 'mean'
-H2OrichnessSD <- as.data.frame(colSd(H2Orichness))%>%
-  add_rownames('parameter')
-names(H2OrichnessSD)[names(H2OrichnessSD) == 'colSd(H2Orichness)'] <- 'sd'
-H2OrichnessOverall <- H2OrichnessMean%>%
-  left_join(H2OrichnessSD)
-
-richnessH2OPlotFinal <- ggplot(data=subset(rawTrt, precip!=0), aes(x=precip, y=S_PC)) +
+richnessDroPlotFinal <- ggplot(data=droData, aes(x=precip, y=S_PC, color=MAP)) +
   geom_point(size=5) +
+  coord_cartesian(ylim=c(-0.8,1)) +
   scale_y_continuous(name='') +
   xlab('') +
-  annotate('text', x=-80, y=0.6, label='(b)', size=12, hjust='left')
+  annotate('text', x=-80, y=1, label='(b)', size=12, hjust='left') +
+  theme(legend.position='none')
 
-pushViewport(viewport(layout=grid.layout(2,2)))
+
+#irrigation change
+irrData <- read.csv('ForAnalysis_allAnalysisH2Omag_irr.csv')
+
+meanIrrPlotFinal <- ggplot(data=irrData, aes(x=precip, y=mean_change)) +
+  geom_point(size=5) +
+  coord_cartesian(ylim=c(0,1)) +
+  scale_y_continuous(name='') +
+  xlab(expression(paste(H[2], 'O deviation from ambient (%)'))) +
+  annotate('text', x=0, y=1, label='(f)', size=12, hjust='left')
+
+richnessIrrPlotFinal <- ggplot(data=irrData, aes(x=precip, y=S_PC, color=MAP)) +
+  geom_point(size=5) +
+  coord_cartesian(ylim=c(-0.8,1)) +
+  scale_y_continuous(name='') +
+  xlab('') +
+  annotate('text', x=0, y=1, label='(c)', size=12, hjust='left') +
+  theme(legend.position='none')
+
+pushViewport(viewport(layout=grid.layout(2,3)))
 print(richnessNPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
 print(meanNPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 1))
-print(richnessH2OPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-print(meanH2OPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
-#export at 1800 x 1600
+print(richnessDroPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
+print(meanDroPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 2))
+print(richnessIrrPlotFinal, vp=viewport(layout.pos.row = 1, layout.pos.col = 3))
+print(meanIrrPlotFinal, vp=viewport(layout.pos.row = 2, layout.pos.col = 3))
+#export at 2700 x 1600
 
 
 
