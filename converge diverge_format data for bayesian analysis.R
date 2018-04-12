@@ -455,7 +455,7 @@ irrMag <- allAnalysisMag%>%
 # write.csv(irrMag, 'ForAnalysis_allAnalysisH2Omag_irr.csv')
 droMag <- allAnalysisMag%>%
   filter(precip<0)
-# write.csv(irrMag, 'ForAnalysis_allAnalysisH2Omag_drought.csv')
+# write.csv(droMag, 'ForAnalysis_allAnalysisH2Omag_drought.csv')
 
 #prelim figure
 ggplot(data=subset(Nmag, !(site_code %in% c('CAR', 'NANT', 'PIE', 'SERC'))), aes(x=n, y=mean_change)) +
