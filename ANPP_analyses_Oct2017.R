@@ -37,7 +37,7 @@ anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
 
 trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, treatment, trt_type7, trt_type6, trt_type)
+  select(site_project_comm, treatment, trt_type7, trt_type5, trt_type6, trt_type)
 
 #no longer using prism data
 # precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
