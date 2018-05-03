@@ -1,14 +1,15 @@
 library(tidyverse)
 library(ggplot2)
-library(lme4)
-library(car)
 library(gridExtra)
-library(gtools)
 library(gtable)
-library(grid)
-library(lmerTest)
-library(MuMIn)
-library(ppcor)
+
+# library(lme4)
+# library(car)
+# library(gtools)
+# library(grid)
+# library(lmerTest)
+# library(MuMIn)
+# library(ppcor)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -36,7 +37,7 @@ anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
 
 trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, treatment, trt_type5, trt_type6, trt_type)
+  select(site_project_comm, treatment, trt_type7, trt_type6, trt_type)
 
 #no longer using prism data
 # precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
@@ -170,53 +171,52 @@ logRRsp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calend
   select(-treatment.x)
 
 
-# # overall effect of vari --------------------------------------------------
-# cont_temp<-anpp_temp_cv%>%
-#   filter(plot_mani==0)%>%
-#   mutate(cont_temp_cv=anpp_temp_cv)%>%
-#   ungroup()%>%
-#   select(site_code, project_name, community_type, treatment, cont_temp_cv)%>%
-#   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-#   select(-treatment)
-#
-# trt_temp<-anpp_temp_cv%>%
-#   filter(plot_mani>0)
-#
-# tograph1_temp<-merge(cont_temp, trt_temp, by=c("site_code", 'project_name',"community_type"))%>%
-#   mutate(id=paste(site_code, project_name, community_type, sep="_"))
-#
-# tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment"))
-#
-# ##spatial
-#
-# cont_spat<-lastyr%>%
-#   filter(plot_mani==0)%>%
-#   mutate(cont_sp_cv=anpp_sp_cv)%>%
-#   ungroup()%>%
-#   select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
-#   select(-treatment)
-#
-# trt_spat<-lastyr%>%
-#   filter(plot_mani>0)
-#
-# tograph1_spat<-merge(cont_spat, trt_spat, by=c("site_project_comm","calendar_year"))
-#
-# tograph_spat<-merge(tograph1_spat, trtint, by=c("site_project_comm","treatment"))
-#
-# ###other year for spatial
-# cont_spatother<-other_year%>%
-#   filter(plot_mani==0)%>%
-#   mutate(cont_sp_cv=anpp_sp_cv)%>%
-#   ungroup()%>%
-#   select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
-#   select(-treatment)
-#
-# trt_spatother<-other_year%>%
-#   filter(plot_mani>0)
-# tograph1_otherspat<-merge(cont_spatother, trt_spatother, by=c("site_project_comm","calendar_year"))
-#
-# tograph_ottherspat<-merge(tograph1_otherspat, trtint, by=c("site_project_comm","treatment"))
-#
+# overall effect of vari --------------------------------------------------
+cont_temp<-anpp_temp_cv%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_temp_cv=anpp_temp_cv)%>%
+  ungroup()%>%
+  select(site_code, project_name, community_type, treatment, cont_temp_cv)%>%
+  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
+  select(-treatment)
+
+trt_temp<-anpp_temp_cv%>%
+  filter(plot_mani>0)
+
+tograph1_temp<-merge(cont_temp, trt_temp, by=c("site_code", 'project_name',"community_type"))%>%
+  mutate(id=paste(site_code, project_name, community_type, sep="_"))
+
+tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment"))
+
+##spatial
+
+cont_spat<-lastyr%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_sp_cv=anpp_sp_cv)%>%
+  ungroup()%>%
+  select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
+  select(-treatment)
+
+trt_spat<-lastyr%>%
+  filter(plot_mani>0)
+
+tograph1_spat<-merge(cont_spat, trt_spat, by=c("site_project_comm","calendar_year"))
+
+tograph_spat<-merge(tograph1_spat, trtint, by=c("site_project_comm","treatment"))
+###other year for spatial
+cont_spatother<-other_year%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_sp_cv=anpp_sp_cv)%>%
+  ungroup()%>%
+  select(site_project_comm, treatment, cont_sp_cv, calendar_year)%>%
+  select(-treatment)
+
+trt_spatother<-other_year%>%
+  filter(plot_mani>0)
+tograph1_otherspat<-merge(cont_spatother, trt_spatother, by=c("site_project_comm","calendar_year"))
+
+tograph_ottherspat<-merge(tograph1_otherspat, trtint, by=c("site_project_comm","treatment"))
+
 # ####just overall what are the effects of the treatments on spatial and temporal heterogeneity?
 # ##testing for differences
 # spat_bar<-tograph_spat%>%
@@ -344,26 +344,36 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 
 ###graphing this
 temp<-
-ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   geom_point(size=2)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Temporal CV Treatment Plots")+
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  annotate("text", x = 25, y = 95, label= "A", size = 8)
 
 spat<-
-ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv))+
+ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   geom_point(size=2)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Spatial CV Treatment Plots")+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  annotate("text", x = 10, y = 135, label= "B", size = 8)
 
-grid.arrange(temp, spat, ncol=2)
+grid.arrange(temp, spat, ncol=1)
 
 
 ###looking at three well replicated treatmetns.
@@ -416,33 +426,33 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # no p = 0.195
 
-tograph_temp_trt<-tograph_temp%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-
-tograph_spat_trt<-tograph_spat%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-temp_trt<-
-ggplot(data=tograph_temp_trt, aes(x=cont_temp_cv, y=anpp_temp_cv))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black")+
-  ylab("Temporal CV Treatment Plots")+
-  xlab("Temporal CV Control Plots")+
-  ggtitle("A) Temporal")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  facet_wrap(~trt_type6)
-spat_trt<-
-ggplot(data=tograph_spat_trt, aes(x=cont_sp_cv, y=anpp_sp_cv))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black")+
-  ylab("Spatial CV Treatment Plots")+
-  xlab("Spatial CV Control Plots")+
-  ggtitle("B) Spatial")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  facet_wrap(~trt_type6)
-
-grid.arrange(temp_trt, spat_trt, ncol=2)
+# tograph_temp_trt<-tograph_temp%>%
+#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+# 
+# tograph_spat_trt<-tograph_spat%>%
+#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+# temp_trt<-
+# ggplot(data=tograph_temp_trt, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+#   geom_point(size=2)+
+#   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+#   geom_smooth(method="lm", se=F, color="black")+
+#   ylab("Temporal CV Treatment Plots")+
+#   xlab("Temporal CV Control Plots")+
+#   ggtitle("A) Temporal")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   facet_wrap(~trt_type6)
+# spat_trt<-
+# ggplot(data=tograph_spat_trt, aes(x=cont_sp_cv, y=anpp_sp_cv))+
+#   geom_point(size=2)+
+#   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+#   geom_smooth(method="lm", se=F, color="black")+
+#   ylab("Spatial CV Treatment Plots")+
+#   xlab("Spatial CV Control Plots")+
+#   ggtitle("B) Spatial")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   facet_wrap(~trt_type6)
+# 
+# grid.arrange(temp_trt, spat_trt, ncol=2)
 
 ###spatial through time.
 # cont_spat_all<-anpp_spatial%>%
@@ -506,11 +516,12 @@ summary(lm(mlogrr ~ cont_temp_cv,
 
 ##graphing this
 
-  ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr))+
+  ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr, color = trt_type7))+
   geom_point(size=2)+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   ylab("Log RR")+
   xlab("Temporal CV Control Plots")+
-  geom_smooth(method="lm", color="black", se=F)+
+  geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 tograph_log_temp_trt<-tograph_log_temp%>%
@@ -656,12 +667,13 @@ slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #graphing diff
 
 map<-
-ggplot(data=slopes_tograph, aes(x=MAP, y=diff))+
+ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"))+
   geom_point(size=3)+
   ylab("Difference in Slopes")+
   xlab("Site MAP")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_text(x=275, y=1.6, label="B", size=8)
+  annotate("text", x=275, y=1.6, label="B", size=8)
 
 control<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=c_est))+
@@ -677,8 +689,8 @@ ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
   ylab("")+
   ylab("Difference in Slopes")+
   #theme(axis.text.x=element_text(angle=45, hjust=1))+
-  scale_fill_manual(values=c("black", "lightgray","gray","darkgray"))+
-  xlab("Treatment")+
+  scale_fill_manual(values=c("black", "orange","green3","blue"))+
+  xlab("GCD Treatment")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=0.245, label="*", size=8)+
