@@ -2,8 +2,11 @@ library(tidyverse)
 library(ggplot2)
 library(gridExtra)
 library(gtable)
+library(devtools)
+install_github("NCEAS/codyn", ref = github_pull(83))
+library(codyn)
+library(lme4)
 
-# library(lme4)
 # library(car)
 # library(gtools)
 # library(grid)
@@ -26,7 +29,7 @@ anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
 
 site_info<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, MAP, MAT)
+  select(site_project_comm, MAP, MAT, rrich)
 
 anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
   select(-X)%>%
@@ -727,6 +730,79 @@ ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   facet_wrap(~trt_type5, ncol=5, scales="free")
 
+
+
+# Biodiversity effects ----------------------------------------------------
+#plot level temporal anpp
+anpp_temp_cv_plot<-all_anpp_dat%>%
+  group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
+  summarize(anpp_temp_mean=mean(anpp, na.rm=T),
+            anpp_temp_sd=sd(anpp, na.rm=T),
+            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
+  mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
+
+anpp_spc<-all_anpp_dat%>%
+  select(site_project_comm)%>%
+  unique()
+
+#read in community data
+community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  right_join(anpp_spc)
+
+#get richness for each plot
+spc<-unique(community$site_project_comm)
+rich_even<-data.frame()
+
+for (i in 1:length(spc)){
+  subset<-community%>%
+    filter(site_project_comm==spc[i])
+  
+  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
+  out$site_project_comm<-spc[i]
+  
+  rich_even<-rbind(rich_even, out)
+}
+
+ave_rich<-rich_even%>%
+  group_by(site_project_comm, plot_id)%>%
+  summarize(richness = mean(richness))%>%
+  left_join(anpp_temp_cv_plot)
+
+#1) recreate figures from Yann 2014 Nature paper of NutNet data
+
+#test relationship
+model_control<-lmer(anpp_temp_cv ~ richness +
+       (richness | site_code / project_name / community_type),
+     data = subset(ave_rich, plot_mani==0))
+
+summary(model_control) 
+#t-value is less than 2, so probably not significant.
+
+model_treatment<-lmer(anpp_temp_cv ~ richness +
+                (richness | site_code / project_name / community_type/treatment),
+              data = subset(ave_rich, plot_mani!=0))
+
+summary(model_treatment) 
+#not sure how to interpret this
+
+controls<-
+ggplot(data=subset(ave_rich, plot_mani==0), aes(x = richness, y = anpp_temp_cv, color = site_project_comm))+
+  geom_point()+
+  xlab("Plot Richness")+
+  ylab("Temporal CV of ANPP")+
+  ggtitle("Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+treated<-
+  ggplot(data=subset(ave_rich, plot_mani!=0), aes(x = richness, y = anpp_temp_cv, color = site_project_comm))+
+  geom_point()+
+  xlab("Plot Richness")+
+  ylab("Temporal CV of ANPP")+
+  ggtitle("Treated Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+
+grid.arrange(controls, treated, ncol=2)
 
 
 
