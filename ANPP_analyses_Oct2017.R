@@ -623,12 +623,12 @@ MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph)
 
 summary(MAP_diff)
 
-#yes sig effect. p = 0.003
+#yes sig effect. p = 0.049
 
 #try without MAERC
 MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"))
 summary(MAP_diff)
-#yes, still sig. p = 0.005
+#yes, still sig. p = 0.049
 
 
 #overall ttest
@@ -804,6 +804,125 @@ treated<-
 
 grid.arrange(controls, treated, ncol=2)
 
+#2) recreate Yann 2015 Science paper results
+control_rich_stabiltiy<-ave_rich%>%
+  filter(plot_mani==0)%>%
+  group_by(site_project_comm)%>%
+  summarize(cont_rich = mean(richness),
+            cont_tempcv = mean(anpp_temp_cv),
+            cont_temp_mean = mean(anpp_temp_mean),
+            cont_temp_sd = mean(anpp_temp_sd))
+
+stability_logrr<-ave_rich%>%
+  filter(plot_mani > 0)%>%
+  left_join(control_rich_stabiltiy)%>%
+  mutate(log_stability = log(anpp_temp_mean/cont_temp_mean) - log(anpp_temp_sd/cont_temp_sd),
+         log_rich = log(richness/cont_rich))%>%
+  left_join(trtint)
+
+ggplot(data = stability_logrr, aes(x = log_rich, y = log_stability, color = trt_type7))+
+  geom_point()+
+  geom_smooth(aes(group = trt_type7), method = 'lm', se = F)+
+  geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
+
+
+model_treatment<-lmer(log_stability ~ log_rich +
+                        (richness | site_code / project_name / community_type/treatment),
+                      data = stability_logrr)
+summary(model_treatment)
+
+
+
+ggplot(data = subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability, color = trt_type6))+
+  geom_point()+
+  geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
+  geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
+
+ggplot(data = subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability, color = trt_type6))+
+  geom_point()+
+  geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
+  geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
+
+
+###can I recreate Yann's paper?
+
+cdr_e001.2<-all_anpp_dat%>%
+  filter(project_name == "e001"| project_name == "e002")%>%
+  filter(calendar_year < 2005)%>%
+  group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
+  summarize(anpp_temp_mean=mean(anpp, na.rm=T),
+            anpp_temp_sd=sd(anpp, na.rm=T),
+            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
+  mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
+
+cdr_biocon<-all_anpp_dat%>%
+  filter(project_name == "BioCON")%>%
+  filter(calendar_year < 2012)%>%
+  group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
+  summarize(anpp_temp_mean=mean(anpp, na.rm=T),
+            anpp_temp_sd=sd(anpp, na.rm=T),
+            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
+  mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
+
+cdr_anpp<-rbind(cdr_e001.2, cdr_biocon)
+
+#read in community data
+community_e001.2<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  filter(project_name == "e001"| project_name == "e002")%>%
+  filter(calendar_year < 2005)
+
+community_biocon<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  filter(project_name == "BioCON")%>%
+  filter(calendar_year < 2012)
+
+community_all<-rbind(community_biocon,community_e001.2)
+
+#get richness for each plot
+spc<-unique(community_all$site_project_comm)
+cdr_rich_even<-data.frame()
+
+for (i in 1:length(spc)){
+  subset<-community_all%>%
+    filter(site_project_comm==spc[i])
+  
+  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
+  out$site_project_comm<-spc[i]
+  
+  cdr_rich_even<-rbind(cdr_rich_even, out)
+}
+
+cdr_ave_rich<-cdr_rich_even%>%
+  group_by(site_project_comm, plot_id)%>%
+  summarize(richness = mean(richness))%>%
+  left_join(cdr_anpp)
+
+cdr_control_rich_stabiltiy<-cdr_ave_rich%>%
+  filter(plot_mani==0)%>%
+  group_by(site_project_comm)%>%
+  summarize(cont_rich = mean(richness),
+            cont_tempcv = mean(anpp_temp_cv),
+            cont_temp_mean = mean(anpp_temp_mean),
+            cont_temp_sd= mean(anpp_temp_sd))
+
+cdr_stability_logrr<-cdr_ave_rich%>%
+  filter(plot_mani > 0)%>%
+  left_join(cdr_control_rich_stabiltiy)%>%
+  mutate(trt = ifelse(treatment == "N_X", "N4", ifelse(treatment == "N_C","N10 CO2", ifelse(treatment == "X_C", "CO2", ifelse(treatment == "8"|treatment == "8_f_u_n", "N27", ifelse(treatment==1|treatment == "1_f_u_n", "MultNut", "N9"))))))%>%
+  mutate(log_stability = (log(anpp_temp_mean/cont_temp_mean) - log(anpp_temp_sd/cont_temp_sd)),
+         log_rich = log(richness/cont_rich),
+         id = paste(site_project_comm, treatment, sep = "::"))
+
+boxplot<-cdr_stability_logrr%>%
+  group_by(trt)%>%
+  summarise(log_stability = mean(log_stability))
+
+ggplot(data = cdr_stability_logrr, aes(x = log_rich, y = log_stability, color = trt))+
+  geom_point()+
+  geom_smooth(aes(group = trt), method = 'lm', se = F)
 
 
 # figure for SEM paper ----------------------------------------------------
