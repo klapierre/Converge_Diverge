@@ -521,7 +521,7 @@ summary(lm(mlogrr ~ cont_temp_cv,
   ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr, color = trt_type7))+
   geom_point(size=2)+
   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  ylab("Log RR")+
+  ylab("Change in ANPP (Log RR ANPP)")+
   xlab("Temporal CV Control Plots")+
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -733,6 +733,151 @@ ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
 
 
 # Biodiversity effects ----------------------------------------------------
+#project-treatment level temporal anpp
+
+#getting log RR of temporal CV
+cont_cv<-anpp_temp_cv%>%
+  filter(plot_mani==0)%>%
+  rename(cont_temp_cv = anpp_temp_cv)%>%
+  ungroup()%>%
+  select(-plot_mani, -treatment)
+  
+logRR_cv<-anpp_temp_cv%>%
+  filter(plot_mani!=0)%>%
+  left_join(cont_cv)%>%
+  mutate(logRR_cv = log(anpp_temp_cv/cont_temp_cv))%>%
+  mutate(site_project_comm = paste(site_code, project_name, community_type, sep = "_"))
+
+#getting richness change
+anpp_spc<-all_anpp_dat%>%
+  select(site_project_comm)%>%
+  unique()
+
+#read in community data
+community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  right_join(anpp_spc)
+
+#get richness for each plot
+spc<-unique(community$site_project_comm)
+rich_even<-data.frame()
+
+for (i in 1:length(spc)){
+  subset<-community%>%
+    filter(site_project_comm==spc[i])
+  
+  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
+  out$site_project_comm<-spc[i]
+  
+  rich_even<-rbind(rich_even, out)
+}
+
+trt<-community%>%
+  select(site_project_comm, plot_id, treatment)%>%
+  unique
+plot_mani<-all_anpp_dat%>%
+  select(site_project_comm, treatment, plot_mani)%>%
+  unique
+
+ave_rich<-rich_even%>%
+  left_join(trt)%>%
+  group_by(site_project_comm, plot_id, treatment)%>%
+  summarize(richness = mean(richness))%>%
+  ungroup()%>%
+  group_by(site_project_comm, treatment)%>%
+  summarize(richness = mean(richness))%>%
+  right_join(plot_mani)
+
+
+cont_rich<-ave_rich%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_rich = richness)%>%
+  select(-plot_mani, -treatment, -richness)
+
+logRR_rich<-ave_rich%>%
+  filter(plot_mani != 0)%>%
+  left_join(cont_rich)%>%
+  mutate(logRR_rich = log(richness/cont_rich))
+ 
+###relationship between change in richness and change in variabilty
+cv_rich<-logRR_rich%>%
+  left_join(logRR_cv)%>%
+  left_join(trtint)
+
+#overall
+summary(lm(logRR_cv~logRR_rich, data = cv_rich)) # bad relatinoship but sig.
+
+##treatments seperately
+summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Nitrogen"))) #not sig.
+summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrients")))#not sig
+summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
+
+
+ggplot(data = cv_rich, aes(x = logRR_rich, y = logRR_cv, color = trt_type7))+
+  geom_point()+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_point(size=2)+
+  geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
+  xlab('Change in Richness (Log RR Richness)')+
+  ylab('Change in Temporal Variability of ANPP (Log RR CV)')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)
+
+###looking into composition change
+###doing for composition change - Not going to present this, I think it does not enhance the paper at all. 
+#get composition change
+# spc<-unique(community$site_project_comm)
+# delta_comp<-data.frame()
+# 
+# for (i in 1:length(spc)){
+#   subset<-community%>%
+#     filter(site_project_comm==spc[i])
+# 
+#   out<-multivariate_change(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id', treatment = 'treatment', species.var = 'genus_species')
+#   out$site_project_comm<-spc[i]
+# 
+#   delta_comp<-rbind(delta_comp, out)
+# }
+# ave_comp<-delta_comp%>%
+#   group_by(site_project_comm, treatment)%>%
+#   summarize(comp_change = mean(composition_change))%>%
+#   separate(site_project_comm, into=c("site_code", 'project_name', 'community_type'), sep = "_", remove = F)%>%
+#   left_join(plot_mani)
+# 
+# control_comp<-ave_comp%>%
+#   filter(plot_mani==0)%>%
+#   mutate(cont_comp = comp_change)%>%
+#   select(-comp_change, -treatment, -plot_mani)
+# 
+# comp_cv<-ave_comp%>%
+#   filter(plot_mani > 0)%>%
+#   left_join(control_comp)%>%
+#   mutate(logRR_comp = log(comp_change/cont_comp))%>%
+#   left_join(logRR_cv)%>%
+#   left_join(trtint)
+# 
+# summary(lm(logRR_cv~logRR_comp, data = comp_cv))
+# 
+# 
+# ggplot(data = comp_cv, aes(x = logRR_comp, y = logRR_cv, color = trt_type7))+
+#   geom_point()+
+#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)+
+#   scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+#   geom_point(size=2)+
+#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Water"), method="lm", se=F, color="blue", size = 1)+
+#   xlab('Change in Composition')+
+#   ylab('Change in Temporal Stabilty')+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
+# biodiversity effect using stabilty recreating Yanns paper ---------------
+
+
 #plot level temporal anpp
 anpp_temp_cv_plot<-all_anpp_dat%>%
   group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
