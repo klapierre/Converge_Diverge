@@ -3,7 +3,6 @@ library(ggplot2)
 library(gridExtra)
 library(gtable)
 library(devtools)
-install_github("NCEAS/codyn", ref = github_pull(83))
 library(codyn)
 library(lme4)
 # library(gtools)
@@ -184,7 +183,8 @@ precip_vari<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   select(site_code, project_name, community_type, calendar_year, precip_mm)%>%
   unique()%>%
   group_by(site_code, project_name, community_type)%>%
-  summarize(varppt=var(precip_mm))
+  summarize(varppt=var(precip_mm),
+            sdppt=sd(precip_mm))
 
 # overall effect of vari --------------------------------------------------
 cont_temp<-anpp_temp_cv%>%
@@ -358,40 +358,6 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # yes p < 0.001
 
-###graphing this
-temp<-
-ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Temporal CV Treatment Plots")+
-  xlab("Temporal CV Control Plots")+
-  ggtitle("Temporal")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  annotate("text", x = 25, y = 95, label= "A", size = 8)
-
-spat<-
-ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Spatial CV Treatment Plots")+
-  xlab("Spatial CV Control Plots")+
-  ggtitle("Spatial")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  annotate("text", x = 10, y = 135, label= "B", size = 8)
-
-grid.arrange(temp, spat, ncol=1)
-
-
 ###looking at three well replicated treatmetns.
 #nitrogen - temporal
 temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Nitrogen"))
@@ -441,6 +407,106 @@ my.df <- summary(spat.lm)$df[2]
 t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # no p = 0.195
+
+
+###further investigating the temporal relationship
+##is there a relationship with SD or mean?
+summary(lm(cont_temp_cv~cont_temp_mean, data = tograph_temp)) #sig
+summary(lm(cont_temp_cv~cont_temp_sd, data = tograph_temp)) #sig
+summary(lm(anpp_temp_cv~anpp_temp_mean, data = tograph_temp)) #not sig
+summary(lm(anpp_temp_cv~anpp_temp_sd, data = tograph_temp)) #sig
+
+
+
+###graphing this
+theme_set(theme_bw(14))
+temp<-
+ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_point(size=3)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
+  ylab("Temporal CV Treatment Plots")+
+  xlab("Temporal CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  annotate("text", x = 25, y = 100, label= "A", size = 6)
+
+theme_set(theme_bw(10))
+c_mean<-
+ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=cont_temp_cv))+
+  geom_point(size=2)+
+  ggtitle("Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_smooth(method="lm", se=F, color="black", size = 1)+
+  xlab("Mean ANPP")+
+  ylab("CV of ANPP")+
+  annotate("text", x = 75, y = 88, label= "B", size = 6)+
+  annotate("text", x = 250, y = 80, label="Adj.~R^{2}==0.161 ",parse = TRUE, size = 4)
+c_sd<-
+ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=cont_temp_cv))+
+  geom_point(size=2)+
+  ggtitle("Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_smooth(method="lm", se=F, color="black", size = 1)+
+  xlab("SD of ANPP")+
+  ylab("CV of ANPP")+
+  annotate("text", x = 200, y = 85, label="Adj.~R^{2}==0.634 ",parse = TRUE, size = 4)
+t_mean<-
+ggplot(data=tograph_temp, aes(x=anpp_temp_mean, y=anpp_temp_cv))+
+  geom_point(size=2)+
+  ggtitle("Treatment Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  xlab("Mean ANPP")+
+  ylab("CV of ANPP")
+t_sd<-
+ggplot(data=tograph_temp, aes(x=anpp_temp_sd, y=anpp_temp_cv))+
+  geom_point(size=2)+
+  ggtitle("Treatment Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_smooth(method="lm", se=F, color="black", size = 1)+
+  xlab("Mean ANPP")+
+  ylab("CV of ANPP")+
+  annotate("text", x = 300, y = 95, label="Adj.~R^{2}==0.152 ",parse = TRUE, size = 4)
+
+small<-grid.arrange(c_mean, c_sd, t_mean, t_sd, ncol=2)
+
+grid.arrange(temp, small, ncol=1)
+
+#to appendix
+#spatail
+theme_set(theme_bw(14))
+ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_point(size=2)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
+  ylab("Spatial CV Treatment Plots")+
+  xlab("Spatial CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#role of precip vari and or anpp
+
+tograph_temp_color<-tograph_temp%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)
+
+ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdppt, size = manpp))+
+  geom_point()+
+  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation\n SD")+
+  scale_size(name = "Average ANPP", range = c(1,6))+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  ylab("Temporal CV Treatment Plots")+
+  xlab("Temporal CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
 
 # tograph_temp_trt<-tograph_temp%>%
 #   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
@@ -496,122 +562,6 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 #   xlab("Treatment Year")+
 #   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-###further investigating the temporal relationship
-##is there a relationship with SD or mean?
-temp.sd.lm<-lm(anpp_temp_sd~cont_temp_sd, data=tograph_temp)
-my.slope <- summary(temp.sd.lm)$coef["cont_temp_sd", c("Estimate", "Std. Error")]
-my.df <- summary(temp.sd.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
-
-temp.mn.lm<-lm(anpp_temp_mean~cont_temp_mean, data=tograph_temp)
-my.slope <- summary(temp.mn.lm)$coef["cont_temp_mean", c("Estimate", "Std. Error")]
-my.df <- summary(temp.mn.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# no not sig.
-
-tograph_temp_color<-tograph_temp%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-
-##graphing a more detailed figure 1
-#color by mean anpp and size by precip vari
-ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = varppt, size = manpp))+
-  geom_point()+
-  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation\n Variance")+
-  scale_size(name = "Average ANPP", range = c(1,6))+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  ylab("Temporal CV Treatment Plots")+
-  xlab("Temporal CV Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-#sd relationship
-temp_sd<-
-ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=anpp_temp_sd))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  ylab("Temporal SD Treatment Plots")+
-  xlab("Temporal SD Control Plots")+
-  ggtitle("Temporal SD")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-#mean relationship
-temp_mean<-ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=anpp_temp_mean))+
-  geom_point(size=2)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  ylab("Temporal Mean Treatment Plots")+
-  xlab("Temporal Mean Control Plots")+
-  ggtitle("Temporal Mean")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-grid.arrange(temp_sd, temp_mean, ncol = 2)
-
-
-###kims way of doing the figure
-theme_set(theme_bw(10))
-tograph_temp_controls<-tograph_temp%>%
-  select(site_project_comm, cont_temp_cv, cont_temp_mean, cont_temp_sd)%>%
-  unique()%>%
-  arrange(cont_temp_cv)%>%
-  mutate(spc = factor(site_project_comm, as.character(site_project_comm)))
-
-tograph_temp_trts<-tograph_temp%>%
-  select(site_project_comm, treatment, anpp_temp_cv, anpp_temp_mean, anpp_temp_sd)%>%
-  unique()%>%
-  mutate(id = paste(site_project_comm, treatment, sep = "_"))%>%
-  arrange(anpp_temp_cv)%>%
-  mutate(spc = factor(id, as.character(id)))
-
-cont_cv<-
-ggplot(data = tograph_temp_controls, aes(x = reorder(site_project_comm, cont_temp_cv), y = cont_temp_cv))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal CV of Controls")+
-  ylab("Temporal CV")+
-  xlab("Experiment")+
-  theme(axis.text.x = element_text(angle = 90))
-cont_sd<-
-ggplot(data = tograph_temp_controls, aes(x = spc, y = cont_temp_sd))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal SD of Controls")+
-  ylab("Temporal SD")+
-  xlab("Experiment")+
-  theme(axis.text.x = element_text(angle = 90))
-cont_mean<-
-ggplot(data = tograph_temp_controls, aes(x = spc, y = cont_temp_mean))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal Mean of Controls")+
-  ylab("Temporal Mean")+
-  xlab("Experiment")+
-  theme(axis.text.x = element_text(angle = 90))
-
-trt_cv<-
-  ggplot(data = tograph_temp_trts, aes(x = reorder(id, anpp_temp_cv), y = anpp_temp_cv))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal CV of Treatments")+
-  ylab("Temporal CV")+
-  xlab("Experiment and Treatment")+
-  theme(axis.text.x = element_text(angle = 90))
-trt_sd<-
-  ggplot(data = tograph_temp_trts, aes(x = spc, y = anpp_temp_sd))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal SD of Treatments")+
-  ylab("Temporal SD")+
-  xlab("Experiment and Treatment")+
-  theme(axis.text.x = element_text(angle = 90))
-trt_mean<-
-  ggplot(data = tograph_temp_trts, aes(x = spc, y = anpp_temp_mean))+
-  geom_bar(stat = "identity")+
-  ggtitle("Temporal Mean of Treatments")+
-  ylab("Temporal Mean")+
-  xlab("Experiment and Treatment")+
-  theme(axis.text.x = element_text(angle = 90))
-
-
-grid.arrange(cont_cv, trt_cv, cont_sd, trt_sd, cont_mean, trt_mean, ncol=2)
 
 # Q2 what is the relationship between control CV and effect size? ---------
 
@@ -655,26 +605,12 @@ summary(lm(mlogrr ~ cont_temp_cv,
 
 ##graphing this
 
-  ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr, color = trt_type7))+
+  ggplot(data=tograph_log_temp, aes(x=cont_temp_cv, y=mlogrr))+
   geom_point(size=2)+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   ylab("Change in ANPP (Log RR ANPP)")+
   xlab("Temporal CV Control Plots")+
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-figSD<- ggplot(data=tograph_log_temp, aes(x=cont_temp_sd, y=mlogrr))+
-    geom_point(size=2)+
-    ylab("Change in ANPP (Log RR ANPP)")+
-    xlab("Temporal SD Control Plots")+
-    geom_smooth(method="lm", color="black", se=F, size = 2)+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-figMean<- ggplot(data=tograph_log_temp, aes(x=cont_temp_mean, y=mlogrr))+
-    geom_point(size=2)+
-    ylab("Change in ANPP (Log RR ANPP)")+
-    xlab("Temporal Mean Control Plots")+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-grid.arrange(figSD, figMean, ncol = 2)
 
 # tograph_log_temp_trt<-tograph_log_temp%>%
 #   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
@@ -890,7 +826,7 @@ cont_cv<-anpp_temp_cv%>%
   filter(plot_mani==0)%>%
   rename(cont_temp_cv = anpp_temp_cv)%>%
   ungroup()%>%
-  select(-plot_mani, -treatment)
+  select(-plot_mani, -treatment, -anpp_temp_mean, -anpp_temp_sd)
   
 logRR_cv<-anpp_temp_cv%>%
   filter(plot_mani!=0)%>%
@@ -925,10 +861,10 @@ for (i in 1:length(spc)){
 
 trt<-community%>%
   select(site_project_comm, plot_id, treatment)%>%
-  unique
+  unique()
 plot_mani<-all_anpp_dat%>%
   select(site_project_comm, treatment, plot_mani)%>%
-  unique
+  unique()
 
 ave_rich<-rich_even%>%
   left_join(trt)%>%
@@ -967,7 +903,7 @@ summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Water")))#n
 ggplot(data = cv_rich, aes(x = logRR_rich, y = logRR_cv, color = trt_type7))+
   geom_point()+
   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_point(size=2)+
+  geom_point(size=3)+
   geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
   xlab('Change in Richness (Log RR Richness)')+
   ylab('Change in Temporal Variability of ANPP (Log RR CV)')+
@@ -1029,41 +965,41 @@ ggplot(data = cv_rich, aes(x = logRR_rich, y = logRR_cv, color = trt_type7))+
 
 
 #plot level temporal anpp
-anpp_temp_cv_plot<-all_anpp_dat%>%
-  group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
-  summarize(anpp_temp_mean=mean(anpp, na.rm=T),
-            anpp_temp_sd=sd(anpp, na.rm=T),
-            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
-  mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
-
-anpp_spc<-all_anpp_dat%>%
-  select(site_project_comm)%>%
-  unique()
-
-#read in community data
-community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
-  select(-X)%>%
-  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
-  right_join(anpp_spc)
-
-#get richness for each plot
-spc<-unique(community$site_project_comm)
-rich_even<-data.frame()
-
-for (i in 1:length(spc)){
-  subset<-community%>%
-    filter(site_project_comm==spc[i])
-  
-  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
-  out$site_project_comm<-spc[i]
-  
-  rich_even<-rbind(rich_even, out)
-}
-
-ave_rich<-rich_even%>%
-  group_by(site_project_comm, plot_id)%>%
-  summarize(richness = mean(richness))%>%
-  left_join(anpp_temp_cv_plot)
+# anpp_temp_cv_plot<-all_anpp_dat%>%
+#   group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
+#   summarize(anpp_temp_mean=mean(anpp, na.rm=T),
+#             anpp_temp_sd=sd(anpp, na.rm=T),
+#             anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
+#   mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
+# 
+# anpp_spc<-all_anpp_dat%>%
+#   select(site_project_comm)%>%
+#   unique()
+# 
+# #read in community data
+# community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+#   select(-X)%>%
+#   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+#   right_join(anpp_spc)
+# 
+# #get richness for each plot
+# spc<-unique(community$site_project_comm)
+# rich_even<-data.frame()
+# 
+# for (i in 1:length(spc)){
+#   subset<-community%>%
+#     filter(site_project_comm==spc[i])
+#   
+#   out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
+#   out$site_project_comm<-spc[i]
+#   
+#   rich_even<-rbind(rich_even, out)
+# }
+# 
+# ave_rich<-rich_even%>%
+#   group_by(site_project_comm, plot_id)%>%
+#   summarize(richness = mean(richness))%>%
+#   left_join(anpp_temp_cv_plot)
 
 #1) recreate figures from Yann 2014 Nature paper of NutNet data - not going to present this, there is nothing here.
 
@@ -1084,104 +1020,104 @@ ave_rich<-rich_even%>%
 # 
 # grid.arrange(controls, treated, ncol=2)
 # 
-#2) recreate Yann 2015 Science paper results
-control_rich_stabiltiy<-ave_rich%>%
-  filter(plot_mani==0)%>%
-  group_by(site_project_comm)%>%
-  summarize(cont_rich = mean(richness),
-            cont_tempcv = mean(anpp_temp_cv),
-            cont_temp_mean = mean(anpp_temp_mean),
-            cont_temp_sd = mean(anpp_temp_sd))
-
-stability_logrr<-ave_rich%>%
-  filter(plot_mani > 0)%>%
-  left_join(control_rich_stabiltiy)%>%
-  mutate(log_stability = log(anpp_temp_mean/cont_temp_mean) - log(anpp_temp_sd/cont_temp_sd),
-         log_rich = log(richness/cont_rich))%>%
-  left_join(trtint)
-
-ggplot(data = stability_logrr, aes(x = log_rich, y = log_stability, color = trt_type7))+
-  geom_point()+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_point(size=2)+
-  xlab('Change in Richness')+
-  ylab('Change in Temporal Stabilty')+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_vline(xintercept = 0)+
-  geom_hline(yintercept = 0)
-
-model_all<-lmer(log_stability ~ log_rich+
-                        (0+log_rich | site_code /project_name/community_type/trt_type6),
-                      data = stability_logrr)
-summary(model_all)
-
-#seperate GCD
-model_mult<-lmer(log_stability ~ log_rich+
-                  (0+log_rich | site_code /project_name/community_type),
-                data = subset(stability_logrr, trt_type7 == "Multiple Nutrients"))
-summary(model_mult)
-model_water<-lmer(log_stability ~ log_rich+
-                   (0+log_rich | site_code /project_name/community_type),
-                 data = subset(stability_logrr, trt_type7 == "Water"))
-summary(model_water)
-
-model_nit<-lmer(log_stability ~ log_rich+
-                   (0+log_rich | site_code /project_name/community_type),
-                 data = subset(stability_logrr, trt_type7 == "Nitrogen"))
-summary(model_nit)
-
-
-##doing this for each site with 2 or more experiments
-#cdr
-model_cdr<-lmer(log_stability ~ log_rich+
-                  (0 + log_rich | project_name /community_type/trt_type6),
-                data =subset(stability_logrr, site_code == "CDR"))
-summary(model_cdr)
-
-#recreating CDR
-model_cdr<-lmer(log_stability ~ log_rich*trt_type6+
-                  (0 + log_rich|project_name),
-                data =subset(stability_logrr, site_code == "CDR"))
-summary(model_cdr)
-Anova(model_cdr) #yes 
-
-ggplot(data=subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability))+
-  geom_point()
-
-#sev
-model_sev<-lmer(log_stability ~ log_rich+
-                  (log_rich | project_name/community_type/trt_type6),
-                data =subset(stability_logrr, site_code == "SEV"))
-summary(model_sev)
-
-
-#knz
-model_knz<-lmer(log_stability ~ log_rich+
-                  (log_rich | project_name/community_type/trt_type6),
-                data =subset(stability_logrr, site_code == "KNZ"))
-summary(model_knz)
-
-#recreating konza - yes I generally get the same pattern Mendy is publishing
-summary(lm(log_stability ~ log_rich,
-        data =subset(stability_logrr, site_code == "KNZ")))
-ggplot(data=subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability))+
-  geom_point()
-
-#serc
-model_serc<-lmer(log_stability ~ log_rich+
-                  (log_rich | project_name / community_type/trt_type6),
-                data =subset(stability_logrr, site_code == "SERC"))
-summary(model_serc)
-
-ggplot(data = subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability, color = trt_type6))+
-  geom_point()+
-  geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
-  geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
-
-ggplot(data = subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability, color = trt_type6))+
-  geom_point()+
-  geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
-  geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
+# #2) recreate Yann 2015 Science paper results
+# control_rich_stabiltiy<-ave_rich%>%
+#   filter(plot_mani==0)%>%
+#   group_by(site_project_comm)%>%
+#   summarize(cont_rich = mean(richness),
+#             cont_tempcv = mean(anpp_temp_cv),
+#             cont_temp_mean = mean(anpp_temp_mean),
+#             cont_temp_sd = mean(anpp_temp_sd))
+# 
+# stability_logrr<-ave_rich%>%
+#   filter(plot_mani > 0)%>%
+#   left_join(control_rich_stabiltiy)%>%
+#   mutate(log_stability = log(anpp_temp_mean/cont_temp_mean) - log(anpp_temp_sd/cont_temp_sd),
+#          log_rich = log(richness/cont_rich))%>%
+#   left_join(trtint)
+# 
+# ggplot(data = stability_logrr, aes(x = log_rich, y = log_stability, color = trt_type7))+
+#   geom_point()+
+#   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+#   geom_point(size=2)+
+#   xlab('Change in Richness')+
+#   ylab('Change in Temporal Stabilty')+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   geom_vline(xintercept = 0)+
+#   geom_hline(yintercept = 0)
+# 
+# model_all<-lmer(log_stability ~ log_rich+
+#                         (0+log_rich | site_code /project_name/community_type/trt_type6),
+#                       data = stability_logrr)
+# summary(model_all)
+# 
+# #seperate GCD
+# model_mult<-lmer(log_stability ~ log_rich+
+#                   (0+log_rich | site_code /project_name/community_type),
+#                 data = subset(stability_logrr, trt_type7 == "Multiple Nutrients"))
+# summary(model_mult)
+# model_water<-lmer(log_stability ~ log_rich+
+#                    (0+log_rich | site_code /project_name/community_type),
+#                  data = subset(stability_logrr, trt_type7 == "Water"))
+# summary(model_water)
+# 
+# model_nit<-lmer(log_stability ~ log_rich+
+#                    (0+log_rich | site_code /project_name/community_type),
+#                  data = subset(stability_logrr, trt_type7 == "Nitrogen"))
+# summary(model_nit)
+# 
+# 
+# ##doing this for each site with 2 or more experiments
+# #cdr
+# model_cdr<-lmer(log_stability ~ log_rich+
+#                   (0 + log_rich | project_name /community_type/trt_type6),
+#                 data =subset(stability_logrr, site_code == "CDR"))
+# summary(model_cdr)
+# 
+# #recreating CDR
+# model_cdr<-lmer(log_stability ~ log_rich*trt_type6+
+#                   (0 + log_rich|project_name),
+#                 data =subset(stability_logrr, site_code == "CDR"))
+# summary(model_cdr)
+# Anova(model_cdr) #yes 
+# 
+# ggplot(data=subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability))+
+#   geom_point()
+# 
+# #sev
+# model_sev<-lmer(log_stability ~ log_rich+
+#                   (log_rich | project_name/community_type/trt_type6),
+#                 data =subset(stability_logrr, site_code == "SEV"))
+# summary(model_sev)
+# 
+# 
+# #knz
+# model_knz<-lmer(log_stability ~ log_rich+
+#                   (log_rich | project_name/community_type/trt_type6),
+#                 data =subset(stability_logrr, site_code == "KNZ"))
+# summary(model_knz)
+# 
+# #recreating konza - yes I generally get the same pattern Mendy is publishing
+# summary(lm(log_stability ~ log_rich,
+#         data =subset(stability_logrr, site_code == "KNZ")))
+# ggplot(data=subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability))+
+#   geom_point()
+# 
+# #serc
+# model_serc<-lmer(log_stability ~ log_rich+
+#                   (log_rich | project_name / community_type/trt_type6),
+#                 data =subset(stability_logrr, site_code == "SERC"))
+# summary(model_serc)
+# 
+# ggplot(data = subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability, color = trt_type6))+
+#   geom_point()+
+#   geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
+#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
+# 
+# ggplot(data = subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability, color = trt_type6))+
+#   geom_point()+
+#   geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
+#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
 
 ##3 doing this in a way that makes more sense to me. Instead of doing this for each plot, I would just have one dot for each treatment in each experiment, like all the other figures are done.
 
