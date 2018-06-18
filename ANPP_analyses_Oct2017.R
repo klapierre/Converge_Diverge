@@ -55,7 +55,7 @@ precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_prec
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
 
-# clean up anp data --------------------------------------------------------
+# clean up anpp data --------------------------------------------------------
 
 
 ###select the data to use
@@ -138,7 +138,9 @@ anpp_temp_cv<-all_anpp_dat%>%
             anpp_temp_sd=sd(anpp, na.rm=T),
             anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
   group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarize(anpp_temp_cv=mean(anpp_temp_cv, na.rm=T))
+  summarize(anpp_temp_cv=mean(anpp_temp_cv, na.rm=T),
+            anpp_temp_mean = mean(anpp_temp_mean, na.rm = T),
+            anpp_temp_sd = mean(anpp_temp_sd, na.rm = T))
 
 ##calculating effect sizes
 meandat<-all_anpp_dat%>%
@@ -171,13 +173,27 @@ logRRsp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calend
   ungroup()%>%
   select(-treatment.x)
 
+ave_prod<-all_anpp_dat%>%
+  filter(plot_mani==0)%>%
+  group_by(site_code, project_name, community_type, calendar_year)%>%
+  summarize(anpp = mean(anpp))%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(manpp = mean(anpp))
+
+precip_vari<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
+  select(site_code, project_name, community_type, calendar_year, precip_mm)%>%
+  unique()%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(varppt=var(precip_mm))
 
 # overall effect of vari --------------------------------------------------
 cont_temp<-anpp_temp_cv%>%
   filter(plot_mani==0)%>%
-  mutate(cont_temp_cv=anpp_temp_cv)%>%
+  mutate(cont_temp_cv=anpp_temp_cv, 
+         cont_temp_mean= anpp_temp_mean,
+         cont_temp_sd = anpp_temp_sd)%>%
   ungroup()%>%
-  select(site_code, project_name, community_type, treatment, cont_temp_cv)%>%
+  select(site_code, project_name, community_type, treatment, cont_temp_cv, cont_temp_mean,cont_temp_sd)%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(-treatment)
 
@@ -342,7 +358,6 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # yes p < 0.001
 
-
 ###graphing this
 temp<-
 ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
@@ -481,6 +496,122 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 #   xlab("Treatment Year")+
 #   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
+###further investigating the temporal relationship
+##is there a relationship with SD or mean?
+temp.sd.lm<-lm(anpp_temp_sd~cont_temp_sd, data=tograph_temp)
+my.slope <- summary(temp.sd.lm)$coef["cont_temp_sd", c("Estimate", "Std. Error")]
+my.df <- summary(temp.sd.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+# yes p < 0.001
+
+temp.mn.lm<-lm(anpp_temp_mean~cont_temp_mean, data=tograph_temp)
+my.slope <- summary(temp.mn.lm)$coef["cont_temp_mean", c("Estimate", "Std. Error")]
+my.df <- summary(temp.mn.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+# no not sig.
+
+tograph_temp_color<-tograph_temp%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)
+
+##graphing a more detailed figure 1
+#color by mean anpp and size by precip vari
+ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = varppt, size = manpp))+
+  geom_point()+
+  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation\n Variance")+
+  scale_size(name = "Average ANPP", range = c(1,6))+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  ylab("Temporal CV Treatment Plots")+
+  xlab("Temporal CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#sd relationship
+temp_sd<-
+ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=anpp_temp_sd))+
+  geom_point(size=2)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  ylab("Temporal SD Treatment Plots")+
+  xlab("Temporal SD Control Plots")+
+  ggtitle("Temporal SD")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#mean relationship
+temp_mean<-ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=anpp_temp_mean))+
+  geom_point(size=2)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  ylab("Temporal Mean Treatment Plots")+
+  xlab("Temporal Mean Control Plots")+
+  ggtitle("Temporal Mean")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+grid.arrange(temp_sd, temp_mean, ncol = 2)
+
+
+###kims way of doing the figure
+theme_set(theme_bw(10))
+tograph_temp_controls<-tograph_temp%>%
+  select(site_project_comm, cont_temp_cv, cont_temp_mean, cont_temp_sd)%>%
+  unique()%>%
+  arrange(cont_temp_cv)%>%
+  mutate(spc = factor(site_project_comm, as.character(site_project_comm)))
+
+tograph_temp_trts<-tograph_temp%>%
+  select(site_project_comm, treatment, anpp_temp_cv, anpp_temp_mean, anpp_temp_sd)%>%
+  unique()%>%
+  mutate(id = paste(site_project_comm, treatment, sep = "_"))%>%
+  arrange(anpp_temp_cv)%>%
+  mutate(spc = factor(id, as.character(id)))
+
+cont_cv<-
+ggplot(data = tograph_temp_controls, aes(x = reorder(site_project_comm, cont_temp_cv), y = cont_temp_cv))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal CV of Controls")+
+  ylab("Temporal CV")+
+  xlab("Experiment")+
+  theme(axis.text.x = element_text(angle = 90))
+cont_sd<-
+ggplot(data = tograph_temp_controls, aes(x = spc, y = cont_temp_sd))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal SD of Controls")+
+  ylab("Temporal SD")+
+  xlab("Experiment")+
+  theme(axis.text.x = element_text(angle = 90))
+cont_mean<-
+ggplot(data = tograph_temp_controls, aes(x = spc, y = cont_temp_mean))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal Mean of Controls")+
+  ylab("Temporal Mean")+
+  xlab("Experiment")+
+  theme(axis.text.x = element_text(angle = 90))
+
+trt_cv<-
+  ggplot(data = tograph_temp_trts, aes(x = reorder(id, anpp_temp_cv), y = anpp_temp_cv))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal CV of Treatments")+
+  ylab("Temporal CV")+
+  xlab("Experiment and Treatment")+
+  theme(axis.text.x = element_text(angle = 90))
+trt_sd<-
+  ggplot(data = tograph_temp_trts, aes(x = spc, y = anpp_temp_sd))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal SD of Treatments")+
+  ylab("Temporal SD")+
+  xlab("Experiment and Treatment")+
+  theme(axis.text.x = element_text(angle = 90))
+trt_mean<-
+  ggplot(data = tograph_temp_trts, aes(x = spc, y = anpp_temp_mean))+
+  geom_bar(stat = "identity")+
+  ggtitle("Temporal Mean of Treatments")+
+  ylab("Temporal Mean")+
+  xlab("Experiment and Treatment")+
+  theme(axis.text.x = element_text(angle = 90))
+
+
+grid.arrange(cont_cv, trt_cv, cont_sd, trt_sd, cont_mean, trt_mean, ncol=2)
 
 # Q2 what is the relationship between control CV and effect size? ---------
 
@@ -492,7 +623,13 @@ tograph_log_temp<-merge(tograph_log2_temp, site_info, by="site_project_comm")
 #test the relationship between control_temp and effect size
 
 temp_effect <- lm(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
-summary(temp_effect)
+summary(temp_effect) #sig
+
+temp_effect <- lm(mlogrr ~ cont_temp_sd, data = tograph_log_temp)
+summary(temp_effect)#sig
+
+temp_effect <- lm(mlogrr ~ cont_temp_mean, data = tograph_log_temp)
+summary(temp_effect)#not sig
 
 # map_effect <- lm(cont_temp_cv ~ MAP, data = tograph_log_temp)
 # summary(map_effect)
@@ -526,16 +663,29 @@ summary(lm(mlogrr ~ cont_temp_cv,
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-tograph_log_temp_trt<-tograph_log_temp%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+figSD<- ggplot(data=tograph_log_temp, aes(x=cont_temp_sd, y=mlogrr))+
+    geom_point(size=2)+
+    ylab("Change in ANPP (Log RR ANPP)")+
+    xlab("Temporal SD Control Plots")+
+    geom_smooth(method="lm", color="black", se=F, size = 2)+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+figMean<- ggplot(data=tograph_log_temp, aes(x=cont_temp_mean, y=mlogrr))+
+    geom_point(size=2)+
+    ylab("Change in ANPP (Log RR ANPP)")+
+    xlab("Temporal Mean Control Plots")+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+grid.arrange(figSD, figMean, ncol = 2)
 
-ggplot(data=tograph_log_temp_trt, aes(x=cont_temp_cv, y=mlogrr))+
-  geom_point(size=2)+
-  ylab("Log RR")+
-  xlab("Temporal CV Control Plots")+
-  #geom_smooth(method="lm", color="black", se=F)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  facet_wrap(~trt_type6)
+# tograph_log_temp_trt<-tograph_log_temp%>%
+#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+# 
+# ggplot(data=tograph_log_temp_trt, aes(x=cont_temp_cv, y=mlogrr))+
+#   geom_point(size=2)+
+#   ylab("Log RR")+
+#   xlab("Temporal CV Control Plots")+
+#   #geom_smooth(method="lm", color="black", se=F)+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   facet_wrap(~trt_type6)
 
 # precipitation analysis --------------------------------------------------
 
