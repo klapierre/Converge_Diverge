@@ -409,14 +409,30 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 # no p = 0.195
 
 
-###further investigating the temporal relationship
-##is there a relationship with SD or mean?
-summary(lm(cont_temp_cv~cont_temp_mean, data = tograph_temp)) #sig
-summary(lm(cont_temp_cv~cont_temp_sd, data = tograph_temp)) #sig
-summary(lm(anpp_temp_cv~anpp_temp_mean, data = tograph_temp)) #not sig
-summary(lm(anpp_temp_cv~anpp_temp_sd, data = tograph_temp)) #sig
+###further investigating the relationships
+##temporal
+##does the relationship with SD or mean differ from 1:1
+temp.sd.lm<-lm(anpp_temp_sd~cont_temp_sd, data=tograph_temp)
+my.slope <- summary(temp.sd.lm)$coef["cont_temp_sd", c("Estimate", "Std. Error")]
+my.df <- summary(temp.sd.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+#yes P < 0.001
 
+temp.mean.lm<-lm(anpp_temp_mean~cont_temp_mean, data=tograph_temp)
+my.slope <- summary(temp.mean.lm)$coef["cont_temp_mean", c("Estimate", "Std. Error")]
+my.df <- summary(temp.mean.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+#no not sig differen.t
 
+##spatail
+spat.sd.lm<-lm(anpp_sp_sd~cont_sp_sd, data=tograph_spat)
+my.slope <- summary(spat.sd.lm)$coef["cont_sp_sd", c("Estimate", "Std. Error")]
+my.df <- summary(spat.sd.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+# yes p < 0.001
 
 ###graphing this
 theme_set(theme_bw(14))
@@ -431,29 +447,34 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7)
   geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Temporal CV Treatment Plots")+
   xlab("Temporal CV Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  annotate("text", x = 25, y = 100, label= "A", size = 6)
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 theme_set(theme_bw(10))
-c_mean<-
-ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=cont_temp_cv))+
-  geom_point(size=2)+
-  ggtitle("Control Plots")+
+c_t_mean<-
+ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=anpp_temp_mean))+
+  geom_point()+
+  ggtitle("Mean")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_smooth(method="lm", se=F, color="black", size = 1)+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")+
-  annotate("text", x = 75, y = 88, label= "B", size = 6)+
-  annotate("text", x = 250, y = 80, label="Adj.~R^{2}==0.161 ",parse = TRUE, size = 4)
-c_sd<-
-ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=cont_temp_cv))+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  xlab("Mean ANPP of Control Plots")+
+  ylab("Mean ANPP of Treatent Plots")
+c_t_sd<-
+ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=anpp_temp_sd))+
   geom_point(size=2)+
-  ggtitle("Control Plots")+
+  ggtitle("Standard Deviation")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_smooth(method="lm", se=F, color="black", size = 1)+
-  xlab("SD of ANPP")+
-  ylab("CV of ANPP")+
-  annotate("text", x = 200, y = 85, label="Adj.~R^{2}==0.634 ",parse = TRUE, size = 4)
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  xlab("SD of Control Plot ANPP")+
+  ylab("CV of Treatment Plot ANPP")
+
+small<-grid.arrange(c_t_mean, c_t_sd, ncol=2)
+
+grid.arrange(temp, small, ncol=1)
+
+###old no longer using. but don't delete yet.
+  
 t_mean<-
 ggplot(data=tograph_temp, aes(x=anpp_temp_mean, y=anpp_temp_cv))+
   geom_point(size=2)+
@@ -471,9 +492,6 @@ ggplot(data=tograph_temp, aes(x=anpp_temp_sd, y=anpp_temp_cv))+
   ylab("CV of ANPP")+
   annotate("text", x = 300, y = 95, label="Adj.~R^{2}==0.152 ",parse = TRUE, size = 4)
 
-small<-grid.arrange(c_mean, c_sd, t_mean, t_sd, ncol=2)
-
-grid.arrange(temp, small, ncol=1)
 
 #to appendix
 #spatail
