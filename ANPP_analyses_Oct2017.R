@@ -433,7 +433,15 @@ my.slope <- summary(spat.sd.lm)$coef["cont_sp_sd", c("Estimate", "Std. Error")]
 my.df <- summary(spat.sd.lm)$df[2]
 t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+# not sig
+
+spat.mean.lm<-lm(anpp_sp_mean~cont_sp_mean, data=tograph_spat)
+my.slope <- summary(spat.mean.lm)$coef["cont_sp_mean", c("Estimate", "Std. Error")]
+my.df <- summary(spat.mean.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+#sig
+
 
 ###graphing this
 theme_set(theme_bw(14))
@@ -474,34 +482,6 @@ small<-grid.arrange(c_t_mean, c_t_sd, ncol=2)
 
 grid.arrange(temp, small, ncol=1)
 
-###old no longer using. but don't delete yet.
-  
-t_mean<-
-ggplot(data=tograph_temp, aes(x=anpp_temp_mean, y=anpp_temp_cv))+
-  geom_point(size=2)+
-  ggtitle("Treatment Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")
-t_sd<-
-ggplot(data=tograph_temp, aes(x=anpp_temp_sd, y=anpp_temp_cv))+
-  geom_point(size=2)+
-  ggtitle("Treatment Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")+
-  annotate("text", x = 300, y = 95, label="Adj.~R^{2}==0.152 ",parse = TRUE, size = 4)
-
-
-
-###further investigating the spatial relationship
-##is there a relationship with SD or mean?
-summary(lm(cont_sp_cv~cont_sp_mean, data = tograph_spat)) # not sig
-summary(lm(cont_sp_cv~cont_sp_sd, data = tograph_spat)) # not sig
-summary(lm(anpp_sp_cv~anpp_sp_mean, data = tograph_spat)) #not sig
-summary(lm(anpp_sp_cv~anpp_sp_sd, data = tograph_spat)) #sig
-
 
 #graphing this
 #spatail
@@ -509,7 +489,7 @@ theme_set(theme_bw(14))
 spat_cv<-
 ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_point(size=2)+
+  geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_smooth(method="lm", se=F, color="black", size = 2)+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
@@ -517,44 +497,30 @@ ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Spatial CV Treatment Plots")+
   xlab("Spatial CV Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+  
-  annotate("text", x = 10, y = 150, label= "A", size = 6)
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 theme_set(theme_bw(10))
-c_mean<-
-  ggplot(data=tograph_spat, aes(x=cont_sp_mean, y=cont_sp_cv))+
+c_t_spat_mean<-
+  ggplot(data=tograph_spat, aes(x=cont_sp_mean, y=anpp_sp_mean))+
   geom_point(size=2)+
-  ggtitle("Control Plots")+
+  ggtitle("Mean")+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")+
-  annotate("text", x = 75, y = 65, label= "B", size = 6)
+  xlab("Mean ANPP of Control Plots")+
+  ylab("Mean ANPP of Treatment Plots")
 
-c_sd<-
-  ggplot(data=tograph_spat, aes(x=cont_sp_sd, y=cont_sp_cv))+
+c_t_spat_sd<-
+  ggplot(data=tograph_spat, aes(x=cont_sp_sd, y=anpp_sp_sd))+
   geom_point(size=2)+
-  ggtitle("Control Plots")+
+  ggtitle("Standard Deviation")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("SD of ANPP")+
-  ylab("CV of ANPP")
-t_mean<-
-  ggplot(data=tograph_spat, aes(x=anpp_sp_mean, y=anpp_sp_cv))+
-  geom_point(size=2)+
-  ggtitle("Treatment Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")
-t_sd<-
-  ggplot(data=tograph_spat, aes(x=anpp_sp_sd, y=anpp_sp_cv))+
-  geom_point(size=2)+
-  ggtitle("Treatment Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
-  xlab("Mean ANPP")+
-  ylab("CV of ANPP")+
-  annotate("text", x = 250, y = 140, label="Adj.~R^{2}==0.356 ",parse = TRUE, size = 4)
+  xlab("SD of Control Plot ANPP")+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  ylab("SD of Treatment Plot ANPP")
 
-small<-grid.arrange(c_mean, c_sd, t_mean, t_sd, ncol=2)
+small<-grid.arrange(c_t_spat_mean, c_t_spat_sd, ncol=2)
 
 grid.arrange(spat_cv, small, ncol=1)
 
@@ -563,7 +529,11 @@ grid.arrange(spat_cv, small, ncol=1)
 tograph_temp_color<-tograph_temp%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
+tograph_spat_color<-tograph_spat%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)
 
+temp<-
 ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdppt, size = manpp))+
   geom_point()+
   scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation S.D.")+
@@ -572,9 +542,22 @@ ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdpp
   geom_smooth(method="lm", se=F, color="black", size = 2)+
   ylab("Temporal CV Treatment Plots")+
   xlab("Temporal CV Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Temporal")
 
+spat<-
+  ggplot(data=tograph_spat_color, aes(x=cont_sp_cv, y=anpp_sp_cv, color = sdppt, size = manpp))+
+  geom_point()+
+  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation S.D.")+
+  scale_size(name = "Average ANPP", range = c(1,6))+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_smooth(method="lm", se=F, color="black", size = 2)+
+  ylab("Spatial CV Treatment Plots")+
+  xlab("Spatial CV Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("Spatial")
 
+grid.arrange(temp, spat, ncol=1)
 
 # tograph_temp_trt<-tograph_temp%>%
 #   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
@@ -677,14 +660,16 @@ tograph_log_temp2<-  tograph_log_temp%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
-  ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mlogrr, color = sdppt, size = manpp))+
+responsiveness<-
+  ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mlogrr, color = cont_temp_sd, size = cont_temp_mean))+
     geom_point()+
-    scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation S.D.")+
-    scale_size(name = "Average ANPP", range = c(1,6))+
+    scale_color_gradient(low = "lightblue", high = "darkred", name = "S.D. of ANPP")+
+    scale_size(name = "Mean ANPP", range = c(1,6))+
   ylab("Change in ANPP (Log RR ANPP)")+
   xlab("Temporal CV Control Plots")+
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 
 # tograph_log_temp_trt<-tograph_log_temp%>%
 #   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
