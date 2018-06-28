@@ -7,6 +7,7 @@ setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge di
 
 #meghan's
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
+setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
 library(tidyr)
 library(dplyr)
@@ -87,18 +88,17 @@ SampleIntensity<-species%>%
   summarize(SampleIntensity=length(SampleIntensity))%>%#how many plots were sampled over the course of the experiment
   tbl_df()
 
-exp<-SampleIntensity%>%
-  select(exp)
+exp<-unique(SampleIntensity$exp)
 
 
 #create empty dataframe for loop
 estimatedRichness=data.frame(row.names=1) 
 
-for(i in 1:length(exp$exp)) {
+for(i in 1:length(exp)) {
 
   #creates a dataset for each unique experiment
   subset <- species%>%
-    filter(exp==exp$exp[i])%>%
+    filter(exp==exp[i])%>%
     select(exp, plot_id, calendar_year, genus_species, abundance)
   
   #transpose data into wide form
@@ -110,7 +110,7 @@ for(i in 1:length(exp$exp)) {
   chao <- as.data.frame(as.matrix(pool$chao))#this gives us estimated richness from 1-X samples
   chao$aveChao<-rowMeans(chao)
   chao$n<-row.names(chao)
-  chao$exp<-exp$exp[i]
+  chao$exp<-exp[i]
   chao2<-chao%>%
     select(exp,n, aveChao)
   
