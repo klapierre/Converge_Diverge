@@ -5,6 +5,7 @@ library(gtable)
 library(devtools)
 library(codyn)
 library(lme4)
+library(vegan)
 # library(gtools)
 # library(grid)
 library(lmerTest)
@@ -140,7 +141,7 @@ anpp_temp_cv<-all_anpp_dat%>%
             anpp_temp_mean = mean(anpp_temp_mean, na.rm = T),
             anpp_temp_sd = mean(anpp_temp_sd, na.rm = T))
 
-##calculating effect sizes
+##calculating log RR ANPP
 meandat<-all_anpp_dat%>%
   group_by(site_project_comm, plot_mani, treatment, treatment_year, calendar_year)%>%
   summarize(manpp=mean(anpp))
@@ -162,15 +163,41 @@ logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
-logRRsp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
-  mutate(logrr=abs(log(manpp/contanpp)))%>%
-  group_by(site_project_comm, treatment.x, calendar_year)%>%
-  summarise(mlogrr=mean(logrr),
-            sdlogrr=sd(logrr))%>%
-  mutate(treatment=treatment.x)%>%
-  ungroup()%>%
-  select(-treatment.x)
+###calculating log RR CV, SD, Mean
+#temporal
+mcontrol_temp<-anpp_temp_cv%>%
+  filter(plot_mani==0)%>%
+  mutate(c_cv=anpp_temp_cv,
+         c_sd=anpp_temp_sd,
+         c_mean=anpp_temp_mean)%>%
+  select(-anpp_temp_cv, -anpp_temp_sd, -anpp_temp_mean, -plot_mani)
 
+mtrt_temp<-anpp_temp_cv%>%
+  filter(plot_mani!=0)
+
+logRR_temp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","community_type"))%>%
+  mutate(logrr_cv=log(anpp_temp_cv/c_cv),
+         logrr_sd=log(anpp_temp_sd/c_sd),
+         logrr_mean =log(anpp_temp_mean/c_mean))
+
+#spatial
+mcontrol_sp<-lastyr%>%
+  filter(plot_mani==0)%>%
+  mutate(c_cv=anpp_sp_cv,
+         c_sd=anpp_sp_sd,
+         c_mean=anpp_sp_mean)%>%
+  select(-anpp_sp_cv, -anpp_sp_sd, -anpp_sp_mean, -plot_mani)
+
+mtrt_sp<-lastyr%>%
+  filter(plot_mani!=0)
+
+logRR_sp<-merge(mtrt_sp, mcontrol_sp, by=c("site_code","project_name","community_type"))%>%
+  mutate(logrr_cv=log(anpp_sp_cv/c_cv),
+         logrr_sd=log(anpp_sp_sd/c_sd),
+         logrr_mean =log(anpp_sp_mean/c_mean))
+
+
+##getting average projection and precip vari
 ave_prod<-all_anpp_dat%>%
   filter(plot_mani==0)%>%
   group_by(site_code, project_name, community_type, calendar_year)%>%
@@ -409,42 +436,26 @@ t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # no p = 0.195
 
+###variance partitioning
+var_temp<- varpart(logRR_temp$logrr_cv, 
+                                ~logrr_mean, 
+                                ~logrr_sd, 
+                                data = logRR_temp)
 
-###further investigating the relationships
-##temporal
-##does the relationship with SD or mean differ from 1:1
-temp.sd.lm<-lm(anpp_temp_sd~cont_temp_sd, data=tograph_temp)
-my.slope <- summary(temp.sd.lm)$coef["cont_temp_sd", c("Estimate", "Std. Error")]
-my.df <- summary(temp.sd.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-#yes P < 0.001
+### venn diagram plot
+plot(var_temp)
 
-temp.mean.lm<-lm(anpp_temp_mean~cont_temp_mean, data=tograph_temp)
-my.slope <- summary(temp.mean.lm)$coef["cont_temp_mean", c("Estimate", "Std. Error")]
-my.df <- summary(temp.mean.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-#no not sig differen.t
 
-##spatail
-spat.sd.lm<-lm(anpp_sp_sd~cont_sp_sd, data=tograph_spat)
-my.slope <- summary(spat.sd.lm)$coef["cont_sp_sd", c("Estimate", "Std. Error")]
-my.df <- summary(spat.sd.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# not sig
+var_sp<- varpart(logRR_sp$logrr_cv, 
+                   ~logrr_mean, 
+                   ~logrr_sd, 
+                   data = logRR_sp)
 
-spat.mean.lm<-lm(anpp_sp_mean~cont_sp_mean, data=tograph_spat)
-my.slope <- summary(spat.mean.lm)$coef["cont_sp_mean", c("Estimate", "Std. Error")]
-my.df <- summary(spat.mean.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-#sig
+### venn diagram plot
+plot(var_sp)
 
 
 ###graphing this
-theme_set(theme_bw(14))
 temp<-
 ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
@@ -456,36 +467,10 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7)
   geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Temporal CV Treatment Plots")+
   xlab("Temporal CV Control Plots")+
+  ggtitle("Temporal CV")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-theme_set(theme_bw(10))
-c_t_mean<-
-ggplot(data=tograph_temp, aes(x=cont_temp_mean, y=anpp_temp_mean))+
-  geom_point()+
-  ggtitle("Mean")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  xlab("Mean ANPP of Control Plots")+
-  ylab("Mean ANPP of Treatent Plots")
-c_t_sd<-
-ggplot(data=tograph_temp, aes(x=cont_temp_sd, y=anpp_temp_sd))+
-  geom_point(size=2)+
-  ggtitle("Standard Deviation")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  xlab("SD of Control Plot ANPP")+
-  ylab("CV of Treatment Plot ANPP")
-
-small<-grid.arrange(c_t_mean, c_t_sd, ncol=2)
-
-grid.arrange(temp, small, ncol=1)
-
-
-#graphing this
 #spatail
-theme_set(theme_bw(14))
 spat_cv<-
 ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
@@ -497,32 +482,10 @@ ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Spatial CV Treatment Plots")+
   xlab("Spatial CV Control Plots")+
+  ggtitle("Spatial CV")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-theme_set(theme_bw(10))
-c_t_spat_mean<-
-  ggplot(data=tograph_spat, aes(x=cont_sp_mean, y=anpp_sp_mean))+
-  geom_point(size=2)+
-  ggtitle("Mean")+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("Mean ANPP of Control Plots")+
-  ylab("Mean ANPP of Treatment Plots")
-
-c_t_spat_sd<-
-  ggplot(data=tograph_spat, aes(x=cont_sp_sd, y=anpp_sp_sd))+
-  geom_point(size=2)+
-  ggtitle("Standard Deviation")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  xlab("SD of Control Plot ANPP")+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  ylab("SD of Treatment Plot ANPP")
-
-small<-grid.arrange(c_t_spat_mean, c_t_spat_sd, ncol=2)
-
-grid.arrange(spat_cv, small, ncol=1)
+grid.arrange(temp, spat_cv, ncol=1)
 
 #role of precip vari and or anpp
 
@@ -536,7 +499,7 @@ tograph_spat_color<-tograph_spat%>%
 temp<-
 ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdppt, size = manpp))+
   geom_point()+
-  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation S.D.")+
+  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation SD")+
   scale_size(name = "Average ANPP", range = c(1,6))+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_smooth(method="lm", se=F, color="black", size = 2)+
@@ -548,7 +511,7 @@ ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdpp
 spat<-
   ggplot(data=tograph_spat_color, aes(x=cont_sp_cv, y=anpp_sp_cv, color = sdppt, size = manpp))+
   geom_point()+
-  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation S.D.")+
+  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation SD")+
   scale_size(name = "Average ANPP", range = c(1,6))+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_smooth(method="lm", se=F, color="black", size = 2)+
@@ -653,6 +616,15 @@ summary(lm(mlogrr ~ cont_temp_cv,
 summary(lm(mlogrr ~ cont_temp_cv, 
            data = subset(tograph_log_temp, trt_type6=="Multiple Nutrients")))
 
+var_temp_controls<- varpart(tograph_log_temp$cont_temp_cv, 
+                   ~cont_temp_mean, 
+                   ~cont_temp_sd, 
+                   data = tograph_log_temp)
+
+### venn diagram plot
+plot(var_temp_controls)
+
+
 
 ##graphing this
 
@@ -663,12 +635,15 @@ tograph_log_temp2<-  tograph_log_temp%>%
 responsiveness<-
   ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mlogrr, color = cont_temp_sd, size = cont_temp_mean))+
     geom_point()+
-    scale_color_gradient(low = "lightblue", high = "darkred", name = "S.D. of ANPP")+
+    scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
     scale_size(name = "Mean ANPP", range = c(1,6))+
   ylab("Change in ANPP (Log RR ANPP)")+
   xlab("Temporal CV Control Plots")+
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+
 
 
 # tograph_log_temp_trt<-tograph_log_temp%>%
