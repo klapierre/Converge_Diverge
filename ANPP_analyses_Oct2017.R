@@ -141,7 +141,7 @@ anpp_temp_cv<-all_anpp_dat%>%
             anpp_temp_mean = mean(anpp_temp_mean, na.rm = T),
             anpp_temp_sd = mean(anpp_temp_sd, na.rm = T))
 
-##calculating log RR ANPP
+##calculating RR ANPP
 meandat<-all_anpp_dat%>%
   group_by(site_project_comm, plot_mani, treatment, treatment_year, calendar_year)%>%
   summarize(manpp=mean(anpp))
@@ -156,10 +156,12 @@ mtrt<-meandat%>%
 
 logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
   mutate(logrr=abs(log(manpp/contanpp)),
-         RR=((manpp-contanpp)/contanpp)*100)%>%
+         RR=((manpp-contanpp)/contanpp)*100,
+         RR2=manpp/contanpp)%>%
   group_by(site_project_comm, treatment.x)%>%
   summarise(mlogrr=mean(logrr),
-            mrr=sd(RR))%>%
+            mrr=sd(RR), 
+            mrr2=mean(RR2))%>%
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
@@ -178,7 +180,10 @@ mtrt_temp<-anpp_temp_cv%>%
 logRR_temp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","community_type"))%>%
   mutate(logrr_cv=log(anpp_temp_cv/c_cv),
          logrr_sd=log(anpp_temp_sd/c_sd),
-         logrr_mean =log(anpp_temp_mean/c_mean))
+         logrr_mean =log(anpp_temp_mean/c_mean),
+         rr_cv=anpp_temp_cv/c_cv,
+         rr_sd=anpp_temp_sd/c_sd,
+         rr_mean =anpp_temp_mean/c_mean)
 
 #spatial
 mcontrol_sp<-lastyr%>%
@@ -456,34 +461,41 @@ plot(var_sp)
 
 
 ###graphing this
+theme_set(theme_bw(30))
+
 temp<-
 ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_smooth(method="lm", se=F, color="black", size = 2)+
   geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
   geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Temporal CV Treatment Plots")+
+  ylab("Temporal CV Trt Plots")+
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal CV")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(10,100))+
+  scale_y_continuous(limits=c(10,100))
 
 #spatail
 spat_cv<-
 ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"),labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_smooth(method="lm", se=F, color="black", size = 2)+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Spatial CV Treatment Plots")+
+  ylab("Spatial CV Trt Plots")+
   xlab("Spatial CV Control Plots")+
   ggtitle("Spatial CV")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(0,151))+
+  scale_y_continuous(limits=c(0,151))
+
 
 grid.arrange(temp, spat_cv, ncol=1)
 
@@ -586,13 +598,13 @@ tograph_log_temp<-merge(tograph_log2_temp, site_info, by="site_project_comm")
 
 #test the relationship between control_temp and effect size
 
-temp_effect <- lm(mlogrr ~ cont_temp_cv, data = tograph_log_temp)
+temp_effect <- lm(mrr ~ cont_temp_cv, data = tograph_log_temp)
 summary(temp_effect) #sig
 
-temp_effect <- lm(mlogrr ~ cont_temp_sd, data = tograph_log_temp)
+temp_effect <- lm(mrr ~ cont_temp_sd, data = tograph_log_temp)
 summary(temp_effect)#sig
 
-temp_effect <- lm(mlogrr ~ cont_temp_mean, data = tograph_log_temp)
+temp_effect <- lm(mrr ~ cont_temp_mean, data = tograph_log_temp)
 summary(temp_effect)#not sig
 
 # map_effect <- lm(cont_temp_cv ~ MAP, data = tograph_log_temp)
@@ -633,11 +645,11 @@ tograph_log_temp2<-  tograph_log_temp%>%
   left_join(precip_vari)
 
 responsiveness<-
-  ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mlogrr, color = cont_temp_sd, size = cont_temp_mean))+
+  ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mrr, color = cont_temp_sd, size = cont_temp_mean))+
     geom_point()+
     scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
     scale_size(name = "Mean ANPP", range = c(1,6))+
-  ylab("Change in ANPP (Log RR ANPP)")+
+  ylab("Percent Difference in ANPP")+
   xlab("Temporal CV Control Plots")+
   geom_smooth(method="lm", color="black", se=F, size = 2)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -790,7 +802,7 @@ slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 
 map<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   ylab("Difference in Slopes")+
@@ -813,6 +825,7 @@ ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
   ylab("Difference in Slopes")+
   #theme(axis.text.x=element_text(angle=45, hjust=1))+
   scale_fill_manual(values=c("black", "orange","green3","blue"))+
+  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("GCD Treatment")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
@@ -865,7 +878,8 @@ cont_cv<-anpp_temp_cv%>%
 logRR_cv<-anpp_temp_cv%>%
   filter(plot_mani!=0)%>%
   left_join(cont_cv)%>%
-  mutate(logRR_cv = log(anpp_temp_cv/cont_temp_cv))%>%
+  mutate(logRR_cv = log(anpp_temp_cv/cont_temp_cv),
+         PC_cv = ((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)%>%
   mutate(site_project_comm = paste(site_code, project_name, community_type, sep = "_"))
 
 #getting richness change
@@ -918,7 +932,8 @@ cont_rich<-ave_rich%>%
 logRR_rich<-ave_rich%>%
   filter(plot_mani != 0)%>%
   left_join(cont_rich)%>%
-  mutate(logRR_rich = log(richness/cont_rich))
+  mutate(logRR_rich = log(richness/cont_rich),
+         PC_rich = ((richness-cont_rich)/cont_rich)*100)
  
 ###relationship between change in richness and change in variabilty
 cv_rich<-logRR_rich%>%
@@ -926,21 +941,21 @@ cv_rich<-logRR_rich%>%
   left_join(trtint)
 
 #overall
-summary(lm(logRR_cv~logRR_rich, data = cv_rich)) # bad relatinoship but sig.
+summary(lm(PC_cv~PC_rich, data = cv_rich)) # bad relatinoship but sig.
 
 ##treatments seperately
-summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Nitrogen"))) #not sig.
-summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrients")))#not sig
-summary(lm(logRR_cv~logRR_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
+summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Nitrogen"))) #not sig.
+summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrients")))#not sig
+summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
 
 
-ggplot(data = cv_rich, aes(x = logRR_rich, y = logRR_cv, color = trt_type7))+
+ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv, color = trt_type7))+
   geom_point()+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
-  xlab('Change in Richness (Log RR Richness)')+
-  ylab('Change in Temporal Variability of ANPP (Log RR CV)')+
+  xlab('Percent Difference in Richness')+
+  ylab('Percent Difference in Temporal\nVariability of ANPP ')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)+
   geom_hline(yintercept = 0)
