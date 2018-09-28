@@ -962,9 +962,9 @@ summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrient
 summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
 
 
-ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv))+
+ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv, color = trt_type7))+
   geom_point()+
-  #scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
   xlab('Percent Difference in Richness')+
