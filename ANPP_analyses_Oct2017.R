@@ -804,6 +804,7 @@ map<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
   scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
+  geom_smooth(method="lm", se=F, color="black", size = 1)+
   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   ylab("Difference in Slopes")+
   xlab("Site MAP")+
@@ -834,6 +835,18 @@ ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
   geom_text(x=0.6, y=0.24, label="A", size=8)
 
 grid.arrange(bar, map, ncol=2)
+
+bar_poster<-
+  ggplot(data=slopes_bar_overall, aes(x=trt_type6, y=mdiff))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Difference in Slopes")+
+  xlab("")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+
+  geom_text(x=1, y=0.255, label="*", size=8)
+
 
 # overall PC anpp ---------------------------------------------------------
 all_anpp_dat_mean<-all_anpp_dat%>%
@@ -949,9 +962,9 @@ summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrient
 summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
 
 
-ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv, color = trt_type7))+
+ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv))+
   geom_point()+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+  #scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
   xlab('Percent Difference in Richness')+
