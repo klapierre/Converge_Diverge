@@ -1,16 +1,10 @@
 library(tidyverse)
-library(ggplot2)
 library(gridExtra)
 library(gtable)
-library(devtools)
 library(codyn)
 library(lme4)
 library(vegan)
-# library(gtools)
-# library(grid)
 library(lmerTest)
-# library(MuMIn)
-# library(ppcor)
 library(lmodel2)
 library(MVN)
 
@@ -109,7 +103,7 @@ sites<-all_anpp_dat%>%
 #   select(site_project_comm, treatment)%>%
 #   unique
 
-# calculate temporal spatial cv and effect sizes ---------------------------------------
+# calculate temporal cv and effect sizes ---------------------------------------
 
 #Calculate temporal
 anpp_temp_cv<-all_anpp_dat%>%
@@ -168,7 +162,7 @@ logRR_temp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","com
 
 
 
-##getting average projection and precip vari
+##getting average production and precip vari
 ave_prod<-all_anpp_dat%>%
   filter(plot_mani==0)%>%
   group_by(site_code, project_name, community_type, calendar_year)%>%
@@ -256,17 +250,7 @@ tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment")
 
 
 ##t-test - do the slopes differ from 1?
-#Temporal control versus treatment
-# do the lines differ from a slope of 1?
-#this is the old way of doing it.
-# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp)
-# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-# my.df <- summary(temp.lm)$df[2]
-# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-# 2*pt(t_value_one, df=my.df) # two sided test
-# # yes p < 0.001
-
-#trying model 2 regression
+#model 2 regression
 #first check data is it bivariate normal?
 dat<-tograph_temp[,c(6,10)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
@@ -282,6 +266,26 @@ df<-93
 t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df)
 #yes p < 0.001
+
+##doing the same thing for SD not CV
+##t-test - do the slopes differ from 1?
+#model 2 regression
+#first check data is it bivariate normal?
+sddat<-tograph_temp[,c(8,12)]
+normal<-mvn(data=log(sddat), univariatePlot = "qqplot")#data are somewhat bivaiate normal
+
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#yes p < 0.001
+
 
 # ###looking at three well replicated treatmetns.
 # #nitrogen - temporal
@@ -300,15 +304,7 @@ df<-9
 t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df)
 #not sig.
-
-
-# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Nitrogen"))
-# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-# my.df <- summary(temp.lm)$df[2]
-# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-# 2*pt(t_value_one, df=my.df) # two sided test
-# # yes p = 0.0426
-# 
+ 
 # # nuts temporal
 subdat<-subset(subset(tograph_temp, trt_type6=="Multiple Nutrients"))
 dat<-subdat[,c(6,10)]
@@ -326,13 +322,7 @@ t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df)
 #not sig.
 
-# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Multiple Nutrients"))
-# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-# my.df <- summary(temp.lm)$df[2]
-# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-# 2*pt(t_value_one, df=my.df) # two sided test
-# # yes p = 0.003
-# 
+
 # #water temporal
 subdat<-subset(subset(tograph_temp, trt_type6=="Water"))
 dat<-subdat[,c(6,10)]
@@ -347,17 +337,9 @@ high<-model2.lm$confidence.intervals[2,5]
 se<-((high-low)/2)/2.24
 df<-5
 t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
+2*pt(t_value_one, df=df, lower=F)
 #not sig.
 
-# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Water"))
-# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-# my.df <- summary(temp.lm)$df[2]
-# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-# 2*pt(t_value_one, df=my.df) # two sided test
-# # # yes p = 1
-# 
-# 
 ###variance partitioning
 var_temp<- varpart(logRR_temp$logrr_cv, 
                                 ~logrr_mean, 
@@ -366,15 +348,6 @@ var_temp<- varpart(logRR_temp$logrr_cv,
 
 ### venn diagram plot
 plot(var_temp)
-
-
-var_sp<- varpart(logRR_sp$logrr_cv, 
-                   ~logrr_mean, 
-                   ~logrr_sd, 
-                   data = logRR_sp)
-
-### venn diagram plot
-plot(var_sp)
 
 
 ###graphing this
@@ -389,17 +362,11 @@ interceptm<-model2.lm$regression.results[2,2]
 
 temp<-
 ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
-  #scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  #geom_smooth(method = "lm", formula= "y ~ 0.4849907*x + 19.17157", se=F, color="black", size = 2)+
-  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Temporal CV Trt Plots")+
+    ylab("Temporal CV Trt Plots")+
   xlab("Temporal CV Control Plots")+
-  ggtitle("Temporal CV")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_x_continuous(limits=c(10,100))+
   scale_y_continuous(limits=c(10,100))
