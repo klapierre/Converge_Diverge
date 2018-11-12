@@ -12,11 +12,12 @@ library(lmerTest)
 # library(MuMIn)
 # library(ppcor)
 library(lmodel2)
+library(MVN)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
-theme_set(theme_bw(14)) 
+theme_set(theme_bw(12)) 
 
 #read in data
 
@@ -367,89 +368,178 @@ tograph_ottherspat<-merge(tograph1_otherspat, trtint, by=c("site_project_comm","
 ##t-test - do the slopes differ from 1?
 #Temporal control versus treatment
 # do the lines differ from a slope of 1?
-temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp)
-my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(temp.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+#this is the old way of doing it.
+# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=tograph_temp)
+# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(temp.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p < 0.001
 
-#trying RMA
-test.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=tograph_temp, nperm=99)
-my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(temp.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+#trying model 2 regression
+#first check data is it bivariate normal?
+dat<-tograph_temp[,c(6,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#yes p < 0.001
 
 
-#spatail control versus treatment
-# do the lines differ from a slope of 1?
-spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=tograph_spat)
-my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(spat.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+# #spatail control versus treatment
+# # do the lines differ from a slope of 1?
+# spat.lm<-lm(log(anpp_sp_cv)~log(cont_sp_cv), data=tograph_spat)
+# my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(spat.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p < 0.001
+
+spdat<-tograph_spat[,c(4,14)]
+normal<-mvn(data=log(spdat), univariatePlot = "qqplot")#logged data are bivariate normal
+
+model2.lm<-lmodel2(log(anpp_sp_cv)~log(cont_sp_cv), range.x = "relative", range.y = "relative", data=spdat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#no not sig.
 
 ###test another year for spatial data
 
-spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=tograph_ottherspat)
-my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(spat.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+# spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=tograph_ottherspat)
+# my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(spat.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p < 0.001
 
-###looking at three well replicated treatmetns.
-#nitrogen - temporal
-temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Nitrogen"))
-my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(temp.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p = 0.0426
+spdat<-tograph_ottherspat[,c(4,12)]
+normal<-mvn(data=log(spdat), univariatePlot = "qqplot")#logged data are bivariate normal
 
-# nuts temporal
-temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Multiple Nutrients"))
-my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(temp.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p = 0.003
+model2.lm<-lmodel2(log(anpp_sp_cv)~log(cont_sp_cv), range.x = "relative", range.y = "relative", data=spdat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+##still not sig.
 
-#water temporal
-temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Water"))
-my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(temp.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p = 1
+# ###looking at three well replicated treatmetns.
+# #nitrogen - temporal
+subdat<-subset(subset(tograph_temp, trt_type6=="Nitrogen"))
+dat<-subdat[,c(6,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-9
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#not sig.
 
 
-#nitrogen spatial
-spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Nitrogen"))
-my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(spat.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# no p = 0.467
+# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Nitrogen"))
+# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(temp.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p = 0.0426
+# 
+# # nuts temporal
+subdat<-subset(subset(tograph_temp, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(6,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
 
-#nuts
-spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Multiple Nutrients"))
-my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(spat.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# yes p < 0.001
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-31
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#not sig.
 
-#Water
-spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Water"))
-my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
-my.df <- summary(spat.lm)$df[2]
-t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
-2*pt(t_value_one, df=my.df) # two sided test
-# no p = 0.195
+# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Multiple Nutrients"))
+# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(temp.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p = 0.003
+# 
+# #water temporal
+subdat<-subset(subset(tograph_temp, trt_type6=="Water"))
+dat<-subdat[,c(6,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-5
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#not sig.
+
+# temp.lm<-lm(anpp_temp_cv~cont_temp_cv, data=subset(tograph_temp, trt_type6=="Water"))
+# my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(temp.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # # yes p = 1
+# 
+# 
+# #nitrogen spatial
+# spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Nitrogen"))
+# my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(spat.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # no p = 0.467
+# 
+# #nuts
+# spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Multiple Nutrients"))
+# my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(spat.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # yes p < 0.001
+# 
+# #Water
+# spat.lm<-lm(anpp_sp_cv~cont_sp_cv, data=subset(tograph_spat, trt_type6=="Water"))
+# my.slope <- summary(spat.lm)$coef["cont_sp_cv", c("Estimate", "Std. Error")]
+# my.df <- summary(spat.lm)$df[2]
+# t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+# 2*pt(t_value_one, df=my.df) # two sided test
+# # no p = 0.195
 
 ###variance partitioning
 var_temp<- varpart(logRR_temp$logrr_cv, 
@@ -471,17 +561,25 @@ plot(var_sp)
 
 
 ###graphing this
-theme_set(theme_bw(30))
+theme_set(theme_bw(12))
+
+dat<-tograph_temp[,c(6,10)]
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slopem<-model2.lm$regression.results[2,3]
+interceptm<-model2.lm$regression.results[2,2]
 
 temp<-
-ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+  #scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)+
+  #geom_smooth(method = "lm", formula= "y ~ 0.4849907*x + 19.17157", se=F, color="black", size = 2)+
+  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  #geom_smooth(data=subset(tograph_temp, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
   ylab("Temporal CV Trt Plots")+
   xlab("Temporal CV Control Plots")+
   ggtitle("Temporal CV")+
@@ -490,21 +588,30 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7)
   scale_y_continuous(limits=c(10,100))
 
 #spatail
+
+spdat<-tograph_spat[,c(4,14)]
+model2.lm<-lmodel2(log(anpp_sp_cv)~log(cont_sp_cv), range.x = "relative", range.y = "relative", data=spdat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slopesp<-model2.lm$regression.results[2,3]
+interceptsp<-model2.lm$regression.results[2,2]
+
 spat_cv<-
-ggplot(data=tograph_spat, aes(x=cont_sp_cv, y=anpp_sp_cv, color = trt_type7))+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"),labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+ggplot(data=tograph_spat, aes(x=log(cont_sp_cv), y=log(anpp_sp_cv)))+
+  #scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"),labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
-  ylab("Spatial CV Trt Plots")+
-  xlab("Spatial CV Control Plots")+
+  geom_abline(slope=slopesp, intercept=interceptsp, size=1)+
+  #geom_smooth(method="lm", se=F, color="black", size = 2)+
+  #geom_smooth(data=subset(tograph_spat, trt_type6 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
+  #geom_smooth(data=subset(tograph_spat, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  #geom_smooth(data=subset(tograph_spat, trt_type6 =="Water"), method="lm", se=F, color="blue", size = 1)+
+  ylab("Log (Spatial CV Trt Plots)")+
+  xlab("Log (Spatial CV Control Plots)")+
   ggtitle("Spatial CV")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(0,151))+
-  scale_y_continuous(limits=c(0,151))
+  scale_x_continuous(limits=c(2,5))+
+  scale_y_continuous(limits=c(2,5))
 
 
 grid.arrange(temp, spat_cv, ncol=1)
@@ -1248,7 +1355,6 @@ colin_plot<-stability_logrr%>%
 
 colin_trt<-comp_stability_logrr%>%
   left_join(site_info)
-lg
 
 # figure for SEM paper ----------------------------------------------------
 
