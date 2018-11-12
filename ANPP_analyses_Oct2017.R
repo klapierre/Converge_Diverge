@@ -11,6 +11,7 @@ library(vegan)
 library(lmerTest)
 # library(MuMIn)
 # library(ppcor)
+library(lmodel2)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -372,6 +373,15 @@ my.df <- summary(temp.lm)$df[2]
 t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
 2*pt(t_value_one, df=my.df) # two sided test
 # yes p < 0.001
+
+#trying RMA
+test.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=tograph_temp, nperm=99)
+my.slope <- summary(temp.lm)$coef["cont_temp_cv", c("Estimate", "Std. Error")]
+my.df <- summary(temp.lm)$df[2]
+t_value_one <- (my.slope["Estimate"] - 1) / my.slope["Std. Error"]
+2*pt(t_value_one, df=my.df) # two sided test
+# yes p < 0.001
+
 
 #spatail control versus treatment
 # do the lines differ from a slope of 1?
