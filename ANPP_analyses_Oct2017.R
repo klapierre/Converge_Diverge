@@ -36,13 +36,6 @@ trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, treatment, trt_type7, trt_type5, trt_type6, trt_type)
 
-#no longer using prism data
-# precip<-read.csv('~/Dropbox/converge_diverge/datasets/LongForm/climate/ANPP_PrecipData.csv')
-# 
-# precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\ANPP_PrecipData.csv")%>%
-#   mutate(site_code=ï..site_code)%>%
-#   select(-ï..site_code)
-
 precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\real_precip_anppSites.csv")%>%
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
@@ -103,7 +96,7 @@ sites<-all_anpp_dat%>%
 #   select(site_project_comm, treatment)%>%
 #   unique
 
-# calculate temporal cv and effect sizes ---------------------------------------
+# calculate temporal cv ---------------------------------------
 
 #Calculate temporal
 anpp_temp_cv<-all_anpp_dat%>%
@@ -116,7 +109,7 @@ anpp_temp_cv<-all_anpp_dat%>%
             anpp_temp_mean = mean(anpp_temp_mean, na.rm = T),
             anpp_temp_sd = mean(anpp_temp_sd, na.rm = T))
 
-##calculating RR ANPP
+##calculating PC ANPP
 meandat<-all_anpp_dat%>%
   group_by(site_project_comm, plot_mani, treatment, treatment_year, calendar_year)%>%
   summarize(manpp=mean(anpp))
@@ -129,37 +122,27 @@ mcontrol<-meandat%>%
 mtrt<-meandat%>%
   filter(plot_mani!=0)
 
-logRR<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
-  mutate(logrr=abs(log(manpp/contanpp)),
-         RR=((manpp-contanpp)/contanpp)*100,
-         RR2=manpp/contanpp)%>%
+PC<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
+  mutate(PC=((manpp-contanpp)/contanpp)*100)%>%
   group_by(site_project_comm, treatment.x)%>%
-  summarise(mlogrr=mean(logrr),
-            mrr=sd(RR), 
-            mrr2=mean(RR2))%>%
+  summarise(mPC=mean(PC))%>%
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
-###calculating log RR CV, SD, Mean
+###calculating comparing control to treats
 #temporal
-mcontrol_temp<-anpp_temp_cv%>%
-  filter(plot_mani==0)%>%
-  mutate(c_cv=anpp_temp_cv,
-         c_sd=anpp_temp_sd,
-         c_mean=anpp_temp_mean)%>%
-  select(-anpp_temp_cv, -anpp_temp_sd, -anpp_temp_mean, -plot_mani)
-
-mtrt_temp<-anpp_temp_cv%>%
-  filter(plot_mani!=0)
-
-logRR_temp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","community_type"))%>%
-  mutate(logrr_cv=log(anpp_temp_cv/c_cv),
-         logrr_sd=log(anpp_temp_sd/c_sd),
-         logrr_mean =log(anpp_temp_mean/c_mean),
-         rr_cv=anpp_temp_cv/c_cv,
-         rr_sd=anpp_temp_sd/c_sd,
-         rr_mean =anpp_temp_mean/c_mean)
-
+# mcontrol_temp<-anpp_temp_cv%>%
+#   filter(plot_mani==0)%>%
+#   mutate(c_cv=anpp_temp_cv,
+#          c_sd=anpp_temp_sd,
+#          c_mean=anpp_temp_mean)%>%
+#   select(-anpp_temp_cv, -anpp_temp_sd, -anpp_temp_mean, -plot_mani)
+# 
+# mtrt_temp<-anpp_temp_cv%>%
+#   filter(plot_mani!=0)
+# 
+# CT_comp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","community_type"))
+# 
 
 
 ##getting average production and precip vari
@@ -191,73 +174,23 @@ cont_temp<-anpp_temp_cv%>%
 trt_temp<-anpp_temp_cv%>%
   filter(plot_mani>0)
 
-tograph1_temp<-merge(cont_temp, trt_temp, by=c("site_code", 'project_name',"community_type"))%>%
-  mutate(id=paste(site_code, project_name, community_type, sep="_"))
-
-tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment"))
-
-
-# ####just overall what are the effects of the treatments on spatial and temporal heterogeneity?
-# ##testing for differences
-#
-# temp_bar<-tograph_temp%>%
-#   mutate(PC=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)
-#
-# t.test(abs(temp_bar$PC), mu=0)
-# t.test(temp_bar$PC, mu=0)
-#
-# #do t-test do the PC differ from zero?
-# #temporal model
-# irr<-subset(temp_bar, trt_type6=="Water")
-# t.test(irr$PC, mu=0)
-# nit<-subset(temp_bar, trt_type6=="Nitrogen")
-# t.test(nit$PC, mu=0)
-# nuts<-subset(temp_bar, trt_type6=="Multiple Nutrients")
-# t.test(nuts$PC, mu=0)
-#
-#
-# tograph_temp_bar<-tograph_temp%>%
-#   mutate(PC=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)%>%
-#   group_by(trt_type6)%>%
-#   summarize(P.C=mean(PC),
-#             sdd=sd(PC),
-#             num=length(PC))%>%
-#   mutate(se=sdd/sqrt(num))%>%
-#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-#
-#
-# #graphing this
-# temp_pc<-
-#   ggplot(data=tograph_temp_bar, aes(x=trt_type6, y=P.C, fill=trt_type6))+
-#   geom_bar(position=position_dodge(), stat="identity")+
-#   geom_errorbar(aes(ymin=P.C-se, ymax=P.C+se),position= position_dodge(0.9), width=0.2)+
-#   ylab("Percent Change of Temporal Variability")+
-#   theme(axis.text.x=element_text(angle=45, hjust=1))+
-#   scale_fill_manual(values=c("darkred","orange","dodgerblue"))+
-#   xlab("Treatment")+
-#   ggtitle("Temporal")+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   theme(legend.position = "none")+
-#   scale_y_continuous(limits=c(-35,100))
-# 
-
-
+CT_comp<-cont_temp%>%
+  left_join(trt_temp)%>%
+  mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
+  left_join(trtint)
 
 
 # Q1 how does gcds effect temporal vari? -----------------------
 
-###temporal analysis
-
-
 ##t-test - do the slopes differ from 1?
 #model 2 regression
 #first check data is it bivariate normal?
-dat<-tograph_temp[,c(6,10)]
+dat<-CT_comp[,c(4,10)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
 
 model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
 #first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
+#or I can do a ttest.
 slope<-model2.lm$regression.results[2,3]
 low<-model2.lm$confidence.intervals[2,4]
 high<-model2.lm$confidence.intervals[2,5]
@@ -271,12 +204,10 @@ t_value_one <- (slope - 1) / se
 ##t-test - do the slopes differ from 1?
 #model 2 regression
 #first check data is it bivariate normal?
-sddat<-tograph_temp[,c(8,12)]
+sddat<-CT_comp[,c(6,12)]
 normal<-mvn(data=log(sddat), univariatePlot = "qqplot")#data are somewhat bivaiate normal
 
 model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
 slope<-model2.lm$regression.results[2,3]
 low<-model2.lm$confidence.intervals[2,4]
 high<-model2.lm$confidence.intervals[2,5]
@@ -289,13 +220,11 @@ t_value_one <- (slope - 1) / se
 
 # ###looking at three well replicated treatmetns.
 # #nitrogen - temporal
-subdat<-subset(subset(tograph_temp, trt_type6=="Nitrogen"))
-dat<-subdat[,c(6,10)]
+subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
+dat<-subdat[,c(4,10)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
 
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
 slope<-model2.lm$regression.results[2,3]
 low<-model2.lm$confidence.intervals[2,4]
 high<-model2.lm$confidence.intervals[2,5]
@@ -306,13 +235,11 @@ t_value_one <- (slope - 1) / se
 #not sig.
  
 # # nuts temporal
-subdat<-subset(subset(tograph_temp, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(6,10)]
+subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(4,10)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
 
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
 slope<-model2.lm$regression.results[2,3]
 low<-model2.lm$confidence.intervals[2,4]
 high<-model2.lm$confidence.intervals[2,5]
@@ -324,8 +251,8 @@ t_value_one <- (slope - 1) / se
 
 
 # #water temporal
-subdat<-subset(subset(tograph_temp, trt_type6=="Water"))
-dat<-subdat[,c(6,10)]
+subdat<-subset(subset(CT_comp, trt_type6=="Water"))
+dat<-subdat[,c(4,10)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
 
 model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
@@ -340,7 +267,7 @@ t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df, lower=F)
 #not sig.
 
-###variance partitioning
+###variance partitioning - I no longer think this is necessary b/c going to include the SD analysis.
 var_temp<- varpart(logRR_temp$logrr_cv, 
                                 ~logrr_mean, 
                                 ~logrr_sd, 
@@ -352,16 +279,18 @@ plot(var_temp)
 
 ###graphing this
 theme_set(theme_bw(12))
+tograph_color<-CT_comp%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)
 
-dat<-tograph_temp[,c(6,10)]
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
+##CV figure
+dat<-CT_comp[,c(4,10)]
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA 
 slopem<-model2.lm$regression.results[2,3]
 interceptm<-model2.lm$regression.results[2,2]
 
-temp<-
-ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+#main figure for paper
+ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
@@ -371,55 +300,49 @@ ggplot(data=tograph_temp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
   scale_x_continuous(limits=c(10,100))+
   scale_y_continuous(limits=c(10,100))
 
-
-#role of precip vari and or anpp
-
-tograph_temp_color<-tograph_temp%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-tograph_spat_color<-tograph_spat%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-
-temp<-
-ggplot(data=tograph_temp_color, aes(x=cont_temp_cv, y=anpp_temp_cv, color = sdppt, size = manpp))+
+# looking at affect of precip and productivity
+ggplot(data=tograph_color, aes(x=cont_temp_cv, y=anpp_temp_cv,color = sdppt, size = manpp))+
   geom_point()+
   scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation SD")+
   scale_size(name = "Average ANPP", range = c(1,6))+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_smooth(method="lm", se=F, color="black", size = 2)+
-  ylab("Temporal CV Treatment Plots")+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)+
+  ylab("Temporal CV Trt Plots")+
   xlab("Temporal CV Control Plots")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("Temporal")
+  scale_x_continuous(limits=c(10,100))+
+  scale_y_continuous(limits=c(10,100))
 
 
-# tograph_temp_trt<-tograph_temp%>%
-#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-# 
-# tograph_spat_trt<-tograph_spat%>%
-#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-# temp_trt<-
-# ggplot(data=tograph_temp_trt, aes(x=cont_temp_cv, y=anpp_temp_cv))+
-#   geom_point(size=2)+
-#   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-#   geom_smooth(method="lm", se=F, color="black")+
-#   ylab("Temporal CV Treatment Plots")+
-#   xlab("Temporal CV Control Plots")+
-#   ggtitle("A) Temporal")+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   facet_wrap(~trt_type6)
-# 
+##sd figure
+sddat<-CT_comp[,c(6,12)]
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA 
+slopem<-model2.lm$regression.results[2,3]
+interceptm<-model2.lm$regression.results[2,2]
+
+ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd)))+
+  geom_point(size=3)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)+
+  ylab("Log (Temporal SD Trt Plots)")+
+  xlab("Log (Temporal SD Control Plots)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(3,7))+
+  scale_y_continuous(limits=c(3,7))
 
 
-# Q2 what is the relationship between control CV and effect size? ---------
+# Q2 what is the relationship between control CV and PC in ANPP? ---------
+C_PC<-PC%>%
+  left_join(cont_temp)%>%
+  left_join(trtint)%>%
+  left_join(site_info)
 
-##temporal
-tograph_log1_temp<-merge(logRR, cont_temp, by="site_project_comm")
-tograph_log2_temp<-merge(tograph_log1_temp, trtint, by=c("site_project_comm","treatment"))
-tograph_log_temp<-merge(tograph_log2_temp, site_info, by="site_project_comm")
+#test the relationship between control_temp and PC using model2 regressions
 
-#test the relationship between control_temp and effect size
+dat<-C_PC[,c(7,2)]
+mvn(data=dat, univariatePlot = "qqplot")
+
+contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99)
 
 temp_effect <- lm(mrr ~ cont_temp_cv, data = tograph_log_temp)
 summary(temp_effect) #sig
