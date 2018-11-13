@@ -129,6 +129,7 @@ PC<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_ye
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
+
 ###calculating comparing control to treats
 #temporal
 # mcontrol_temp<-anpp_temp_cv%>%
@@ -338,71 +339,65 @@ C_PC<-PC%>%
   left_join(site_info)
 
 #test the relationship between control_temp and PC using model2 regressions
-
+#CV
 dat<-C_PC[,c(7,2)]
 mvn(data=dat, univariatePlot = "qqplot")
+contCV<-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#not sig
 
-contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99)
+#SD
+sddat<-C_PC[,c(9,2)]
 
-temp_effect <- lm(mrr ~ cont_temp_cv, data = tograph_log_temp)
-summary(temp_effect) #sig
+mvn(data=sddat, univariatePlot = "qqplot")
+contSD<-lmodel2(mPC~cont_temp_sd, range.x = "interval", range.y = "interval", data=sddat, nperm=99)
+#not sig
 
-temp_effect <- lm(mrr ~ cont_temp_sd, data = tograph_log_temp)
-summary(temp_effect)#sig
 
-temp_effect <- lm(mrr ~ cont_temp_mean, data = tograph_log_temp)
-summary(temp_effect)#not sig
 
-# map_effect <- lm(cont_temp_cv ~ MAP, data = tograph_log_temp)
-# summary(map_effect)
+#looking at three seperate GCDs - NONE are sig.
+subdat<-subset(C_PC, trt_type6=="Nitrogen")
+dat<-subdat[,c(7,2)]
+lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+
+subdat<-subset(C_PC, trt_type6=="Multiple Nutrients")
+dat<-subdat[,c(7,2)]
+lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+
+subdat<-subset(C_PC, trt_type6=="Water")
+dat<-subdat[,c(7,2)]
+lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+
+# #not sure I need this
+# var_temp_controls<- varpart(tograph_log_temp$cont_temp_cv, 
+#                    ~cont_temp_mean, 
+#                    ~cont_temp_sd, 
+#                    data = tograph_log_temp)
 # 
-# map_temp_effect <- lm(mlogrr ~ MAP, data = tograph_log_temp)
-# summary(map_temp_effect)
-
-# ##do partial correlation to see the correlation between cv control and logrr given MAP
-# pcordata<-tograph_log_temp[,c(3,8,12)]
-# with(tograph_log_temp, pcor.test(cont_temp_cv, mlogrr, MAP))
-# pcor(pcordata)
-
-#looking at three seperate GCDs
-
-summary(lm(mlogrr ~ cont_temp_cv, 
-                  data = subset(tograph_log_temp, trt_type6=="Nitrogen")))
-summary(lm(mlogrr ~ cont_temp_cv, 
-           data = subset(tograph_log_temp, trt_type6=="Water")))
-
-summary(lm(mlogrr ~ cont_temp_cv, 
-           data = subset(tograph_log_temp, trt_type6=="Multiple Nutrients")))
-
-var_temp_controls<- varpart(tograph_log_temp$cont_temp_cv, 
-                   ~cont_temp_mean, 
-                   ~cont_temp_sd, 
-                   data = tograph_log_temp)
-
-### venn diagram plot
-plot(var_temp_controls)
+# ### venn diagram plot
+# plot(var_temp_controls)
 
 
 
 ##graphing this
 
-tograph_log_temp2<-  tograph_log_temp%>%
+graphQ2<-C_PC%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
-responsiveness<-
-  ggplot(data=tograph_log_temp2, aes(x=cont_temp_cv, y=mrr, color = cont_temp_sd, size = cont_temp_mean))+
+dat<-C_PC[,c(7,2)]
+mvn(data=dat, univariatePlot = "qqplot")
+contCV<-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopem<-contCV$regression.results[4,3]#something is funky with MA
+interceptm<-contCV$regression.results[4,2]
+
+ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
     geom_point()+
     scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
     scale_size(name = "Mean ANPP", range = c(1,6))+
   ylab("Percent Difference in ANPP")+
   xlab("Temporal CV Control Plots")+
-  geom_smooth(method="lm", color="black", se=F, size = 2)+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-
-
-
 
 # tograph_log_temp_trt<-tograph_log_temp%>%
 #   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
