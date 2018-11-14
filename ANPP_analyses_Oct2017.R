@@ -44,6 +44,17 @@ precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_prec
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
 
+#getting richness_evenness
+anpp_spc<-all_anpp_dat%>%
+  select(site_project_comm)%>%
+  unique()
+
+#read in community data
+community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  right_join(anpp_spc)
+
 # clean up anpp data --------------------------------------------------------
 
 
@@ -122,28 +133,12 @@ mcontrol<-meandat%>%
 mtrt<-meandat%>%
   filter(plot_mani!=0)
 
-PC<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
+PC_anpp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
   mutate(PC=((manpp-contanpp)/contanpp)*100)%>%
   group_by(site_project_comm, treatment.x)%>%
   summarise(mPC=mean(PC))%>%
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
-
-
-###calculating comparing control to treats
-#temporal
-# mcontrol_temp<-anpp_temp_cv%>%
-#   filter(plot_mani==0)%>%
-#   mutate(c_cv=anpp_temp_cv,
-#          c_sd=anpp_temp_sd,
-#          c_mean=anpp_temp_mean)%>%
-#   select(-anpp_temp_cv, -anpp_temp_sd, -anpp_temp_mean, -plot_mani)
-# 
-# mtrt_temp<-anpp_temp_cv%>%
-#   filter(plot_mani!=0)
-# 
-# CT_comp<-merge(mtrt_temp, mcontrol_temp, by=c("site_code","project_name","community_type"))
-# 
 
 
 ##getting average production and precip vari
@@ -160,6 +155,52 @@ precip_vari<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   group_by(site_code, project_name, community_type)%>%
   summarize(varppt=var(precip_mm),
             sdppt=sd(precip_mm))
+
+###calculate community data
+#get richness for each plot
+spc<-unique(community$site_project_comm)
+rich_even<-data.frame()
+
+for (i in 1:length(spc)){
+  subset<-community%>%
+    filter(site_project_comm==spc[i])
+  
+  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
+  out$site_project_comm<-spc[i]
+  
+  rich_even<-rbind(rich_even, out)
+}
+
+trt<-community%>%
+  select(site_project_comm, plot_id, treatment)%>%
+  unique()
+plot_mani<-all_anpp_dat%>%
+  select(site_project_comm, treatment, plot_mani)%>%
+  unique()
+
+ave_rich<-rich_even%>%
+  left_join(trt)%>%
+  group_by(site_project_comm, plot_id, treatment)%>%
+  summarize(richness = mean(richness),
+            Evar=mean(Evar, na.rm=T))%>%
+  ungroup()%>%
+  group_by(site_project_comm, treatment)%>%
+  summarize(richness = mean(richness),
+            Evar = mean(Evar, na.rm=T))%>%
+  right_join(plot_mani)
+
+
+cont_rich<-ave_rich%>%
+  filter(plot_mani==0)%>%
+  mutate(cont_rich = richness)%>%
+  select(-plot_mani, -treatment, -richness)
+
+PC_rich<-ave_rich%>%
+  filter(plot_mani != 0)%>%
+  select(-Evar)%>%
+  left_join(cont_rich)%>%
+  mutate(PC_rich = ((richness-cont_rich)/cont_rich)*100)
+
 
 # overall effect of vari --------------------------------------------------
 cont_temp<-anpp_temp_cv%>%
@@ -178,10 +219,161 @@ trt_temp<-anpp_temp_cv%>%
 CT_comp<-cont_temp%>%
   left_join(trt_temp)%>%
   mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
-  left_join(trtint)
+  left_join(trtint)%>%
+  mutate(PC_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv),
+         PC_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd),
+         PC_mean=(anpp_temp_mean-cont_temp_mean)/cont_temp_mean)
 
 
 # Q1 how does gcds effect temporal vari? -----------------------
+
+##first overall for PC_CV
+t.test(CT_comp$PC_CV, mu=0) # overall No, and not for the difference GCDs
+t.test(CT_comp$PC_sd, mu=0) #yes overall sig for SD
+t.test(CT_comp$PC_mean, mu=0)#yes overall sig for mean
+
+##num postive or negative PC
+sign<-CT_comp%>%
+  mutate(pos=ifelse(PC_CV<0, 0,1))
+
+#pos
+sum(sign$pos)
+
+45/95 #47% are postive and 53% are negative
+50/95
+##for CV not sig for any
+irr<-subset(CT_comp, trt_type6=="Water")
+t.test(abs(irr$PC_CV), mu=0)
+nit<-subset(CT_comp, trt_type6=="Nitrogen")
+t.test(abs(nit$PC_CV), mu=0)
+nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
+t.test(abs(nuts$PC_CV), mu=0)
+## for SD sig for all
+irr<-subset(CT_comp, trt_type6=="Water")
+t.test(abs(irr$PC_sd), mu=0)
+nit<-subset(CT_comp, trt_type6=="Nitrogen")
+t.test(abs(nit$PC_sd), mu=0)
+nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
+t.test(abs(nuts$PC_sd), mu=0)
+##for mean sig for all
+irr<-subset(CT_comp, trt_type6=="Water")
+t.test(abs(irr$PC_mean), mu=0)
+nit<-subset(CT_comp, trt_type6=="Nitrogen")
+t.test(abs(nit$PC_mean), mu=0)
+nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
+t.test(abs(nuts$PC_mean), mu=0)
+
+
+
+PC_bargraph_trt<-CT_comp%>%
+  group_by(trt_type6)%>%
+  summarize(cv=mean(PC_CV),
+            sd_cv=sd(PC_CV),
+            sd=mean(PC_sd),
+            sd_sd=sd(PC_sd),
+            mn=mean(PC_mean),
+            sd_mn=sd(PC_mean),
+            num=length(PC_CV))%>%
+  mutate(se_cv=sd_cv/sqrt(num),
+         se_sd=sd_sd/sqrt(num),
+         se_mn=sd_mn/sqrt(num))%>%
+  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+
+PC_bargraph_all<-CT_comp%>%
+  summarize(cv=mean(PC_CV),
+            sd_cv=sd(PC_CV),
+            sd=mean(PC_sd),
+            sd_sd=sd(PC_sd),
+            mn=mean(PC_mean),
+            sd_mn=sd(PC_mean),
+            num=length(PC_CV))%>%
+  mutate(se_cv=sd_cv/sqrt(num),
+         se_sd=sd_sd/sqrt(num),
+         se_mn=sd_mn/sqrt(num))%>%
+  mutate(trt_type6="All Treatments")
+
+PC_bargraph<-rbind(PC_bargraph_trt, PC_bargraph_all)
+
+
+cv_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nCV of ANPP")+
+  scale_fill_manual(values=c("black", "orange","green3","blue"))+
+  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+
+  geom_text(x=0.6, y=0.12, label="A", size=4)
+sd_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nSD of ANPP")+
+  scale_fill_manual(values=c("black", "orange","green3","blue"))+
+  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+  
+  geom_text(x=1, y=0.75, label="*", size=8)+
+  geom_text(x=2, y=0.35, label="*", size=8)+
+  geom_text(x=3, y=0.35, label="*", size=8)+
+  geom_text(x=4, y=0.35, label="*", size=8)+
+  geom_text(x=0.6, y=0.75, label="B", size=4)+
+  scale_y_continuous(limits=c(0, 0.8))
+
+mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nANPP")+
+  scale_fill_manual(values=c("black", "orange","green3","blue"))+
+  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("GCD Treatment")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+
+  geom_text(x=1, y=0.55, label="*", size=8)+
+  geom_text(x=2, y=0.35, label="*", size=8)+
+  geom_text(x=3, y=0.48, label="*", size=8)+
+  geom_text(x=4, y=0.35, label="*", size=8)+
+  scale_y_continuous(limits=c(0, 0.6))+
+  geom_text(x=0.6, y=0.55, label="C", size=4)
+
+grid.arrange(cv_fig, sd_fig, mn_fig, ncol=1)
+
+###what correlates with PC_CV?
+
+PC_cor<-CT_comp%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)%>%
+  left_join(cont_rich)%>%
+  left_join(site_info)
+
+#CV
+cor.test(PC_cor$PC_CV, PC_cor$manpp)
+cor.test(PC_cor$PC_CV, PC_cor$sdppt)
+cor.test(PC_cor$PC_CV, PC_cor$MAP)
+cor.test(PC_cor$PC_CV, PC_cor$MAT)
+cor.test(PC_cor$PC_CV, PC_cor$cont_rich)
+cor.test(PC_cor$PC_CV, PC_cor$Evar)
+#SD
+cor.test(PC_cor$PC_sd, PC_cor$manpp)
+cor.test(PC_cor$PC_sd, PC_cor$sdppt)
+cor.test(PC_cor$PC_sd, PC_cor$MAP)
+cor.test(PC_cor$PC_sd, PC_cor$MAT)
+cor.test(PC_cor$PC_sd, PC_cor$cont_rich)
+cor.test(PC_cor$PC_sd, PC_cor$Evar)
+#mean
+cor.test(PC_cor$PC_mean, PC_cor$manpp)
+cor.test(PC_cor$PC_mean, PC_cor$sdppt)
+cor.test(PC_cor$PC_mean, PC_cor$MAP)
+cor.test(PC_cor$PC_mean, PC_cor$MAT)
+cor.test(PC_cor$PC_mean, PC_cor$cont_rich)
+cor.test(PC_cor$PC_mean, PC_cor$Evar)
+
+
+pairs(PC_cor[,c(18:26)])
 
 ##t-test - do the slopes differ from 1?
 #model 2 regression
@@ -268,11 +460,11 @@ t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df, lower=F)
 #not sig.
 
-###variance partitioning - I no longer think this is necessary b/c going to include the SD analysis.
-var_temp<- varpart(logRR_temp$logrr_cv, 
-                                ~logrr_mean, 
-                                ~logrr_sd, 
-                                data = logRR_temp)
+###variance partitioning 
+var_temp<- varpart(CT_comp$PC_CV, 
+                                ~PC_sd, 
+                                ~PC_mean, 
+                                data = CT_comp)
 
 ### venn diagram plot
 plot(var_temp)
@@ -291,29 +483,16 @@ slopem<-model2.lm$regression.results[2,3]
 interceptm<-model2.lm$regression.results[2,2]
 
 #main figure for paper
-ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv))+
+ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
   geom_point(size=3)+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
-    ylab("Temporal CV Trt Plots")+
-  xlab("Temporal CV Control Plots")+
+    ylab("CV of ANPP Trt Plots")+
+  xlab("CV of ANPP Control Plots")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_x_continuous(limits=c(10,100))+
   scale_y_continuous(limits=c(10,100))
-
-# looking at affect of precip and productivity
-ggplot(data=tograph_color, aes(x=cont_temp_cv, y=anpp_temp_cv,color = sdppt, size = manpp))+
-  geom_point()+
-  scale_color_gradient(low = "lightblue", high = "darkred", name = "Precipitation SD")+
-  scale_size(name = "Average ANPP", range = c(1,6))+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  ylab("Temporal CV Trt Plots")+
-  xlab("Temporal CV Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(10,100))+
-  scale_y_continuous(limits=c(10,100))
-
 
 ##sd figure
 sddat<-CT_comp[,c(6,12)]
@@ -321,19 +500,20 @@ model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", ra
 slopem<-model2.lm$regression.results[2,3]
 interceptm<-model2.lm$regression.results[2,2]
 
-ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd)))+
+ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd), color=trt_type7))+
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  ylab("Log (Temporal SD Trt Plots)")+
-  xlab("Log (Temporal SD Control Plots)")+
+  ylab("Log (SD of ANPP Trt Plots)")+
+  xlab("Log (SD of ANPP Control Plots)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_x_continuous(limits=c(3,7))+
   scale_y_continuous(limits=c(3,7))
 
 
 # Q2 what is the relationship between control CV and PC in ANPP? ---------
-C_PC<-PC%>%
+C_PC<-PC_anpp%>%
   left_join(cont_temp)%>%
   left_join(trtint)%>%
   left_join(site_info)
@@ -370,17 +550,6 @@ subdat<-subset(C_PC, trt_type6=="Water")
 dat<-subdat[,c(7,2)]
 lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
 
-# #not sure I need this
-# var_temp_controls<- varpart(tograph_log_temp$cont_temp_cv, 
-#                    ~cont_temp_mean, 
-#                    ~cont_temp_sd, 
-#                    data = tograph_log_temp)
-# 
-# ### venn diagram plot
-# plot(var_temp_controls)
-
-
-
 ##graphing this
 
 graphQ2<-C_PC%>%
@@ -390,7 +559,7 @@ graphQ2<-C_PC%>%
 dat<-C_PC[,c(7,2)]
 mvn(data=dat, univariatePlot = "qqplot")
 contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-slopem<-contCV$regression.results[4,3]#something is funky with MA USE
+slopem<-contCV$regression.results[4,3]#something is funky with MA USE RMA
 interceptm<-contCV$regression.results[4,2]
 
 ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
@@ -402,16 +571,6 @@ ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = con
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-# tograph_log_temp_trt<-tograph_log_temp%>%
-#   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-# 
-# ggplot(data=tograph_log_temp_trt, aes(x=cont_temp_cv, y=mlogrr))+
-#   geom_point(size=2)+
-#   ylab("Log RR")+
-#   xlab("Temporal CV Control Plots")+
-#   #geom_smooth(method="lm", color="black", se=F)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   facet_wrap(~trt_type6)
 
 # precipitation analysis --------------------------------------------------
 
@@ -534,13 +693,6 @@ slopes_bar_overall<-slopes_tograph%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
   mutate(trt_type6="All Treatments")
 
-slopes_bar_overall_abs<-slopes_tograph%>%
-  summarise(mdiff=mean(abs(diff)),
-            ndiff=length(diff),
-            sddiff=sd(abs(diff)))%>%
-  mutate(sediff=sddiff/sqrt(ndiff))%>%
-  mutate(trt_type6="Abs(All Trts)")
-
 slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #graphing diff
 
@@ -616,7 +768,7 @@ ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
   geom_smooth(method="lm", formula = y ~  poly(x, 2), size=1, color="black", se=F)+
   geom_hline(yintercept=0)+
   xlab("Treatment Year")+
-  ylab("Proportaional Change in ANPP")+
+  ylab("Percent Difference in ANPP")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   facet_wrap(~trt_type5, ncol=5, scales="free")
 
@@ -625,363 +777,65 @@ ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
 # Biodiversity effects ----------------------------------------------------
 #project-treatment level temporal anpp
 
-#getting log RR of temporal CV
-cont_cv<-anpp_temp_cv%>%
-  filter(plot_mani==0)%>%
-  rename(cont_temp_cv = anpp_temp_cv)%>%
-  ungroup()%>%
-  select(-plot_mani, -treatment, -anpp_temp_mean, -anpp_temp_sd)
-  
-logRR_cv<-anpp_temp_cv%>%
-  filter(plot_mani!=0)%>%
-  left_join(cont_cv)%>%
-  mutate(logRR_cv = log(anpp_temp_cv/cont_temp_cv),
-         PC_cv = ((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)%>%
-  mutate(site_project_comm = paste(site_code, project_name, community_type, sep = "_"))
-
-#getting richness change
-anpp_spc<-all_anpp_dat%>%
-  select(site_project_comm)%>%
-  unique()
-
-#read in community data
-community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
-  select(-X)%>%
-  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
-  right_join(anpp_spc)
-
-#get richness for each plot
-spc<-unique(community$site_project_comm)
-rich_even<-data.frame()
-
-for (i in 1:length(spc)){
-  subset<-community%>%
-    filter(site_project_comm==spc[i])
-  
-  out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
-  out$site_project_comm<-spc[i]
-  
-  rich_even<-rbind(rich_even, out)
-}
-
-trt<-community%>%
-  select(site_project_comm, plot_id, treatment)%>%
-  unique()
-plot_mani<-all_anpp_dat%>%
-  select(site_project_comm, treatment, plot_mani)%>%
-  unique()
-
-ave_rich<-rich_even%>%
-  left_join(trt)%>%
-  group_by(site_project_comm, plot_id, treatment)%>%
-  summarize(richness = mean(richness))%>%
-  ungroup()%>%
-  group_by(site_project_comm, treatment)%>%
-  summarize(richness = mean(richness))%>%
-  right_join(plot_mani)
-
-
-cont_rich<-ave_rich%>%
-  filter(plot_mani==0)%>%
-  mutate(cont_rich = richness)%>%
-  select(-plot_mani, -treatment, -richness)
-
-logRR_rich<-ave_rich%>%
-  filter(plot_mani != 0)%>%
-  left_join(cont_rich)%>%
-  mutate(logRR_rich = log(richness/cont_rich),
-         PC_rich = ((richness-cont_rich)/cont_rich)*100)
- 
 ###relationship between change in richness and change in variabilty
-cv_rich<-logRR_rich%>%
-  left_join(logRR_cv)%>%
+Vari_rich<-PC_rich%>%
+  left_join(CT_comp)%>%
   left_join(trtint)
 
-#overall
-summary(lm(PC_cv~PC_rich, data = cv_rich)) # bad relatinoship but sig.
+#overall CV
+dat<-Vari_rich[,c(7,22)]
+mvn(data=dat, univariatePlot = "qqplot")
+biod<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopem<-biod$regression.results[2,3]
+interceptm<-biod$regression.results[2,2]
+##overall SD
+dat<-Vari_rich[,c(7,23)]
+mvn(data=dat, univariatePlot = "qqplot")
+biod_sd<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopesd<-biod_sd$regression.results[2,3]
+interceptsd<-biod_sd$regression.results[2,2]
 
 ##treatments seperately
-summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Nitrogen"))) #not sig.
-summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Multiple Nutrients")))#not sig
-summary(lm(PC_cv~PC_rich, data = subset(cv_rich, trt_type7 == "Water")))#not sig
+#N not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
+dat<-subdat[,c(7,22)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_n<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#water not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
+dat<-subdat[,c(7,22)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_w<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#mult nuts not sig.
+subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(7,22)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_mn<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
 
-
-ggplot(data = cv_rich, aes(x = PC_rich, y = PC_cv, color = trt_type7))+
+#CV pic for paper
+ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_CV, color=trt_type7))+
   geom_point()+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
-  geom_smooth(se = F, method = 'lm', size = 2, color = 'black')+
-  xlab('Percent Difference in Richness')+
-  ylab('Percent Difference in Temporal\nVariability of ANPP ')+
+  xlab('Percent Difference Richness')+
+  ylab('Percent Difference CV of ANPP ')+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)+
-  geom_hline(yintercept = 0)
-
-###looking into composition change
-###doing for composition change - Not going to present this, I think it does not enhance the paper at all. 
-#get composition change
-# spc<-unique(community$site_project_comm)
-# delta_comp<-data.frame()
-# 
-# for (i in 1:length(spc)){
-#   subset<-community%>%
-#     filter(site_project_comm==spc[i])
-# 
-#   out<-multivariate_change(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id', treatment = 'treatment', species.var = 'genus_species')
-#   out$site_project_comm<-spc[i]
-# 
-#   delta_comp<-rbind(delta_comp, out)
-# }
-# ave_comp<-delta_comp%>%
-#   group_by(site_project_comm, treatment)%>%
-#   summarize(comp_change = mean(composition_change))%>%
-#   separate(site_project_comm, into=c("site_code", 'project_name', 'community_type'), sep = "_", remove = F)%>%
-#   left_join(plot_mani)
-# 
-# control_comp<-ave_comp%>%
-#   filter(plot_mani==0)%>%
-#   mutate(cont_comp = comp_change)%>%
-#   select(-comp_change, -treatment, -plot_mani)
-# 
-# comp_cv<-ave_comp%>%
-#   filter(plot_mani > 0)%>%
-#   left_join(control_comp)%>%
-#   mutate(logRR_comp = log(comp_change/cont_comp))%>%
-#   left_join(logRR_cv)%>%
-#   left_join(trtint)
-# 
-# summary(lm(logRR_cv~logRR_comp, data = comp_cv))
-# 
-# 
-# ggplot(data = comp_cv, aes(x = logRR_comp, y = logRR_cv, color = trt_type7))+
-#   geom_point()+
-#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)+
-#   scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-#   geom_point(size=2)+
-#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-#   #geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Water"), method="lm", se=F, color="blue", size = 1)+
-#   xlab('Change in Composition')+
-#   ylab('Change in Temporal Stabilty')+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  geom_hline(yintercept = 0)+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)
+#sd for appendix
+ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
+  geom_point()+
+  geom_point(size=3)+
+  xlab('Percent Difference Richness')+
+  ylab('Percent Difference SD of ANPP ')+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)+
+  geom_abline(slope=slopesd, intercept=interceptsd, size=1)
 
 
-
-# biodiversity effect using stabilty recreating Yanns paper ---------------
-
-
-#plot level temporal anpp
-# anpp_temp_cv_plot<-all_anpp_dat%>%
-#   group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
-#   summarize(anpp_temp_mean=mean(anpp, na.rm=T),
-#             anpp_temp_sd=sd(anpp, na.rm=T),
-#             anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
-#   mutate(site_project_comm = paste(site_code, project_name, community_type, sep="_"))
-# 
-# anpp_spc<-all_anpp_dat%>%
-#   select(site_project_comm)%>%
-#   unique()
-# 
-# #read in community data
-# community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
-#   select(-X)%>%
-#   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
-#   right_join(anpp_spc)
-# 
-# #get richness for each plot
-# spc<-unique(community$site_project_comm)
-# rich_even<-data.frame()
-# 
-# for (i in 1:length(spc)){
-#   subset<-community%>%
-#     filter(site_project_comm==spc[i])
-#   
-#   out<-community_structure(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id')
-#   out$site_project_comm<-spc[i]
-#   
-#   rich_even<-rbind(rich_even, out)
-# }
-# 
-# ave_rich<-rich_even%>%
-#   group_by(site_project_comm, plot_id)%>%
-#   summarize(richness = mean(richness))%>%
-#   left_join(anpp_temp_cv_plot)
-
-#1) recreate figures from Yann 2014 Nature paper of NutNet data - not going to present this, there is nothing here.
-
-# controls<-
-# ggplot(data=subset(ave_rich, plot_mani==0), aes(x = richness, y = anpp_temp_cv, color = site_project_comm))+
-#   geom_point()+
-#   xlab("Plot Richness")+
-#   ylab("Temporal CV of ANPP")+
-#   ggtitle("Control Plots")+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
-# treated<-
-#   ggplot(data=subset(ave_rich, plot_mani!=0), aes(x = richness, y = anpp_temp_cv, color = site_project_comm))+
-#   geom_point()+
-#   xlab("Plot Richness")+
-#   ylab("Temporal CV of ANPP")+
-#   ggtitle("Treated Plots")+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
-# 
-# grid.arrange(controls, treated, ncol=2)
-# 
-# #2) recreate Yann 2015 Science paper results
-# control_rich_stabiltiy<-ave_rich%>%
-#   filter(plot_mani==0)%>%
-#   group_by(site_project_comm)%>%
-#   summarize(cont_rich = mean(richness),
-#             cont_tempcv = mean(anpp_temp_cv),
-#             cont_temp_mean = mean(anpp_temp_mean),
-#             cont_temp_sd = mean(anpp_temp_sd))
-# 
-# stability_logrr<-ave_rich%>%
-#   filter(plot_mani > 0)%>%
-#   left_join(control_rich_stabiltiy)%>%
-#   mutate(log_stability = log(anpp_temp_mean/cont_temp_mean) - log(anpp_temp_sd/cont_temp_sd),
-#          log_rich = log(richness/cont_rich))%>%
-#   left_join(trtint)
-# 
-# ggplot(data = stability_logrr, aes(x = log_rich, y = log_stability, color = trt_type7))+
-#   geom_point()+
-#   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-#   geom_point(size=2)+
-#   xlab('Change in Richness')+
-#   ylab('Change in Temporal Stabilty')+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-#   geom_vline(xintercept = 0)+
-#   geom_hline(yintercept = 0)
-# 
-# model_all<-lmer(log_stability ~ log_rich+
-#                         (0+log_rich | site_code /project_name/community_type/trt_type6),
-#                       data = stability_logrr)
-# summary(model_all)
-# 
-# #seperate GCD
-# model_mult<-lmer(log_stability ~ log_rich+
-#                   (0+log_rich | site_code /project_name/community_type),
-#                 data = subset(stability_logrr, trt_type7 == "Multiple Nutrients"))
-# summary(model_mult)
-# model_water<-lmer(log_stability ~ log_rich+
-#                    (0+log_rich | site_code /project_name/community_type),
-#                  data = subset(stability_logrr, trt_type7 == "Water"))
-# summary(model_water)
-# 
-# model_nit<-lmer(log_stability ~ log_rich+
-#                    (0+log_rich | site_code /project_name/community_type),
-#                  data = subset(stability_logrr, trt_type7 == "Nitrogen"))
-# summary(model_nit)
-# 
-# 
-# ##doing this for each site with 2 or more experiments
-# #cdr
-# model_cdr<-lmer(log_stability ~ log_rich+
-#                   (0 + log_rich | project_name /community_type/trt_type6),
-#                 data =subset(stability_logrr, site_code == "CDR"))
-# summary(model_cdr)
-# 
-# #recreating CDR
-# model_cdr<-lmer(log_stability ~ log_rich*trt_type6+
-#                   (0 + log_rich|project_name),
-#                 data =subset(stability_logrr, site_code == "CDR"))
-# summary(model_cdr)
-# Anova(model_cdr) #yes 
-# 
-# ggplot(data=subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability))+
-#   geom_point()
-# 
-# #sev
-# model_sev<-lmer(log_stability ~ log_rich+
-#                   (log_rich | project_name/community_type/trt_type6),
-#                 data =subset(stability_logrr, site_code == "SEV"))
-# summary(model_sev)
-# 
-# 
-# #knz
-# model_knz<-lmer(log_stability ~ log_rich+
-#                   (log_rich | project_name/community_type/trt_type6),
-#                 data =subset(stability_logrr, site_code == "KNZ"))
-# summary(model_knz)
-# 
-# #recreating konza - yes I generally get the same pattern Mendy is publishing
-# summary(lm(log_stability ~ log_rich,
-#         data =subset(stability_logrr, site_code == "KNZ")))
-# ggplot(data=subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability))+
-#   geom_point()
-# 
-# #serc
-# model_serc<-lmer(log_stability ~ log_rich+
-#                   (log_rich | project_name / community_type/trt_type6),
-#                 data =subset(stability_logrr, site_code == "SERC"))
-# summary(model_serc)
-# 
-# ggplot(data = subset(stability_logrr, site_code == "CDR"), aes(x = log_rich, y = log_stability, color = trt_type6))+
-#   geom_point()+
-#   geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
-#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
-# 
-# ggplot(data = subset(stability_logrr, site_code == "KNZ"), aes(x = log_rich, y = log_stability, color = trt_type6))+
-#   geom_point()+
-#   geom_smooth(aes(group = trt_type6), method = 'lm', se = F)+
-#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)
-
-##3 doing this in a way that makes more sense to me. Instead of doing this for each plot, I would just have one dot for each treatment in each experiment, like all the other figures are done.
-
-
-###doing for composition change - Not going to present this, I think it does not enhance the paper at all. 
-#get composition change
-# spc<-unique(community$site_project_comm)
-# delta_comp<-data.frame()
-# 
-# for (i in 1:length(spc)){
-#   subset<-community%>%
-#     filter(site_project_comm==spc[i])
-#   
-#   out<-multivariate_change(subset, time.var = 'calendar_year', abundance.var = 'relcov', replicate.var = 'plot_id', treatment = 'treatment', species.var = 'genus_species')
-#   out$site_project_comm<-spc[i]
-#   
-#   delta_comp<-rbind(delta_comp, out)
-# }
-# ave_comp<-delta_comp%>%
-#   group_by(site_project_comm, treatment)%>%
-#   summarize(comp_change = mean(composition_change))%>%
-#   separate(site_project_comm, into=c("site_code", 'project_name', 'community_type'), sep = "_", remove = F)%>%
-#   left_join(anpp_temp_cv)
-# 
-# control_comp_stabiltiy<-ave_comp%>%
-#   filter(plot_mani==0)%>%
-#   mutate(cont_comp = comp_change,
-#             cont_tempcv = anpp_temp_cv)%>%
-#   ungroup()%>%
-#   select(-comp_change, -anpp_temp_cv, -treatment, -plot_mani)
-# 
-# comp_stability_logrr<-ave_comp%>%
-#   filter(plot_mani > 0)%>%
-#   left_join(control_comp_stabiltiy)%>%
-#   mutate(log_stability = log(anpp_temp_cv/cont_tempcv),
-#          log_comp = log(comp_change/cont_comp))%>%
-#   left_join(trtint)
-# 
-# 
-# ggplot(data = comp_stability_logrr, aes(x = log_comp, y = log_stability, color = trt_type7))+
-#   geom_point()+
-#   geom_smooth(method = 'lm', se = F, color = 'black', size = 2)+
-#   scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-#   geom_point(size=2)+
-#   geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Nitrogen"), method="lm", se=F, color="green3", size = 1)+
-#   geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-#   geom_smooth(data=subset(comp_stability_logrr, trt_type7 =="Water"), method="lm", se=F, color="blue", size = 1)+
-#   xlab('Change in Composition')+
-#   ylab('Change in Temporal Stabilty')+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-
-##looking into collinearlity in the data
-colin_plot<-stability_logrr%>%
-  left_join(site_info)
-
-colin_trt<-comp_stability_logrr%>%
-  left_join(site_info)
 
 # figure for SEM paper ----------------------------------------------------
 
@@ -1000,74 +854,3 @@ ggplot(data=sem2, aes(x=treatment_year, y=anpp_PC, group=trt_type5))+
   geom_hline(yintercept=0)+
   facet_wrap(~trt_type, ncol=4, scales="free")
 
-
-#overall effect of vari --------------------------------------------------
-cont_temp<-anpp_temp_cv%>%
-  filter(plot_mani==0)%>%
-  mutate(cont_temp_cv=anpp_temp_cv)%>%
-  ungroup()%>%
-  select(site_code, project_name, community_type, treatment, cont_temp_cv)%>%
-  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(-treatment)
-
-trt_temp<-anpp_temp_cv%>%
-  filter(plot_mani>0)
-
-tograph1_temp<-merge(cont_temp, trt_temp, by=c("site_code", 'project_name',"community_type"))%>%
-  mutate(id=paste(site_code, project_name, community_type, sep="_"))
-
-tograph_temp<-merge(tograph1_temp, trtint, by=c("site_project_comm","treatment"))
-
-####just overall what are the effects of the treatments on temporal heterogeneity?
-##testing for differences
-
-temp_bar<-tograph_temp%>%
-  mutate(PC=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)
-
-t.test(abs(temp_bar$PC), mu=0)
-t.test(temp_bar$PC, mu=0)
-
-
-#temporal model
-irr<-subset(temp_bar, trt_type6=="Water")
-t.test(irr$PC, mu=0)
-nit<-subset(temp_bar, trt_type6=="Nitrogen")
-t.test(nit$PC, mu=0)
-nuts<-subset(temp_bar, trt_type6=="Multiple Nutrients")
-t.test(nuts$PC, mu=0)
-
-
-
-tograph_temp_trt<-tograph_temp%>%
-  mutate(PC=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)%>%
-  group_by(trt_type6)%>%
-  summarize(P.C=mean(PC),
-            sdd=sd(PC),
-            num=length(PC))%>%
-  mutate(se=sdd/sqrt(num))%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
-
-tograph_temp_bar_overall<-tograph_temp%>%
-  mutate(PC=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100)%>%
-  summarize(P.C=mean(PC),
-            sdd=sd(PC),
-            num=length(PC))%>%
-  mutate(se=sdd/sqrt(num))%>%
-  mutate(trt_type6="All Treatments")
-
-tograph_temp_bar<-rbind(tograph_temp_trt, tograph_temp_bar_overall)
-
-#graphing this
-temp_pc<-
-  ggplot(data=tograph_temp_bar, aes(x=trt_type6, y=P.C, fill=trt_type6))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=P.C-se, ymax=P.C+se),position= position_dodge(0.9), width=0.2)+
-  ylab("Percent Change of Temporal Variability")+
-  scale_fill_manual(values=c("black", "lightgray","gray","darkgray"))+
-  xlab("Treatment")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-  geom_vline(xintercept = 1.5, size = 1)+
-  ggtitle("Temporal")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  theme(legend.position = "none")
- 
