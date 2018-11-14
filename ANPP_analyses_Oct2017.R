@@ -342,14 +342,17 @@ C_PC<-PC%>%
 #CV
 dat<-C_PC[,c(7,2)]
 mvn(data=dat, univariatePlot = "qqplot")
-contCV<-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+#Don't use MA bc not the same units. 
+cor.test(dat$mPC, dat$cont_temp_cv)#don't use SMA b/c not a significant regression.
+hist(dat$mPC)
+hist(dat$cont_temp_cv)# no outliers should use RMA
 #not sig
 
 #SD
 sddat<-C_PC[,c(9,2)]
-
 mvn(data=sddat, univariatePlot = "qqplot")
-contSD<-lmodel2(mPC~cont_temp_sd, range.x = "interval", range.y = "interval", data=sddat, nperm=99)
+contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", data=sddat, nperm=99)
 #not sig
 
 
@@ -357,15 +360,15 @@ contSD<-lmodel2(mPC~cont_temp_sd, range.x = "interval", range.y = "interval", da
 #looking at three seperate GCDs - NONE are sig.
 subdat<-subset(C_PC, trt_type6=="Nitrogen")
 dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
 
 subdat<-subset(C_PC, trt_type6=="Multiple Nutrients")
 dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
 
 subdat<-subset(C_PC, trt_type6=="Water")
 dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
 
 # #not sure I need this
 # var_temp_controls<- varpart(tograph_log_temp$cont_temp_cv, 
@@ -386,8 +389,8 @@ graphQ2<-C_PC%>%
 
 dat<-C_PC[,c(7,2)]
 mvn(data=dat, univariatePlot = "qqplot")
-contCV<-lmodel2(mPC~cont_temp_cv, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopem<-contCV$regression.results[4,3]#something is funky with MA
+contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+slopem<-contCV$regression.results[4,3]#something is funky with MA USE
 interceptm<-contCV$regression.results[4,2]
 
 ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
