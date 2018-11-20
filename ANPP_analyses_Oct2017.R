@@ -7,6 +7,7 @@ library(vegan)
 library(lmerTest)
 library(lmodel2)
 library(MVN)
+library(rsq)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -23,7 +24,7 @@ anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
 
 site_info<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, MAP, MAT, rrich)
+  select(site_project_comm, MAP, MAT, rrich, anpp)
 
 anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
   select(-X)%>%
@@ -44,16 +45,6 @@ precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_prec
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
 
-#getting richness_evenness
-anpp_spc<-all_anpp_dat%>%
-  select(site_project_comm)%>%
-  unique()
-
-#read in community data
-community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
-  select(-X)%>%
-  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
-  right_join(anpp_spc)
 
 # clean up anpp data --------------------------------------------------------
 
@@ -106,6 +97,19 @@ sites<-all_anpp_dat%>%
 # anpp_trts<-all_anpp_dat%>%
 #   select(site_project_comm, treatment)%>%
 #   unique
+
+#getting richness_evenness
+anpp_spc<-all_anpp_dat%>%
+  select(site_project_comm)%>%
+  unique()
+
+#read in community data
+community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  right_join(anpp_spc)
+
+
 
 # calculate temporal cv ---------------------------------------
 
@@ -241,27 +245,27 @@ sum(sign$pos)
 
 45/95 #47% are postive and 53% are negative
 50/95
-##for CV not sig for any
+##for not sig for all
 irr<-subset(CT_comp, trt_type6=="Water")
-t.test(abs(irr$PC_CV), mu=0)
+t.test(irr$PC_CV, mu=0)
 nit<-subset(CT_comp, trt_type6=="Nitrogen")
-t.test(abs(nit$PC_CV), mu=0)
+t.test(nit$PC_CV, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
-t.test(abs(nuts$PC_CV), mu=0)
+t.test(nuts$PC_CV, mu=0)
 ## for SD sig for all
 irr<-subset(CT_comp, trt_type6=="Water")
-t.test(abs(irr$PC_sd), mu=0)
+t.test(irr$PC_sd, mu=0)
 nit<-subset(CT_comp, trt_type6=="Nitrogen")
-t.test(abs(nit$PC_sd), mu=0)
+t.test(nit$PC_sd, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
-t.test(abs(nuts$PC_sd), mu=0)
+t.test(nuts$PC_sd, mu=0)
 ##for mean sig for all
 irr<-subset(CT_comp, trt_type6=="Water")
-t.test(abs(irr$PC_mean), mu=0)
+t.test(irr$PC_mean, mu=0)
 nit<-subset(CT_comp, trt_type6=="Nitrogen")
-t.test(abs(nit$PC_mean), mu=0)
+t.test(nit$PC_mean, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
-t.test(abs(nuts$PC_mean), mu=0)
+t.test(nuts$PC_mean, mu=0)
 
 
 
@@ -279,6 +283,61 @@ PC_bargraph_trt<-CT_comp%>%
          se_mn=sd_mn/sqrt(num))%>%
   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
 
+CT_comp_trt<-CT_comp%>%
+  filter(trt_type7!="Other GCD")
+CT_comp_all<-CT_comp%>%
+  mutate(trt_type7="All Treatments")
+CT_comp_tograph<-rbind(CT_comp_trt, CT_comp_all)
+
+###making boxplots
+cv <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_CV, color=trt_type7))+
+  geom_jitter()+
+  geom_boxplot(alpha=.1) +
+  xlab("") +
+  ylab("Percent Difference\nCV of ANPP")+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("")+
+  scale_color_manual(values=c("orange","green3","blue","black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+
+  geom_hline(yintercept = 0, size = 0.5)+
+  geom_text(x=0.5, y=1.0, label="C", size=4)
+
+sd <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_sd, color=trt_type7))+
+    geom_jitter()+
+    geom_boxplot(alpha=.1) +
+    xlab("") +
+    ylab("Percent Difference\nSD of ANPP")+
+    scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+    xlab("")+
+    scale_color_manual(values=c("orange","green3","blue","black"))+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+    geom_vline(xintercept = 1.5, size = 1)+
+    geom_hline(yintercept = 0, size = 0.5)+
+geom_text(x=1, y=1.7, label="*", size=8)+
+  geom_text(x=2, y=1.7, label="*", size=8)+
+  geom_text(x=0.5, y=1.7, label="B", size=4)
+
+mean <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_mean, color=trt_type7))+
+    geom_jitter()+
+    geom_boxplot(alpha=.1) +
+    xlab("") +
+    ylab("Percent Difference\nANPP")+
+    scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+    xlab("")+
+    scale_color_manual(values=c("orange","green3","blue","black"))+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+    geom_vline(xintercept = 1.5, size = 1)+
+    geom_hline(yintercept = 0, size = 0.5)+
+geom_text(x=1, y=1.5, label="*", size=8)+
+  geom_text(x=2, y=1.5, label="*", size=8)+
+  geom_text(x=3, y=.6, label="*", size=8)+
+  geom_text(x=4, y=1, label="*", size=8)+
+ geom_text(x=0.5, y=1.5, label="A", size=4)
+
+grid.arrange(mean, sd, cv, ncol=1)
+
+##making a bar graph of this
 PC_bargraph_all<-CT_comp%>%
   summarize(cv=mean(PC_CV),
             sd_cv=sd(PC_CV),
@@ -300,26 +359,25 @@ cv_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
   geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nCV of ANPP")+
-  scale_fill_manual(values=c("black", "orange","green3","blue"))+
-  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
+  scale_fill_manual(values=c("orange","green3","blue","black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
-  geom_text(x=0.6, y=0.12, label="A", size=4)
+  geom_text(x=0.6, y=0.12, label="C", size=4)
+
 sd_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nSD of ANPP")+
-  scale_fill_manual(values=c("black", "orange","green3","blue"))+
-  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
+  scale_fill_manual(values=c("orange","green3","blue","black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+  
-  geom_text(x=1, y=0.75, label="*", size=8)+
-  geom_text(x=2, y=0.35, label="*", size=8)+
-  geom_text(x=3, y=0.35, label="*", size=8)+
-  geom_text(x=4, y=0.35, label="*", size=8)+
+  geom_text(x=1, y=0.35, label="*", size=8)+
+  geom_text(x=2, y=0.75, label="*", size=8)+
   geom_text(x=0.6, y=0.75, label="B", size=4)+
   scale_y_continuous(limits=c(0, 0.8))
 
@@ -328,19 +386,19 @@ mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nANPP")+
-  scale_fill_manual(values=c("black", "orange","green3","blue"))+
-  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-  xlab("GCD Treatment")+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("")+
+  scale_fill_manual(values=c("orange","green3","blue","black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
-  geom_text(x=1, y=0.55, label="*", size=8)+
-  geom_text(x=2, y=0.35, label="*", size=8)+
-  geom_text(x=3, y=0.48, label="*", size=8)+
-  geom_text(x=4, y=0.35, label="*", size=8)+
+  geom_text(x=1, y=0.35, label="*", size=8)+
+  geom_text(x=2, y=0.55, label="*", size=8)+
+  geom_text(x=3, y=0.35, label="*", size=8)+
+  geom_text(x=4, y=0.48, label="*", size=8)+
   scale_y_continuous(limits=c(0, 0.6))+
-  geom_text(x=0.6, y=0.55, label="C", size=4)
+  geom_text(x=0.6, y=0.55, label="A", size=4)
 
-grid.arrange(cv_fig, sd_fig, mn_fig, ncol=1)
+grid.arrange(mn_fig, sd_fig, cv_fig, ncol=1)
 
 ###what correlates with PC_CV?
 
@@ -350,30 +408,67 @@ PC_cor<-CT_comp%>%
   left_join(cont_rich)%>%
   left_join(site_info)
 
-#CV
-cor.test(PC_cor$PC_CV, PC_cor$manpp)
-cor.test(PC_cor$PC_CV, PC_cor$sdppt)
-cor.test(PC_cor$PC_CV, PC_cor$MAP)
-cor.test(PC_cor$PC_CV, PC_cor$MAT)
-cor.test(PC_cor$PC_CV, PC_cor$cont_rich)
-cor.test(PC_cor$PC_CV, PC_cor$Evar)
-#SD
-cor.test(PC_cor$PC_sd, PC_cor$manpp)
-cor.test(PC_cor$PC_sd, PC_cor$sdppt)
-cor.test(PC_cor$PC_sd, PC_cor$MAP)
-cor.test(PC_cor$PC_sd, PC_cor$MAT)
-cor.test(PC_cor$PC_sd, PC_cor$cont_rich)
-cor.test(PC_cor$PC_sd, PC_cor$Evar)
-#mean
-cor.test(PC_cor$PC_mean, PC_cor$manpp)
-cor.test(PC_cor$PC_mean, PC_cor$sdppt)
-cor.test(PC_cor$PC_mean, PC_cor$MAP)
-cor.test(PC_cor$PC_mean, PC_cor$MAT)
-cor.test(PC_cor$PC_mean, PC_cor$cont_rich)
-cor.test(PC_cor$PC_mean, PC_cor$Evar)
 
+tograph_cor<-PC_cor%>%
+  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, anpp, sdppt, MAP, MAT, cont_rich, Evar)%>%
+  gather(parm, value, anpp:Evar)%>%
+  gather(vari_metric, vari_value, PC_CV:PC_mean)%>%
+  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","anpp","MAP","sdppt","MAT")),
+         vari_group=factor(vari_metric, levels=c("PC_mean","PC_sd","PC_CV")))
 
-pairs(PC_cor[,c(18:26)])
+rvalues <- tograph_cor %>% 
+  group_by(vari_group, parm_group) %>%
+  summarize(r.value = round((cor.test(vari_value, value)$estimate), digits=3),
+            p.value = (cor.test(vari_value, value)$p.value))
+
+parameter<-c(
+  anpp = "Site ANPP",
+  sdppt = "SD of Precip",
+  MAP = "MAP",
+  MAT = "MAT",
+  cont_rich = "Sp Richness",
+  Evar = "Evenness"
+)
+
+vari<-c(
+  PC_CV = "CV of ANPP",
+  PC_mean = "ANPP",
+  PC_sd = "SD of ANPP"
+)
+
+ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
+  geom_point()+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
+  facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
+  xlab("Value")+
+  ylab("Percent Difference")+
+  geom_text(data=rvalues, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)
+
+#library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
+
+stepAIC(lm(PC_CV~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.cv<-lm(PC_CV~MAP+anpp+sdppt+Evar, data=PC_cor))
+rsq.partial(model.cv)
+
+stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
+rsq.partial(model.sd)
+
+stepAIC(lm(PC_mean~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
+rsq.partial(model.mn)
 
 ##t-test - do the slopes differ from 1?
 #model 2 regression
