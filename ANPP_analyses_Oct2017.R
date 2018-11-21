@@ -267,8 +267,284 @@ t.test(nit$PC_mean, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 t.test(nuts$PC_mean, mu=0)
 
+##t-test - do the slopes differ from 1?
+#model 2 regression
+#first check data is it bivariate normal?
+dat<-CT_comp[,c(4,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#yes p < 0.001
+
+# ###looking at three well replicated treatmetns.
+# #nitrogen - temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
+dat<-subdat[,c(4,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-9
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#not sig.
+
+# # nuts temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(4,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-31
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#not sig.
 
 
+# #water temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Water"))
+dat<-subdat[,c(4,10)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
+#first, I can just use the 97.5% CI interval to say slope does differ from one.
+#or I can try to do a ttest.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-5
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#not sig.
+
+##doing the same thing for SD 
+sddat<-CT_comp[,c(6,12)]
+normal<-mvn(data=log(sddat), univariatePlot = "qqplot")#data are somewhat bivaiate normal
+
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA to estimate slope according to package.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+#yes p < 0.001
+
+# ###looking at three well replicated treatmetns.
+# #nitrogen - temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
+dat<-subdat[,c(6,12)]
+mvn(data=log(dat), univariatePlot = "qqplot")#data are bivaiate normal
+
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-9
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df)
+# sig p = 0.036
+
+# # nuts temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(6,12)]
+mvn(data=log(dat), univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-31
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower = F)
+#not sig.
+
+
+# #water temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Water"))
+dat<-subdat[,c(6,12)]
+mvn(data=log(dat), univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-5
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#not sig.
+
+##doing the same thing for ANPP overall
+
+mndat<-CT_comp[,c(5,11)]
+mvn(data=mndat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99) #use MA to estimate slope according to package.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-93
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#yes p = 0.026
+
+# ###looking at three well replicated treatmetns.
+# #nitrogen - temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
+mndat<-subdat[,c(5,11)]
+mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-9
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#not sig.
+
+# # nuts temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
+mndat<-subdat[,c(5,11)]
+mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-31
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#sig p < 0.001
+
+# #water temporal
+subdat<-subset(subset(CT_comp, trt_type6=="Water"))
+mndat<-subdat[,c(5,11)]
+mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
+
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99) #use MA to estimate slope according to package.
+slope<-model2.lm$regression.results[2,3]
+low<-model2.lm$confidence.intervals[2,4]
+high<-model2.lm$confidence.intervals[2,5]
+se<-((high-low)/2)/2.24
+df<-5
+t_value_one <- (slope - 1) / se
+2*pt(t_value_one, df=df, lower=F)
+#not sig.
+
+
+###variance partitioning 
+var_temp<- varpart(CT_comp$PC_CV, 
+                   ~PC_sd, 
+                   ~PC_mean, 
+                   data = CT_comp)
+
+### venn diagram plot
+plot(var_temp)
+
+
+###graphing this
+theme_set(theme_bw(12))
+tograph_color<-CT_comp%>%
+  left_join(ave_prod)%>%
+  left_join(precip_vari)
+
+##CV figure
+dat<-CT_comp[,c(4,10)]
+model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA 
+slopem<-model2.lm$regression.results[2,3]
+interceptm<-model2.lm$regression.results[2,2]
+
+#main figure for paper
+cv1fig<-
+ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
+  geom_point(size=3)+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  geom_abline(slope=slopem, intercept=interceptm, size=1)+
+  ylab("CV of ANPP Trt Plots")+
+  xlab("CV of ANPP Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(10,100))+
+  scale_y_continuous(limits=c(10,100))+
+  geom_text(x=15, y=100, label="F", size=4, color="black")
+
+##sd figure
+sddat<-CT_comp[,c(6,12)]
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA 
+slopeA<-model2.lm$regression.results[2,3]
+interceptA<-model2.lm$regression.results[2,2]
+
+subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
+dat<-subdat[,c(6,12)]
+model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
+slopeN<-model2.lm$regression.results[2,3]
+interceptN<-model2.lm$regression.results[2,2]
+sd1fig<-
+ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd), color=trt_type7))+
+  geom_point(size=3)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_abline(slope=slopeA, intercept=interceptA, size=1)+
+  geom_abline(slope=slopeN, intercept=interceptN, size=1, color = "green2")+
+  ylab("Log (SD of ANPP Trt Plots)")+
+  xlab("Log (SD of ANPP Control Plots)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(3,7))+
+  scale_y_continuous(limits=c(3,7))+
+  geom_text(x=3, y=6.8, label="E", size=4, color="black")
+
+##mean figure
+mndat<-CT_comp[,c(5,11)]
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
+slopeA<-model2.lm$regression.results[2,3]
+interceptA<-model2.lm$regression.results[2,2]
+
+subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
+mndat<-subdat[,c(5,11)]
+model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
+slopeMN<-model2.lm$regression.results[2,3]
+interceptMN<-model2.lm$regression.results[2,2]
+
+mean1fig<-
+ggplot(data=CT_comp, aes(x=cont_temp_mean, y=anpp_temp_mean, color=trt_type7))+
+  geom_point(size=3)+
+  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  geom_abline(slope=slopeA, intercept=interceptA, size=1)+
+  geom_abline(slope=slopeMN, intercept=interceptMN, size=1, color = "orange")+
+  ylab("ANPP Trt Plots")+
+  xlab("ANPP Control Plots")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_x_continuous(limits=c(50,1100))+
+  scale_y_continuous(limits=c(50,1100))+
+  geom_text(x=100, y=1100, label="D", size=4, color="black")
+
+##making a bar graph of this
 PC_bargraph_trt<-CT_comp%>%
   group_by(trt_type6)%>%
   summarize(cv=mean(PC_CV),
@@ -283,61 +559,6 @@ PC_bargraph_trt<-CT_comp%>%
          se_mn=sd_mn/sqrt(num))%>%
   filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
 
-CT_comp_trt<-CT_comp%>%
-  filter(trt_type7!="Other GCD")
-CT_comp_all<-CT_comp%>%
-  mutate(trt_type7="All Treatments")
-CT_comp_tograph<-rbind(CT_comp_trt, CT_comp_all)
-
-###making boxplots
-cv <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_CV, color=trt_type7))+
-  geom_jitter()+
-  geom_boxplot(alpha=.1) +
-  xlab("") +
-  ylab("Percent Difference\nCV of ANPP")+
-  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-  xlab("")+
-  scale_color_manual(values=c("orange","green3","blue","black"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-  geom_vline(xintercept = 1.5, size = 1)+
-  geom_hline(yintercept = 0, size = 0.5)+
-  geom_text(x=0.5, y=1.0, label="C", size=4)
-
-sd <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_sd, color=trt_type7))+
-    geom_jitter()+
-    geom_boxplot(alpha=.1) +
-    xlab("") +
-    ylab("Percent Difference\nSD of ANPP")+
-    scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-    xlab("")+
-    scale_color_manual(values=c("orange","green3","blue","black"))+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-    geom_vline(xintercept = 1.5, size = 1)+
-    geom_hline(yintercept = 0, size = 0.5)+
-geom_text(x=1, y=1.7, label="*", size=8)+
-  geom_text(x=2, y=1.7, label="*", size=8)+
-  geom_text(x=0.5, y=1.7, label="B", size=4)
-
-mean <- ggplot(data = CT_comp_tograph, aes(x = trt_type7, y = PC_mean, color=trt_type7))+
-    geom_jitter()+
-    geom_boxplot(alpha=.1) +
-    xlab("") +
-    ylab("Percent Difference\nANPP")+
-    scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-    xlab("")+
-    scale_color_manual(values=c("orange","green3","blue","black"))+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-    geom_vline(xintercept = 1.5, size = 1)+
-    geom_hline(yintercept = 0, size = 0.5)+
-geom_text(x=1, y=1.5, label="*", size=8)+
-  geom_text(x=2, y=1.5, label="*", size=8)+
-  geom_text(x=3, y=.6, label="*", size=8)+
-  geom_text(x=4, y=1, label="*", size=8)+
- geom_text(x=0.5, y=1.5, label="A", size=4)
-
-grid.arrange(mean, sd, cv, ncol=1)
-
-##making a bar graph of this
 PC_bargraph_all<-CT_comp%>%
   summarize(cv=mean(PC_CV),
             sd_cv=sd(PC_CV),
@@ -398,7 +619,7 @@ mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   scale_y_continuous(limits=c(0, 0.6))+
   geom_text(x=0.6, y=0.55, label="A", size=4)
 
-grid.arrange(mn_fig, sd_fig, cv_fig, ncol=1)
+grid.arrange(mn_fig, mean1fig, sd_fig, sd1fig, cv_fig, cv1fig, ncol=2)
 
 ###what correlates with PC_CV?
 
@@ -470,141 +691,6 @@ stepAIC(lm(PC_mean~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
 summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
 rsq.partial(model.mn)
 
-##t-test - do the slopes differ from 1?
-#model 2 regression
-#first check data is it bivariate normal?
-dat<-CT_comp[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can do a ttest.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-93
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#yes p < 0.001
-
-##doing the same thing for SD not CV
-##t-test - do the slopes differ from 1?
-#model 2 regression
-#first check data is it bivariate normal?
-sddat<-CT_comp[,c(6,12)]
-normal<-mvn(data=log(sddat), univariatePlot = "qqplot")#data are somewhat bivaiate normal
-
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA to estimate slope according to package.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-93
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#yes p < 0.001
-
-
-# ###looking at three well replicated treatmetns.
-# #nitrogen - temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-9
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#not sig.
- 
-# # nuts temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-31
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#not sig.
-
-
-# #water temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Water"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-5
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#not sig.
-
-###variance partitioning 
-var_temp<- varpart(CT_comp$PC_CV, 
-                                ~PC_sd, 
-                                ~PC_mean, 
-                                data = CT_comp)
-
-### venn diagram plot
-plot(var_temp)
-
-
-###graphing this
-theme_set(theme_bw(12))
-tograph_color<-CT_comp%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-
-##CV figure
-dat<-CT_comp[,c(4,10)]
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA 
-slopem<-model2.lm$regression.results[2,3]
-interceptm<-model2.lm$regression.results[2,2]
-
-#main figure for paper
-ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
-  geom_point(size=3)+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)+
-    ylab("CV of ANPP Trt Plots")+
-  xlab("CV of ANPP Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(10,100))+
-  scale_y_continuous(limits=c(10,100))
-
-##sd figure
-sddat<-CT_comp[,c(6,12)]
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA 
-slopem<-model2.lm$regression.results[2,3]
-interceptm<-model2.lm$regression.results[2,2]
-
-ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd), color=trt_type7))+
-  geom_point(size=3)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  ylab("Log (SD of ANPP Trt Plots)")+
-  xlab("Log (SD of ANPP Control Plots)")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(3,7))+
-  scale_y_continuous(limits=c(3,7))
 
 
 # Q2 what is the relationship between control CV and PC in ANPP? ---------
