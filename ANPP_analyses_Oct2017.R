@@ -151,9 +151,9 @@ PC_anpp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calend
   select(-treatment.x)
 
 PD_anpp_yr<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
-  mutate(PC=((manpp-contanpp)/contanpp)*100)%>%
-  mutate(treatment=treatment.x)%>%
-  select(-treatment.x)
+  mutate(PD=((manpp-contanpp)/contanpp)*100,
+         Diff=manpp-contanpp)%>%
+  mutate(treatment=treatment.x)
 
 
 ##getting average production and precip vari
@@ -162,7 +162,9 @@ ave_prod<-all_anpp_dat%>%
   group_by(site_code, project_name, community_type, calendar_year)%>%
   summarize(anpp = mean(anpp))%>%
   group_by(site_code, project_name, community_type)%>%
-  summarize(manpp = mean(anpp))
+  summarize(manpp = mean(anpp),
+            sdanpp = sd(anpp))%>%
+  mutate(cvanpp = sdanpp/manpp)
 
 precip_vari<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   select(site_code, project_name, community_type, calendar_year, precip_mm)%>%
@@ -636,7 +638,8 @@ grid.arrange(mn_fig, mean1fig, sd_fig, sd1fig, cv_fig, cv1fig, ncol=2)
 ####bar graph of difference across ecosystems
 
 PD_ecosystems<-CT_comp%>%
-  group_by(site_code)%>%
+  left_join(site_info)%>%
+  group_by(site_code, MAP)%>%
   summarize(cv=mean(PC_CV),
             sd_cv=sd(PC_CV),
             sd=mean(PC_sd),
@@ -646,32 +649,34 @@ PD_ecosystems<-CT_comp%>%
             num=length(PC_CV))%>%
   mutate(se_cv=sd_cv/sqrt(num),
          se_sd=sd_sd/sqrt(num),
-         se_mn=sd_mn/sqrt(num))
+         se_mn=sd_mn/sqrt(num))%>%
+  ungroup%>%
+  mutate(site_code2=ifelse(site_code=="maerc","MAERC", as.character(site_code)))
 
-eco_cv<-ggplot(data=PD_ecosystems, aes(x=site_code, y=cv))+
+eco_cv<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=cv, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nCV of ANPP")+
   xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
-eco_sd<-ggplot(data=PD_ecosystems, aes(x=site_code, y=sd))+
+eco_sd<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=sd, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nSD of ANPP")+
   xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-eco_mn<-ggplot(data=PD_ecosystems, aes(x=site_code, y=mn))+
+eco_mn<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=mn, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nANPP")+
   xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
  
 grid.arrange(eco_mn, eco_sd, eco_cv)
 
@@ -685,10 +690,10 @@ PC_cor<-CT_comp%>%
 
 
 tograph_cor<-PC_cor%>%
-  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, anpp, sdppt, MAP, MAT, cont_rich, Evar)%>%
-  gather(parm, value, anpp:Evar)%>%
+  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, manpp, cvanpp, MAP, MAT, cont_rich, Evar)%>%
+  gather(parm, value, manpp:Evar)%>%
   gather(vari_metric, vari_value, PC_CV:PC_mean)%>%
-  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","anpp","MAP","sdppt","MAT")),
+  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","manpp","cvanpp", "MAP","MAT")),
          vari_group=factor(vari_metric, levels=c("PC_mean","PC_sd","PC_CV")))
 
 rvalues <- tograph_cor %>% 
@@ -697,8 +702,8 @@ rvalues <- tograph_cor %>%
             p.value = (cor.test(vari_value, value)$p.value))
 
 parameter<-c(
-  anpp = "Site ANPP",
-  sdppt = "SD of Precip",
+  manpp = "Control ANPP",
+  cvanpp = 'CV of Control ANPP',
   MAP = "MAP",
   MAT = "MAT",
   cont_rich = "Sp Richness",
@@ -716,15 +721,15 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="manpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="anpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="manpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="manpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
   xlab("Value")+
@@ -733,15 +738,15 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
 
 #library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
 
-stepAIC(lm(PC_CV~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.cv<-lm(PC_CV~MAP+anpp+sdppt+Evar, data=PC_cor))
-rsq.partial(model.cv)
+stepAIC(lm(PC_CV~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
+summary(model.cv<-lm(PC_CV~MAP+cvanpp+Evar, data=PC_cor))
+rsq.partial(model.cv, adj = T)
 
-stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
-rsq.partial(model.sd)
+stepAIC(lm(PC_sd~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
+summary(model.sd<-lm(PC_CV~anpp+cvanpp, data=PC_cor))
+rsq.partial(model.sd, adj =T)
 
-stepAIC(lm(PC_mean~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+stepAIC(lm(PC_mean~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
 summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
 rsq.partial(model.mn)
 
@@ -808,13 +813,21 @@ ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = con
 
 ###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
 
-ggplot(data=PD_anpp_yr, aes(x = contanpp, y = PC))+
+ggplot(data=PD_anpp_yr, aes(x = contanpp, y = PD))+
   geom_point()+
   theme(legend.position = "none")+
   geom_smooth(method = "lm")+
   facet_wrap(~site_project_comm, scales = "free")
  
+ggplot(data=PD_anpp_yr, aes(x = contanpp, y =Diff))+
+  geom_point()+
+  theme(legend.position = "none")+
+  geom_smooth(method = "lm")+
+  facet_wrap(~site_project_comm, scales = "free")
 
+summary(lm(Diff~contanpp*site_project_comm, data=PD_anpp_yr))#not sig
+
+summary(lm(PD~contanpp*site_project_comm, data=PD_anpp_yr))#sig
 
 # precipitation analysis --------------------------------------------------
 
@@ -1050,8 +1063,8 @@ Vari_rich<-PC_rich%>%
 dat<-Vari_rich[,c(7,22)]
 mvn(data=dat, univariatePlot = "qqplot")
 biod<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopem<-biod$regression.results[2,3]
-interceptm<-biod$regression.results[2,2]
+slopecv<-biod$regression.results[2,3]
+interceptcv<-biod$regression.results[2,2]
 ##overall SD
 dat<-Vari_rich[,c(7,23)]
 mvn(data=dat, univariatePlot = "qqplot")
@@ -1062,10 +1075,10 @@ interceptsd<-biod_sd$regression.results[2,2]
 dat<-Vari_rich[,c(7,24)]
 mvn(data=dat, univariatePlot = "qqplot")
 biod_mn<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopemn<-biod_sd$regression.results[2,3]
-interceptmn<-biod_sd$regression.results[2,2]
+slopemn<-biod_mn$regression.results[2,3]
+interceptmn<-biod_mn$regression.results[2,2]
 
-##treatments seperately
+##treatments seperately CV
 #N not sig
 subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
 dat<-subdat[,c(7,22)]
@@ -1082,8 +1095,46 @@ dat<-subdat[,c(7,22)]
 normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
 biod_mn<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
 
+###SD
+#N not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
+dat<-subdat[,c(7,23)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_n<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#water not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
+dat<-subdat[,c(7,23)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_w<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#sig.
+subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(7,23)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_mn<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopesd.mn<-biod_mn$regression.results[2,3]
+interceptsd.mn<-biod_mn$regression.results[2,2]
+
+###Mean
+#N not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
+dat<-subdat[,c(7,24)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_n<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#water not sig
+subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
+dat<-subdat[,c(7,24)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_w<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+#sig.
+subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
+dat<-subdat[,c(7,24)]
+normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
+biod_mn<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopemn.mn<-biod_mn$regression.results[2,3]
+interceptmn.mn<-biod_mn$regression.results[2,2]
+
 #CV pic for paper
-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_CV, color=trt_type7))+
+cv_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_CV, color=trt_type7))+
   geom_point()+
   geom_point(size=3)+
   xlab('Percent Difference Richness')+
@@ -1092,9 +1143,10 @@ ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_CV, color=trt_type7))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)+
   geom_hline(yintercept = 0)+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)
+  geom_abline(slope=slopecv, intercept=interceptcv, size=1)+
+  geom_text(x=-75, y=1, label="C", size=4, color="black")
 #sd for appendix
-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
+sd_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
   geom_point()+
   geom_point(size=3)+
   xlab('Percent Difference Richness')+
@@ -1103,10 +1155,12 @@ ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)+
   geom_hline(yintercept = 0)+
-  geom_abline(slope=slopesd, intercept=interceptsd, size=1)
+  geom_abline(slope=slopesd, intercept=interceptsd, size=1)+
+  geom_abline(slope=slopesd.mn, intercept=interceptsd.mn, size=1, color="orange")+
+  geom_text(x=-75, y=1.5, label="B", size=4, color="black")
 
 #mean for appendix
-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7))+
+mn_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7))+
   geom_point()+
   geom_point(size=3)+
   xlab('Percent Difference Richness')+
@@ -1115,9 +1169,11 @@ ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 0)+
   geom_hline(yintercept = 0)+
-  geom_abline(slope=slopemn, intercept=interceptmn, size=1)
+  geom_abline(slope=slopemn, intercept=interceptmn, size=1)+
+  geom_abline(slope=slopemn.mn, intercept=interceptmn.mn, size=1, color="orange")+
+  geom_text(x=-75, y=1.5, label="A", size=4, color="black")
 
-
+grid.arrange(mn_rich, sd_rich, cv_rich, ncol=1)
 
 # figure for SEM paper ----------------------------------------------------
 
