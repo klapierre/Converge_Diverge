@@ -109,6 +109,12 @@ community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\Long
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
   right_join(anpp_spc)
 
+community<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Oct2017.csv")%>%
+  select(-X)%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
+  right_join(anpp_spc)
+
+
 
 
 # calculate temporal cv ---------------------------------------
@@ -141,6 +147,11 @@ PC_anpp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calend
   mutate(PC=((manpp-contanpp)/contanpp)*100)%>%
   group_by(site_project_comm, treatment.x)%>%
   summarise(mPC=mean(PC))%>%
+  mutate(treatment=treatment.x)%>%
+  select(-treatment.x)
+
+PD_anpp_yr<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
+  mutate(PC=((manpp-contanpp)/contanpp)*100)%>%
   mutate(treatment=treatment.x)%>%
   select(-treatment.x)
 
@@ -621,6 +632,49 @@ mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
 
 grid.arrange(mn_fig, mean1fig, sd_fig, sd1fig, cv_fig, cv1fig, ncol=2)
 
+
+####bar graph of difference across ecosystems
+
+PD_ecosystems<-CT_comp%>%
+  group_by(site_code)%>%
+  summarize(cv=mean(PC_CV),
+            sd_cv=sd(PC_CV),
+            sd=mean(PC_sd),
+            sd_sd=sd(PC_sd),
+            mn=mean(PC_mean),
+            sd_mn=sd(PC_mean),
+            num=length(PC_CV))%>%
+  mutate(se_cv=sd_cv/sqrt(num),
+         se_sd=sd_sd/sqrt(num),
+         se_mn=sd_mn/sqrt(num))
+
+eco_cv<-ggplot(data=PD_ecosystems, aes(x=site_code, y=cv))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nCV of ANPP")+
+  xlab("Site Code")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+
+
+eco_sd<-ggplot(data=PD_ecosystems, aes(x=site_code, y=sd))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nSD of ANPP")+
+  xlab("Site Code")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+
+eco_mn<-ggplot(data=PD_ecosystems, aes(x=site_code, y=mn))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nANPP")+
+  xlab("Site Code")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")
+ 
+grid.arrange(eco_mn, eco_sd, eco_cv)
+
 ###what correlates with PC_CV?
 
 PC_cor<-CT_comp%>%
@@ -752,6 +806,15 @@ ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = con
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
+###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
+
+ggplot(data=PD_anpp_yr, aes(x = contanpp, y = PC))+
+  geom_point()+
+  theme(legend.position = "none")+
+  geom_smooth(method = "lm")+
+  facet_wrap(~site_project_comm, scales = "free")
+ 
+
 
 # precipitation analysis --------------------------------------------------
 
@@ -830,15 +893,24 @@ slopes_tograph1<-merge(c.slope, t.slope, by="site_project_comm")
 slopes_tograph2<-merge(slopes_tograph1, trtint, by=c("site_project_comm","treatment"))
 slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
   mutate(diff=est-c_est)%>%
-  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
+  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)%>%
+  left_join(precip_vari)
 
 ###stats
 #regression of map with diff
 summary(MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph))
 #yes sig effect. p = 0.0497
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Nitrogen")))
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Water")))
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients")))
+summary(MAP_diff <- lm(diff ~ sdppt,  data = slopes_tograph))
+#yes sig effect. p = 0.0005
+
+summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Nitrogen"))) #not sig
+summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
+summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients"))) #sig p = 0.001
+
+summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Nitrogen")))#not sig
+summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
+summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients")))#sig. 
+
 
 #try without MAERC
 MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"))
@@ -885,6 +957,17 @@ ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   ylab("Difference in Slopes")+
   xlab("Site MAP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  annotate("text", x=275, y=1.6, label="B", size=8)
+
+sdppt<-
+  ggplot(data=slopes_tograph, aes(x=sdppt, y=diff, color = trt_type7))+
+  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+  geom_point(size=3)+
+  geom_smooth(method="lm", se=F, color="black", size = 1)+
+  geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+  ylab("Difference in Slopes")+
+  xlab("Site SD of Precipitation")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   annotate("text", x=275, y=1.6, label="B", size=8)
 # 
@@ -975,6 +1058,12 @@ mvn(data=dat, univariatePlot = "qqplot")
 biod_sd<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
 slopesd<-biod_sd$regression.results[2,3]
 interceptsd<-biod_sd$regression.results[2,2]
+##overall mean
+dat<-Vari_rich[,c(7,24)]
+mvn(data=dat, univariatePlot = "qqplot")
+biod_mn<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
+slopemn<-biod_sd$regression.results[2,3]
+interceptmn<-biod_sd$regression.results[2,2]
 
 ##treatments seperately
 #N not sig
@@ -1015,6 +1104,18 @@ ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
   geom_vline(xintercept = 0)+
   geom_hline(yintercept = 0)+
   geom_abline(slope=slopesd, intercept=interceptsd, size=1)
+
+#mean for appendix
+ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7))+
+  geom_point()+
+  geom_point(size=3)+
+  xlab('Percent Difference Richness')+
+  ylab('Percent Difference of ANPP ')+
+  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)+
+  geom_abline(slope=slopemn, intercept=interceptmn, size=1)
 
 
 
