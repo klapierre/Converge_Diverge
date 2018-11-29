@@ -1,6 +1,7 @@
 library(tidyverse)
 library(gridExtra)
 library(gtable)
+library(gtools)
 library(codyn)
 library(lme4)
 library(vegan)
@@ -8,6 +9,7 @@ library(lmerTest)
 library(lmodel2)
 library(MVN)
 library(rsq)
+library(grid)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -623,7 +625,7 @@ mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
   scale_fill_manual(values=c("orange","green3","blue","black"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=0.35, label="*", size=8)+
   geom_text(x=2, y=0.55, label="*", size=8)+
@@ -631,6 +633,20 @@ mn_fig<-ggplot(data=PC_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_text(x=4, y=0.48, label="*", size=8)+
   scale_y_continuous(limits=c(0, 0.6))+
   geom_text(x=0.6, y=0.55, label="A", size=4)
+
+legend=gtable_filter(ggplot_gtable(ggplot_build(mean1fig)), "guide-box") 
+grid.draw(legend)
+
+fig1<-
+  grid.arrange(arrangeGrob(mn_fig+theme(legend.position="none"),
+                           mean1fig+theme(legend.position="none"),
+                           sd_fig+theme(legend.position="none"),
+                           sd1fig+theme(legend.position="none"),
+                           cv_fig+theme(legend.position="none"),
+                           cv1fig+theme(legend.position="none"),
+                           ncol=2), legend, 
+               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
+
 
 grid.arrange(mn_fig, mean1fig, sd_fig, sd1fig, cv_fig, cv1fig, ncol=2)
 
@@ -677,6 +693,16 @@ eco_mn<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=mn, fill=MA
   ylab("Percent Difference\nANPP")+
   xlab("Site Code")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+legend=gtable_filter(ggplot_gtable(ggplot_build(eco_mn)), "guide-box") 
+grid.draw(legend)
+
+fig1<-
+  grid.arrange(arrangeGrob(eco_mn+theme(legend.position="none"),
+                           eco_sd+theme(legend.position="none"),
+                           eco_cv+theme(legend.position="none"),
+                           ncol=1), legend, 
+               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
  
 grid.arrange(eco_mn, eco_sd, eco_cv)
 
@@ -690,10 +716,10 @@ PC_cor<-CT_comp%>%
 
 
 tograph_cor<-PC_cor%>%
-  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, manpp, cvanpp, MAP, MAT, cont_rich, Evar)%>%
+  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, manpp, cvanpp, MAP, sdppt, MAT, cont_rich, Evar)%>%
   gather(parm, value, manpp:Evar)%>%
   gather(vari_metric, vari_value, PC_CV:PC_mean)%>%
-  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","manpp","cvanpp", "MAP","MAT")),
+  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","manpp","cvanpp", "MAP","sdppt","MAT")),
          vari_group=factor(vari_metric, levels=c("PC_mean","PC_sd","PC_CV")))
 
 rvalues <- tograph_cor %>% 
@@ -705,6 +731,7 @@ parameter<-c(
   manpp = "Control ANPP",
   cvanpp = 'CV of Control ANPP',
   MAP = "MAP",
+  sdppt = "SD of Precip.",
   MAT = "MAT",
   cont_rich = "Sp Richness",
   Evar = "Evenness"
@@ -723,6 +750,8 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="manpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAT"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="manpp"), method="lm", se=F, color = "black")+
@@ -731,6 +760,7 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
   xlab("Value")+
   ylab("Percent Difference")+
@@ -738,15 +768,15 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
 
 #library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
 
-stepAIC(lm(PC_CV~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
-summary(model.cv<-lm(PC_CV~MAP+cvanpp+Evar, data=PC_cor))
+stepAIC(lm(PC_CV~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.cv<-lm(PC_CV~anpp+cvanpp+sdppt+Evar, data=PC_cor))
 rsq.partial(model.cv, adj = T)
 
-stepAIC(lm(PC_sd~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
-summary(model.sd<-lm(PC_CV~anpp+cvanpp, data=PC_cor))
+stepAIC(lm(PC_sd~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.sd<-lm(PC_CV~anpp+cvanpp+sdppt, data=PC_cor))
 rsq.partial(model.sd, adj =T)
 
-stepAIC(lm(PC_mean~MAT+MAP+anpp+cvanpp+cont_rich+Evar, data=PC_cor))
+stepAIC(lm(PC_mean~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
 summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
 rsq.partial(model.mn)
 
@@ -777,57 +807,73 @@ contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", da
 
 
 
-#looking at three seperate GCDs - NONE are sig.
-subdat<-subset(C_PC, trt_type6=="Nitrogen")
-dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-
-subdat<-subset(C_PC, trt_type6=="Multiple Nutrients")
-dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-
-subdat<-subset(C_PC, trt_type6=="Water")
-dat<-subdat[,c(7,2)]
-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-
-##graphing this
-
-graphQ2<-C_PC%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-
-dat<-C_PC[,c(7,2)]
-mvn(data=dat, univariatePlot = "qqplot")
-contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-slopem<-contCV$regression.results[4,3]#something is funky with MA USE RMA
-interceptm<-contCV$regression.results[4,2]
-
-ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
-    geom_point()+
-    scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
-    scale_size(name = "Mean ANPP", range = c(1,6))+
-  ylab("Percent Difference in ANPP")+
-  xlab("Temporal CV Control Plots")+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# #looking at three seperate GCDs - NONE are sig.
+# subdat<-subset(C_PC, trt_type6=="Nitrogen")
+# dat<-subdat[,c(7,2)]
+# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+# 
+# subdat<-subset(C_PC, trt_type6=="Multiple Nutrients")
+# dat<-subdat[,c(7,2)]
+# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+# 
+# subdat<-subset(C_PC, trt_type6=="Water")
+# dat<-subdat[,c(7,2)]
+# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+# 
+# ##graphing this
+# 
+# graphQ2<-C_PC%>%
+#   left_join(ave_prod)%>%
+#   left_join(precip_vari)
+# 
+# dat<-C_PC[,c(7,2)]
+# mvn(data=dat, univariatePlot = "qqplot")
+# contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+# slopem<-contCV$regression.results[4,3]#something is funky with MA USE RMA
+# interceptm<-contCV$regression.results[4,2]
+# 
+# ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
+#     geom_point()+
+#     scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
+#     scale_size(name = "Mean ANPP", range = c(1,6))+
+#   ylab("Percent Difference in ANPP")+
+#   xlab("Temporal CV Control Plots")+
+#   geom_abline(slope=slopem, intercept=interceptm, size=1)+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 ###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
+
+pvalues <- PD_anpp_yr %>% 
+  group_by(site_project_comm) %>%
+  summarize(p.value = round(summary(lm(PD~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3))%>%
+  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))
 
 ggplot(data=PD_anpp_yr, aes(x = contanpp, y = PD))+
   geom_point()+
   theme(legend.position = "none")+
-  geom_smooth(method = "lm")+
-  facet_wrap(~site_project_comm, scales = "free")
- 
-ggplot(data=PD_anpp_yr, aes(x = contanpp, y =Diff))+
+  geom_smooth(method = "lm", color="black", se=F)+
+  facet_wrap(~site_project_comm, scales = "free")+
+  geom_text(data=pvalues, mapping=aes(x=Inf, y = Inf, label = pval), hjust=1.05, vjust=1.5)+
+  xlab("Control ANPP")+
+  ylab("PD of ANPP")
+
+
+#do this for experiments that are 10 years or longer
+ggplot(data=PD_anpp_yr, aes(x = treatment_year, y =PD))+
   geom_point()+
   theme(legend.position = "none")+
   geom_smooth(method = "lm")+
   facet_wrap(~site_project_comm, scales = "free")
 
-summary(lm(Diff~contanpp*site_project_comm, data=PD_anpp_yr))#not sig
+summary(aov(lm(Diff~contanpp*site_project_comm, data=PD_anpp_yr)))# sig negative slope. Say yes overall negative slope. But differs by sites, X% of studies had a negative slope and there was an interaction between sites. Make fig with p.value in box.
 
-summary(lm(PD~contanpp*site_project_comm, data=PD_anpp_yr))#sig
+summary(test<-(lm(Diff~contanpp, data=subset(PD_anpp_yr, site_project_comm=="ANG_watering_0"))))
+
+summary(aov(lm(PD~contanpp*site_project_comm, data=PD_anpp_yr)))#sig negative slope
+
+summary(aov(lm(Diff~treatment_year*site_project_comm, data=PD_anpp_yr)))# sig p = 0.048 negative slope
+
+summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr)))#sig negative slope
 
 # precipitation analysis --------------------------------------------------
 
@@ -964,9 +1010,9 @@ slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 
 map<-
 ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
   geom_point(size=3)+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
+ # geom_smooth(method="lm", se=F, color="black", size = 1)+
   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
   ylab("Difference in Slopes")+
   xlab("Site MAP")+
@@ -1003,7 +1049,7 @@ ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
   xlab("GCD Treatment")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
-  geom_text(x=1, y=0.245, label="*", size=8)+
+  geom_text(x=1, y=0.255, label="*", size=8)+
   geom_text(x=2, y=0.24, label="*", size=8)+
   geom_text(x=0.6, y=0.24, label="A", size=8)
 
@@ -1172,6 +1218,16 @@ mn_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7)
   geom_abline(slope=slopemn, intercept=interceptmn, size=1)+
   geom_abline(slope=slopemn.mn, intercept=interceptmn.mn, size=1, color="orange")+
   geom_text(x=-75, y=1.5, label="A", size=4, color="black")
+
+legend=gtable_filter(ggplot_gtable(ggplot_build(cv_rich)), "guide-box") 
+grid.draw(legend)
+
+fig1<-
+  grid.arrange(arrangeGrob(mn_rich+theme(legend.position="none"),
+                           sd_rich+theme(legend.position="none"),
+                           cv_rich+theme(legend.position="none"),
+                           ncol=1), legend, 
+               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
 
 grid.arrange(mn_rich, sd_rich, cv_rich, ncol=1)
 
