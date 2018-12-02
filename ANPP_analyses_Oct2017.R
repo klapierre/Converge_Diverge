@@ -24,6 +24,11 @@ theme_set(theme_bw(12))
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
   select(-X)
 
+Nlevels<-anpp_expInfo%>%
+  select(site_code, project_name, community_type, n)%>%
+  unique()%>%
+  filter(n!=0)
+
 site_info<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, MAP, MAT, rrich, anpp)
@@ -155,7 +160,8 @@ PC_anpp<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calend
 PD_anpp_yr<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","calendar_year"))%>%
   mutate(PD=((manpp-contanpp)/contanpp)*100,
          Diff=manpp-contanpp)%>%
-  mutate(treatment=treatment.x)
+  mutate(treatment=treatment.x)%>%
+  left_join(site_info)
 
 
 ##getting average production and precip vari
@@ -481,6 +487,13 @@ var_temp<- varpart(CT_comp$PC_CV,
 ### venn diagram plot
 plot(var_temp)
 
+###is there a relationship with N level?
+nquest<-CT_comp%>%
+  left_join(Nlevels)%>%
+  filter(trt_type7=="Nitrogen")
+
+summary(lm(PC_CV~n, data=nquest))
+
 
 ###graphing this
 theme_set(theme_bw(12))
@@ -782,28 +795,28 @@ rsq.partial(model.mn)
 
 
 
-# Q2 what is the relationship between control CV and PC in ANPP? ---------
-C_PC<-PC_anpp%>%
-  left_join(cont_temp)%>%
-  left_join(trtint)%>%
-  left_join(site_info)
-
-#test the relationship between control_temp and PC using model2 regressions
-#CV
-dat<-C_PC[,c(7,2)]
-mvn(data=dat, univariatePlot = "qqplot")
-contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-#Don't use MA bc not the same units. 
-cor.test(dat$mPC, dat$cont_temp_cv)#don't use SMA b/c not a significant regression.
-hist(dat$mPC)
-hist(dat$cont_temp_cv)# no outliers should use RMA
-#not sig
-
-#SD
-sddat<-C_PC[,c(9,2)]
-mvn(data=sddat, univariatePlot = "qqplot")
-contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", data=sddat, nperm=99)
-#not sig
+# # Q2 what is the relationship between control CV and PC in ANPP? ---------
+# C_PC<-PC_anpp%>%
+#   left_join(cont_temp)%>%
+#   left_join(trtint)%>%
+#   left_join(site_info)
+# 
+# #test the relationship between control_temp and PC using model2 regressions
+# #CV
+# dat<-C_PC[,c(7,2)]
+# mvn(data=dat, univariatePlot = "qqplot")
+# contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
+# #Don't use MA bc not the same units. 
+# cor.test(dat$mPC, dat$cont_temp_cv)#don't use SMA b/c not a significant regression.
+# hist(dat$mPC)
+# hist(dat$cont_temp_cv)# no outliers should use RMA
+# #not sig
+# 
+# #SD
+# sddat<-C_PC[,c(9,2)]
+# mvn(data=sddat, univariatePlot = "qqplot")
+# contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", data=sddat, nperm=99)
+# #not sig
 
 
 
@@ -845,21 +858,46 @@ contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", da
 
 pvalues <- PD_anpp_yr %>% 
   group_by(site_project_comm) %>%
-  summarize(p.value = round(summary(lm(PD~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3))%>%
-  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))
+  summarize(p.value = round(summary(lm(PD~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
+            slope = summary(lm(PD~contanpp))$coef["contanpp", c("Estimate")])%>%
+  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
+  left_join(site_info)
 
-ggplot(data=PD_anpp_yr, aes(x = contanpp, y = PD))+
+summary(lm(slope~MAP, data=pvalues))
+with(pvalues, plot(MAP, slope))
+
+PD_anpp_yr2<-PD_anpp_yr%>%
+  mutate(spc_order = factor(site_project_comm, levels = c("SEV_Nfert_0",       "SEV_WENNDEx_0","IMGERS_Yu_0","KLU_KGFert_0","DL_NSFC_0","NWT_snow_0","CDR_BioCON_0" ,"CDR_e001_A","CDR_e001_B","CDR_e001_C", "CDR_e001_D", "CDR_e002_A","CDR_e002_B","CDR_e002_C","KNZ_BGP_0","KNZ_IRG_l","KNZ_IRG_u","KNZ_pplots_0","KNZ_RaMPs_0","KNZ_RHPs_0", "KBS_T7_0","SERC_CXN_0", "SERC_TMECE_MX","SERC_TMECE_SC","SERC_TMECE_SP", "maerc_fireplots_0","ANG_watering_0")))
+
+
+ggplot(data=PD_anpp_yr2, aes(x = contanpp, y = PD))+
   geom_point()+
   theme(legend.position = "none")+
-  geom_smooth(method = "lm", color="black", se=F)+
-  facet_wrap(~site_project_comm, scales = "free")+
-  geom_text(data=pvalues, mapping=aes(x=Inf, y = Inf, label = pval), hjust=1.05, vjust=1.5)+
+  facet_wrap(~spc_order, scales = "free")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_A"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_B"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="ANG_watering_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KBS_T7_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_D"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_l"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
   xlab("Control ANPP")+
   ylab("PD of ANPP")
 
 
 #do this for experiments that are 10 years or longer
-ggplot(data=PD_anpp_yr, aes(x = treatment_year, y =PD))+
+PD_anpp_yr_10<-PD_anpp_yr%>%
+  filter(treatment_year>10)
+
+summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr_10)))#sig negative slope
+
+ggplot(data=PD_anpp_yr_10, aes(x = treatment_year, y =PD))+
   geom_point()+
   theme(legend.position = "none")+
   geom_smooth(method = "lm")+
@@ -1004,6 +1042,25 @@ slopes_bar_overall<-slopes_tograph%>%
             sddiff=sd(diff))%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
   mutate(trt_type6="All Treatments")
+
+
+##does this differ for wet/dry sites
+slopes_bar_site<-slopes_tograph%>%
+  group_by(site_code, MAP)%>%
+  summarise(mdiff=mean(diff),
+            ndiff=length(diff),
+            sddiff=sd(diff))%>%
+  mutate(sediff=sddiff/sqrt(ndiff))
+
+
+
+ggplot(data=slopes_bar_site, aes(x=reorder(site_code, MAP), y=mdiff, fill=MAP))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Difference in Slopes")+
+  xlab("Site Code")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #graphing diff
