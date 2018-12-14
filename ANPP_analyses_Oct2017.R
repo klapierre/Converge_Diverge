@@ -665,6 +665,15 @@ grid.arrange(mn_fig, mean1fig, sd_fig, sd1fig, cv_fig, cv1fig, ncol=2)
 
 
 ####bar graph of difference across ecosystems
+PD_ecosystems_test<-CT_comp%>%
+  left_join(site_info)%>%
+  group_by(site_code, MAP)
+
+cor.test(PD_ecosystems_test$cont_temp_cv, PD_ecosystems_test$anpp)
+
+with(subset(PD_ecosystems_test, site_code!="SERC"), plot(anpp, cont_temp_cv))
+
+ggplot(data=PD_ecosystems_test, aes())
 
 PD_ecosystems<-CT_comp%>%
   left_join(site_info)%>%
