@@ -878,7 +878,6 @@ with(pvalues, plot(MAP, slope))
 PD_anpp_yr2<-PD_anpp_yr%>%
   mutate(spc_order = factor(site_project_comm, levels = c("SEV_Nfert_0",       "SEV_WENNDEx_0","IMGERS_Yu_0","KLU_KGFert_0","DL_NSFC_0","NWT_snow_0","CDR_BioCON_0" ,"CDR_e001_A","CDR_e001_B","CDR_e001_C", "CDR_e001_D", "CDR_e002_A","CDR_e002_B","CDR_e002_C","KNZ_BGP_0","KNZ_IRG_l","KNZ_IRG_u","KNZ_pplots_0","KNZ_RaMPs_0","KNZ_RHPs_0", "KBS_T7_0","SERC_CXN_0", "SERC_TMECE_MX","SERC_TMECE_SC","SERC_TMECE_SP", "maerc_fireplots_0","ANG_watering_0")))
 
-
 ggplot(data=PD_anpp_yr2, aes(x = contanpp, y = PD))+
   geom_point()+
   theme(legend.position = "none")+
@@ -899,6 +898,33 @@ ggplot(data=PD_anpp_yr2, aes(x = contanpp, y = PD))+
   xlab("Control ANPP")+
   ylab("PD of ANPP")
 
+##do by diff and group by CV
+pvalues_df <- PD_anpp_yr %>% 
+  group_by(site_project_comm) %>%
+  summarize(p.value = round(summary(lm(Diff~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
+            slope = summary(lm(Diff~contanpp))$coef["contanpp", c("Estimate")])%>%
+  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
+  left_join(site_info)
+
+PD_anpp_yr3<-PD_anpp_yr%>%
+  mutate(spc_order = factor(site_project_comm, levels = c("KNZ_RaMPs_0", "KNZ_IRG_l", "KNZ_IRG_u", "KLU_KGFert_0", "SERC_TMECE_MX", "KNZ_pplots_0", "DL_NSFC_0", "ANG_watering_0", "SERC_CXN_0", "SERC_TMECE_SC", "CDR_e002_C", "NWT_snow_0", "CDR_e002_A","SERC_TMECE_SP", "CDR_BioCON_0", "IMGERS_Yu_0", "CDR_e001_A", "KBS_T7_0", "CDR_e001_C", "CDR_e001_D", "CDR_e001_B","CDR_e002_B","SEV_Nfert_0", "SEV_WENNDEx_0", "KNZ_BGP_0", "KNZ_RHPs_0","maerc_fireplots_0")))
+
+ggplot(data=PD_anpp_yr3, aes(x = contanpp, y = Diff))+
+  geom_point()+
+  theme(legend.position = "none")+
+  facet_wrap(~spc_order, scales = "free")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SERC_TMECE_SP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="IMGERS_Yu_0"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SEV_WENNDEx_0"), method="lm", se=F, color = "black")+
+  xlab("Control ANPP")+
+  ylab("Diff in ANPP (C-T")
 
 #do this for experiments that are 10 years or longer
 PD_anpp_yr_10<-PD_anpp_yr%>%
