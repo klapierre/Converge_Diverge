@@ -738,10 +738,10 @@ PC_cor<-CT_comp%>%
 
 
 tograph_cor<-PC_cor%>%
-  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, manpp, cvanpp, MAP, sdppt, MAT, cont_rich, Evar)%>%
-  gather(parm, value, manpp:Evar)%>%
+  select(site_project_comm, treatment,PC_CV, PC_sd, PC_mean, anpp, MAP, sdppt, MAT, cont_rich, Evar)%>%
+  gather(parm, value, anpp:Evar)%>%
   gather(vari_metric, vari_value, PC_CV:PC_mean)%>%
-  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","manpp","cvanpp", "MAP","sdppt","MAT")),
+  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","anpp","MAP","sdppt","MAT")),
          vari_group=factor(vari_metric, levels=c("PC_mean","PC_sd","PC_CV")))
 
 rvalues <- tograph_cor %>% 
@@ -750,8 +750,7 @@ rvalues <- tograph_cor %>%
             p.value = (cor.test(vari_value, value)$p.value))
 
 parameter<-c(
-  manpp = "Control ANPP",
-  cvanpp = 'CV of Control ANPP',
+  anpp = "Site ANPP",
   MAP = "MAP",
   sdppt = "SD of Precip.",
   MAT = "MAT",
@@ -770,17 +769,15 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="manpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="manpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="manpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="cvanpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
@@ -790,15 +787,15 @@ ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
 
 #library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
 
-stepAIC(lm(PC_CV~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.cv<-lm(PC_CV~anpp+cvanpp+sdppt+Evar, data=PC_cor))
+stepAIC(lm(PC_CV~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.cv<-lm(PC_CV~anpp+sdppt+Evar+MAP, data=PC_cor))
 rsq.partial(model.cv, adj = T)
 
-stepAIC(lm(PC_sd~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.sd<-lm(PC_CV~anpp+cvanpp+sdppt, data=PC_cor))
+stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
 rsq.partial(model.sd, adj =T)
 
-stepAIC(lm(PC_mean~MAT+MAP+anpp+cvanpp+sdppt+cont_rich+Evar, data=PC_cor))
+stepAIC(lm(PC_mean~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
 summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
 rsq.partial(model.mn)
 
