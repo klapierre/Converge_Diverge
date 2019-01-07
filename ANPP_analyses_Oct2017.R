@@ -1086,7 +1086,7 @@ slopes_bar_site<-slopes_tograph%>%
 
 
 
-ggplot(data=slopes_bar_site, aes(x=reorder(site_code, MAP), y=mdiff, fill=MAP))+
+ggplot(data=slopes_bar_site, aes(x=reorder(toupper(site_code), MAP), y=mdiff, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
   ylab("")+
