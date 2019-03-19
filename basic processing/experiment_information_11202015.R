@@ -8,10 +8,10 @@ setwd('C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
 
 #Meghan's
-setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
+setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 
-library(tidyr)
-library(dplyr)
+library(tidyverse)
+
 
 # notes:
 # nutrients, light, carbon, water, and other are binary variables for the entire experiment (whether one of these factors was manipulated)
@@ -1779,6 +1779,32 @@ lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
   mutate(factorial=1)%>%
   unique()
 
+edge<-read.csv('USA_EDGE.csv')%>%
+  select(site_code, project_name, calendar_year, treatment_year, treatment, community_type)%>%
+  mutate(nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
+         n=0, 
+         p=0, 
+         k=0, 
+         CO2=0, 
+         precip=ifelse(treatment=="chr", -66, ifelse(treatment=="int", -100, 0)), 
+         temp=0,
+         mow_clip=0, 
+         burn=0, 
+         herb_removal=0,
+         management=0,
+         other_trt=ifelse(treatment=="del", "monsoon rain applied later", 0), 
+         trt_details=0,
+         successional=0, 
+         plant_mani=0, 
+         plant_trt=0,
+         pulse=0)%>%
+  mutate(plot_mani=ifelse(treatment=='con', 0, 1))%>%
+  mutate(resource_mani=1)%>%
+  mutate(max_trt=0)%>%
+  mutate(public=0)%>%
+  mutate(factorial=0)%>%
+  unique()
+
 nitadd<-read.csv("YMN_NitAdd.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0,
@@ -1807,13 +1833,13 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   unique()
 
 ###merge all datasets
-combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
+combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, edge, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
 #kim's desktop
 write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Nov2017.csv')
 
 #meghan's
-write.csv(combine, "~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Dec2016.csv")
+write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv")
 
 # ##checking
 # check<-combine%>%
