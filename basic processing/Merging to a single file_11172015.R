@@ -6,12 +6,11 @@ setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\
 
 #Meghan
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
+setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 dir()
 
 library(gtools)
-library(reshape2)
-library(tidyr)
-library(dplyr)
+library(tidyverse)
 
 # nov 20, 2015 -checked all plots have recorded species, so the filter abundance !=0 step will not remove any plots.
 
@@ -584,18 +583,20 @@ lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
   mutate(community_type=0)%>%
   filter(abundance!=0)
 
+edge<-read.csv("USA_EDGE.csv")
+
 nitadd<-read.csv("YMN_NitAdd.csv")%>%
   select(-data_type)%>%
   mutate(community_type=0, block=0)%>%
   filter(abundance!=0)
 
 #merge all datasets
-combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, sask, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu)%>%
+combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2, cxn, e0012, e0023, e62, edge, events2, exp12, face2, fireplots2, gane2, gap22, gb2, gce2, gfp, grazeprecip, herbdiv, herbwood2, imagine2, interaction2, irg2, kgfert2, lind2, lovegrass, lucero, mat22, megarich2, mnt2, mwatfer, nde, nfert2, nitadd, nitphos, nitrogen, nsfc2, oface2,pennings2, pme, pplots, pq2, ramps, rhps2, rmapc2, sask, snfert2, snow2, study1192, study2782, t72, ter, tface, tide2, tmece, uk2 ,wapaclip2, warmnut2, watering2, water, wenndex2, wet2, yu)%>%
   mutate(genus_species=tolower(genus_species))
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-# write.csv(combine, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_Oct2017.csv")
+#write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_March2019.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -614,7 +615,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
-# write.csv(relcov, "C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")
+ #write.csv(relcov, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_March2019.csv")
 
 # ##for Codyn dataset
 # expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
