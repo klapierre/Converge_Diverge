@@ -9,12 +9,11 @@ setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge di
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
-library(tidyr)
-library(dplyr)
+library(tidyverse)
 library(vegan)
 
 #import the list of all experiments site information
-ExpInfo <- read.csv("SpeciesRelativeAbundance_Oct2017.csv")%>%
+ExpInfo <- read.csv("SpeciesRelativeAbundance_March2019.csv")%>%
   select(-X)
 
 ExpList<-ExpInfo%>%
@@ -24,7 +23,7 @@ ExpList<-ExpInfo%>%
 #Getting ANPP
 ANPP<-read.csv("ANPP_Oct2017.csv")
 
-Experiment_Info<-read.csv("ExperimentInformation_May2017.csv")%>%
+Experiment_Info<-read.csv("ExperimentInformation_March2019.csv")%>%
   select(site_code, project_name, community_type, treatment, plot_mani, public)%>%
   unique()
 
@@ -55,7 +54,7 @@ ExpANPP<-merge(AllANPP, ExpList2, by=c("site_code","project_name","community_typ
 #   unique()
 #write.csv(siteList, "SiteList_LatLong.csv")
 
-SiteClimate<-read.csv("siteList_climate_Feb2016.csv")%>%
+SiteClimate<-read.csv("siteList_climate_March2019.csv")%>%
   mutate(MAP=ifelse(site_code=="Finse", 1030, MAP))%>%
   select(site_code, MAP, MAT)
 #for Finse_WarmNut there is a big differnce between this and what they published, and their coordinates were VERY vauge. I am replacing with their value: 1030 mm.
@@ -68,7 +67,7 @@ ExpLength<-ExpInfo%>%
 
 ##calculate chao richness and rarefied richness for each site
 
-species <- read.csv("SpeciesRawAbundance_Oct2017.csv")%>%
+species <- read.csv("SpeciesRawAbundance_March2019.csv")%>%
   select(site_code, project_name, community_type, plot_id, calendar_year, genus_species, abundance)%>%
   mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
   #get rid of duplicate species within a plot and year in the dataset; once we contact the dataowners, this step will no longer be needed
@@ -178,7 +177,7 @@ SiteExpDetails<-merge(SiteClimate, ExpDetails, by="site_code")
 # 
 # with(ExpRichnessTest, plot(rrich1~rrich))
 
-# write.csv(SiteExpDetails, "SiteExperimentDetails_Dec2016.csv")
+# write.csv(SiteExpDetails, "SiteExperimentDetails_March2019.csv")
 
 pairs(SiteExpDetails[,c(2,3,6:8)])
 with(SiteExpDetails,cor.test(MAP, anpp))
