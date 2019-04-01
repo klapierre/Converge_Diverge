@@ -17,7 +17,7 @@ setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 ###read in data
 
 #experiment information
-expInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
+expInfo <- read.csv('ExperimentInformation_March2019.csv')%>%
   mutate(exp_year=paste(site_code, project_name, community_type, sep='::'))%>%
   select(-X)%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep='_'))

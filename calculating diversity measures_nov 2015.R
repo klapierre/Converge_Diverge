@@ -16,11 +16,11 @@ setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge di
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
 #read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_Oct2017.csv")%>%
+alldata<-read.csv("SpeciesRelativeAbundance_March2019.csv")%>%
   select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))
 
-expinfo<-read.csv("ExperimentInformation_Nov2017.csv")%>%
+expinfo<-read.csv("ExperimentInformation_March2019.csv")%>%
   mutate(exp_year=paste(site_code, project_name, community_type, calendar_year, sep="::"))%>%
   select(exp_year, plot_mani, treatment)
 
