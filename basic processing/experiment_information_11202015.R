@@ -30,6 +30,7 @@ library(tidyverse)
 # public means the dataset is publically available and we don't need to ask permission to use it
 # max_trt means that the treatments are the maximum magnitude of the treatment or controls (only applicable for experiments that have multiple levels of the same treatment, e.g., CDR e001 has many levels of N addition)
 # factorial means that the treatments are factorially manipulated - can only be factorial with 2+ treatments, some experiments have some treatments that are factorially manipulated and others that are not, must have all levels (i.e., can't have 3 and 4 combos without 1 and 2 combos)
+# trt_type is a categorical description of the treatments: mult_nutrient category is anything more than N*P (i.e., N*P is listed as a seperate category)
 
 watering<-read.delim("ANG_watering.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
@@ -51,11 +52,12 @@ watering<-read.delim("ANG_watering.txt")%>%
          plant_mani=0,
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='W', 1, ifelse(treatment=='S', 1, 0)))%>%
+  mutate(plot_mani=ifelse(treatment %in% c('W','S'), 1, 0))%>%
   mutate(resource_mani=1)%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment %in% c('W','S'), 'irr', 'control'))%>%
   unique()
 
 mat2<-read.delim("ARC_mat2.txt")%>%
@@ -83,6 +85,7 @@ mat2<-read.delim("ARC_mat2.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='NP', 'N*P', 'control'))%>%
   unique()
 
 mnt<-read.delim("ARC_mnt.txt")%>%
@@ -110,6 +113,7 @@ mnt<-read.delim("ARC_mnt.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='NP', 'N*P', 'control'))%>%
   unique()
 
 clonal<-read.delim("ASGA_Clonal.txt")%>%
@@ -130,13 +134,14 @@ clonal<-read.delim("ASGA_Clonal.txt")%>%
          trt_details=ifelse(treatment=='non-clonal_CO', 'non-clonal species', ifelse(treatment=='mixed_LP', 'large nutrient patches', ifelse(treatment=='non-clonal_LP', 'non-clonal species, large nutrient patches', ifelse(treatment=='mixed_SP', 'small nutrient patches', ifelse(treatment=='non-clonal_SP', 'non-clonal species, small nutrient patches', ifelse(treatment=='non-clonal_UN', 'non-clonal species', 0)))))),
          successional=1, 
          plant_mani=1, 
-         plant_trt=ifelse(treatment=='non-clonal_CO'|treatment=='non-clonal_LP'|treatment=='non-clonal_SP'|treatment=='non-clonal_UN', 1, 0),
+         plant_trt=ifelse(treatment %in% c('non-clonal_CO','non-clonal_LP','non-clonal_SP','non-clonal_UN'), 1, 0),
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='non-clonal_UN'|treatment=='non-clonal_LP'|treatment=='non-clonal_SP', 2, ifelse(treatment=='non-clonal_CO'|treatment=='mixed_LP'|treatment=='mixed_SP'|treatment=='mixed_UN', 1, 0)))%>%
+  mutate(plot_mani=ifelse(treatment %in% c('non-clonal_UN','non-clonal_LP','non-clonal_SP'), 2, ifelse(treatment %in% c('non-clonal_CO','mixed_LP','mixed_SP','mixed_UN'), 1, 0)))%>%
   mutate(resource_mani=ifelse(treatment=='non-clonal_CO', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='non-clonal_CO', 'plant_mani', ifelse(treatment %in% c('mixed_LP','mixed_SP','mixed_UN'), 'N', ifelse(treatment %in% c('non-clonal_LP','non-clonal_SP','non-clonal_UN'), 'N*plant_mani', 'control'))))%>%
   unique()
 
 exp1<-read.delim("ASGA_Exp1.txt")%>%
@@ -154,16 +159,17 @@ exp1<-read.delim("ASGA_Exp1.txt")%>%
          herb_removal=0, 
          management=0,
          other_trt=0,
-         trt_details=ifelse(treatment=='2_0_PA'|treatment=='1_0_PA'|treatment=='2_1_PA'|treatment=='1_1_PA', 'nutrient patches', 0),
-         successional=ifelse(treatment=='2_0_CO'|treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN', 1, 0),
-         plant_mani=ifelse(treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='1_1_CO'|treatment=='1_1_PA'|treatment=='1_1_UN', 1, 0),
-         plant_trt=ifelse(treatment=='2_1_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='1_1_CO'|treatment=='1_1_PA'|treatment=='1_1_UN', 1, 0),
-         pulse=ifelse(treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_0_CO'|treatment=='2_1_PA'|treatment=='2_1_UN'|treatment=='2_1_CO', 1, 0))%>%
-  mutate(plot_mani=ifelse(treatment=='1_0_CO', 0, ifelse(treatment=='1_0_PA'|treatment=='1_0_UN'|treatment=='1_1_CO'|treatment=='2_0_CO', 1, ifelse(treatment=='1_1_PA'|treatment=='1_1_UN'|treatment=='2_0_PA'|treatment=='2_0_UN'|treatment=='2_1_CO', 2, 3))))%>%
-  mutate(resource_mani=ifelse(treatment=='2_0_CO'|treatment=='1_1_CO'|treatment=='2_1_CO', 0, 1))%>%
+         trt_details=ifelse(treatment %in% c('2_0_PA','1_0_PA','2_1_PA','1_1_PA'), 'nutrient patches', 0),
+         successional=ifelse(treatment %in% c('2_0_CO','2_0_PA','2_0_UN','2_1_CO','2_1_PA','2_1_UN'), 1, 0),
+         plant_mani=ifelse(treatment %in% c('2_1_CO','2_1_PA','2_1_UN','1_1_CO','1_1_PA','1_1_UN'), 1, 0),
+         plant_trt=ifelse(treatment %in% c('2_1_CO','2_1_PA','2_1_UN','1_1_CO','1_1_PA','1_1_UN'), 1, 0),
+         pulse=ifelse(treatment %in% c('2_0_PA','2_0_UN','2_0_CO','2_1_PA','2_1_UN','2_1_CO'), 1, 0))%>%
+  mutate(plot_mani=ifelse(treatment=='1_0_CO', 0, ifelse(treatment %in% c('1_0_PA','1_0_UN','1_1_CO','2_0_CO'), 1, ifelse(treatment %in% c('1_1_PA','1_1_UN','2_0_PA','2_0_UN','2_1_CO'), 2, 3))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('2_0_CO','1_1_CO','2_1_CO'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment %in% c('1_0_PA','1_0_UN'), 'N', ifelse(treatment %in% c('2_0_PA','2_0_UN'), 'N*other', ifelse(treatment %in% c('1_1_PA','1_1_UN'), 'N*plant_mani', ifelse(treatment=='2_1_CO', 'plant_mani*other', ifelse(treatment %in% c('2_1_PA','2_1_UN'), 'N*plant_mani*other', ifelse(treatment=='2_0_CO', 'other', ifelse(treatment=='1_1_CO', 'plant_mani', 'control'))))))))%>%
   unique()
 
 nitphos<-read.csv("AZI_NitPhos.csv")%>%
@@ -188,9 +194,10 @@ nitphos<-read.csv("AZI_NitPhos.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='N0P0', 0, ifelse(treatment=="N1P0", 1, ifelse(treatment=="N2P0", 1, ifelse(treatment=="N3P0", 1, 2)))))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='N0P0'|treatment=='N2P0'|treatment=='N2P3'|treatment=='N3P0', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('N0P0','N2P0','N2P3','N3P0'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='N0P0', 'control', ifelse(treatment %in% c('N1P0','N2P0','N3P0'), 'N', 'N*P')))%>%
   unique()
 
 #16 spp plots are controls
@@ -202,7 +209,7 @@ lind<-read.delim("BAY_LIND.txt")%>%
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='rain_rich1'|treatment=='rain_rich2'|treatment=='rain_rich4'|treatment=='rain_rich8'|treatment=='rain_rich16', 8, 0),
+         precip=ifelse(treatment %in% c('rain_rich1','rain_rich2','rain_rich4','rain_rich8','rain_rich16'), 8, 0),
          temp=0, 
          mow_clip=0, 
          burn=0, 
@@ -210,16 +217,17 @@ lind<-read.delim("BAY_LIND.txt")%>%
          management=1,
          pulse=0,
          other_trt=0,
-         trt_details=ifelse(treatment=='ref_rich1'|treatment=='rain_rich1', '1 sp', ifelse(treatment=='ref_rich2'|treatment=='rain_rich2', '2 sp', ifelse(treatment=='ref_rich4'|treatment=='rain_rich4', '4 sp', ifelse(treatment=='ref_rich8'|treatment=='rain_rich8', '8 sp', '16 sp')))),
+         trt_details=ifelse(treatment %in% c('ref_rich1','rain_rich1'), '1 sp', ifelse(treatment %in% c('ref_rich2','rain_rich2'), '2 sp', ifelse(treatment %in% c('ref_rich4','rain_rich4'), '4 sp', ifelse(treatment %in% c('ref_rich8','rain_rich8'), '8 sp', '16 sp')))),
          successional=1, 
          plant_mani=1,  
-         plant_trt=ifelse(treatment=='ref_rich16'|treatment=='rain_rich16', 0, 1),
+         plant_trt=ifelse(treatment %in% c('ref_rich16','rain_rich16'), 0, 1),
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8'|treatment=='rain_rich16', 1, 2)))%>%
-  mutate(resource_mani=ifelse(treatment=='ref_rich1'|treatment=='ref_rich2'|treatment=='ref_rich4'|treatment=='ref_rich8', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='ref_rich16', 0, ifelse(treatment %in% c('ref_rich1','ref_rich2','ref_rich4','ref_rich8','rain_rich16'), 1, 2)))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('ref_rich1','ref_rich2','ref_rich4','ref_rich8'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='ref_rich16', 'control', ifelse(treatment %in% c('ref_rich1','ref_rich2','ref_rich4','ref_rich8'), 'plant_mani', 'irr*plant_mani')))%>%
   unique()
 
 events<-read.delim("Bt_EVENT2.txt")%>%
@@ -247,6 +255,7 @@ events<-read.delim("Bt_EVENT2.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='CA-N1', 'control', 'precip_vari'))%>%
   unique()
 
 pq<-read.delim("BUX_PQ.txt")%>%
@@ -257,8 +266,8 @@ pq<-read.delim("BUX_PQ.txt")%>%
          p=0, 
          k=0, 
          CO2=0, 
-         precip=ifelse(treatment=='wet'|treatment=='warm wet', 20, ifelse(treatment=='dry'|treatment=='warm dry', -20, 0)),
-         temp=ifelse(treatment=='warm'|treatment=='warm dry'|treatment=='warm wet', 3, 0),
+         precip=ifelse(treatment %in% c('wet','warm wet'), 20, ifelse(treatment %in% c('dry','warm dry'), -20, 0)),
+         temp=ifelse(treatment %in% c('warm','warm dry','warm wet'), 3, 0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -269,11 +278,12 @@ pq<-read.delim("BUX_PQ.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='warm'|treatment=='dry'|treatment=='wet', 1, ifelse(treatment=='control', 0, 2)))%>%
+  mutate(plot_mani=ifelse(treatment %in% c('warm','dry','wet'), 1, ifelse(treatment=='control', 0, 2)))%>%
   mutate(resource_mani=ifelse(treatment=='warm', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='dry', 'drought', ifelse(treatment=='wet', 'irr', ifelse(treatment=='warm', 'temp', ifelse(treatment=='warm dry', 'drought*temp', ifelse(treatment=='warm wet', 'irr*temp', 'control'))))))%>%
   unique()
 
 pennings<-read.delim("CAR_Pennings.txt")%>%
@@ -300,6 +310,7 @@ pennings<-read.delim("CAR_Pennings.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='NPK', 'mult_nutrient', 'control'))%>%
   unique()
 
 rmapc<-read.delim("CAU_RMAPC.txt")%>%
@@ -326,6 +337,7 @@ rmapc<-read.delim("CAU_RMAPC.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=ifelse(treatment=='H2O', 0, ifelse(treatment=='Ca', 0, 1)))%>%
+  mutate(trt_type=ifelse(treatment=='H2O', 'irr', ifelse(treatment=='N', 'N', ifelse(treatment=='P', 'P', ifelse(treatment=='Ca', 'lime', ifelse(treatment=='NP', 'N*P', 'control'))))))%>%
   unique()
 
 biocon<-read.delim("CDR_biocon.txt")%>%
@@ -353,6 +365,7 @@ biocon<-read.delim("CDR_biocon.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='X_C', 'CO2', ifelse(treatment=='N_X', 'N', ifelse(treatment=='N_C', 'N*CO2', 'control'))))%>%
   unique()
 
 e001<-read.csv("CDR_e001.csv")%>%
@@ -377,9 +390,10 @@ e001<-read.csv("CDR_e001.csv")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='1', 4, ifelse(treatment=='9', 0, 5)))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='8'|treatment=='1'|treatment=='9', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('8','1','9'), 1, 0))%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='9', 'control', 'mult_nutrient'))%>%
   unique()
 
 e002<-read.delim("CDR_e002.txt")%>%
@@ -404,8 +418,9 @@ e002<-read.delim("CDR_e002.txt")%>%
   mutate(plot_mani=ifelse(treatment=='1_f_u_n', 4, ifelse(treatment=='9_f_u_n', 0, 5)))%>%
   mutate(resource_mani=1)%>%
   mutate(public=1)%>%
-  mutate(max_trt=ifelse(treatment=='1_f_u_n'|treatment=='8_f_u_n'|treatment=='9_f_u_n', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('1_f_u_n','8_f_u_n','9_f_u_n'), 1, 0))%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='9_f_u_n', 'control', 'mult_nutrient'))%>%
   filter(calendar_year<1992)%>%##drops everything once cessation starts
   unique()
 
@@ -434,6 +449,7 @@ megarich<-read.delim("CEH_Megarich.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='AcEt', 'temp', ifelse(treatment=='EcAt', 'CO2', ifelse(treatment=='EcEt', 'CO2*temp', 'control'))))%>%
   unique()
 
 imagine<-read.delim("CLE_imagine.txt")%>%
@@ -461,20 +477,21 @@ imagine<-read.delim("CLE_imagine.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='T', 'temp', ifelse(treatment=='TD', 'drought*temp', ifelse (treatment=='TDCO2', 'drought*CO2*temp', 'control'))))%>%
   unique()
 
 culardoch<-read.delim("CUL_culardoch.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='N10'|treatment=='N10burn'|treatment=='N10clip'|treatment=='N10burnclip', 1, ifelse(treatment=='N20'|treatment=='N20burn'|treatment=='N20clip'|treatment=='N20burnclip', 2, ifelse(treatment=='N50'|treatment=='N50burn'|treatment=='N50clip'|treatment=='N50burnclip', 5, 0))),
+         n=ifelse(treatment %in% c('N10','N10burn','N10clip','N10burnclip'), 1, ifelse(treatment %in% c('N20','N20burn','N20clip','N20burnclip'), 2, ifelse(treatment %in% c('N50','N50burn','N50clip','N50burnclip'), 5, 0))),
          p=0, 
          k=0, 
          CO2=0, 
          precip=0, 
          temp=0,
-         mow_clip=ifelse(treatment=='clip'|treatment=='burnclip'|treatment=='N10clip'|treatment=='N20clip'|treatment=='N50clip'|treatment=='N10burnclip'|treatment=='N20burnclip'|treatment=='N50burnclip', 1, 0),
-         burn=ifelse(treatment=='N10burn'|treatment=='N20burn'|treatment=='N50burn'|treatment=='burn'|treatment=='burnclip'|treatment=='N10burnclip'|treatment=='N20burnclip'|treatment=='N50burnclip', 1, 0),
+         mow_clip=ifelse(treatment %in% c('clip','burnclip','N10clip','N20clip','N50clip','N10burnclip','N20burnclip','N50burnclip'), 1, 0),
+         burn=ifelse(treatment %in% c('N10burn','N20burn','N50burn','burn','burnclip','N10burnclip','N20burnclip','N50burnclip'), 1, 0),
         herb_removal=0,
         management=0,
         other_trt=0, 
@@ -482,12 +499,13 @@ culardoch<-read.delim("CUL_culardoch.txt")%>%
         successional=0, 
         plant_mani=0, 
         plant_trt=0,
-        pulse=ifelse(treatment=='burn'|treatment=='burnclip'|treatment=='N10burn'|treatment=='N10burnclip'|treatment=='N20burn'|treatment=='N20burnclip'|treatment=='N50burn'|treatment=='N50burnclip', 1, 0))%>%
-  mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N10'|treatment=='N20'|treatment=='N50'|treatment=='burn'|treatment=='clip', 1, ifelse(treatment=='N10burnclip'|treatment=='N20burnclip'|treatment=='N50burnclip', 3, 2))))%>%
-  mutate(resource_mani=ifelse(treatment=='burn'|treatment=='clip'|treatment=='burnclip', 0, 1))%>%
-  mutate(max_trt=ifelse(treatment=='control'|treatment=='N50'|treatment=='burn'|treatment=='N50burn'|treatment=='clip'|treatment=='burnclip'|treatment=='N50clip'|treatment=='N50burnclip', 1, 0))%>%
+        pulse=ifelse(treatment %in% c('burn','burnclip','N10burn','N10burnclip','N20burn','N20burnclip','N50burn','N50burnclip'), 1, 0))%>%
+  mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment %in% c('N10','N20','N50','burn','clip'), 1, ifelse(treatment %in% c('N10burnclip','N20burnclip','N50burnclip'), 3, 2))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('burn','clip','burnclip'), 0, 1))%>%
+  mutate(max_trt=ifelse(treatment %in% c('control','N50','burn','N50burn','clip','burnclip','N50clip','N50burnclip'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment=='burn', 'burn', ifelse(treatment=='clip', 'mow_clip', ifelse(treatment=='burnclip', 'burn*mow_clip', ifelse(treatment %in% c('N10','N20','N50'), 'N', ifelse(treatment %in% c('N10burn','N20burn','N50burn'), 'N*burn', ifelse(treatment %in% c('N10clip','N20clip','N50clip'), 'N*mow_clip', 'N*burn*mow_clip'))))))))%>%
   unique()
 
 gap2<-read.delim("DCGS_gap2.txt")%>%
@@ -515,6 +533,7 @@ gap2<-read.delim("DCGS_gap2.txt")%>%
   mutate(max_trt=ifelse(treatment=='_000'|treatment=='_150', 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='_000', 'control', 'light'))%>%
   unique()
 
 nsfc<-read.delim("DL_NSFC.txt")%>%
@@ -542,18 +561,19 @@ nsfc<-read.delim("DL_NSFC.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='N', 'N', ifelse(treatment=='W', 'irr', ifelse(treatment=='WN', 'N*irr', 'control'))))%>%
   unique()
 
 warmnut<-read.delim("Finse_WarmNut.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='nutrient addition'|treatment=='warming + nutrient addition', 10, 0),
-         p=ifelse(treatment=='nutrient addition'|treatment=='warming + nutrient addition', 2, 0),
-         k=ifelse(treatment=='nutrient addition'|treatment=='warming + nutrient addition', 8, 0),
+         n=ifelse(treatment %in% c('nutrient addition','warming + nutrient addition'), 10, 0),
+         p=ifelse(treatment %in% c('nutrient addition','warming + nutrient addition'), 2, 0),
+         k=ifelse(treatment %in% c('nutrient addition','warming + nutrient addition'), 8, 0),
          CO2=0, 
          precip=0,
-         temp=ifelse(treatment=='warming'|treatment=='warming + nutrient addition', 1.5, 0),
+         temp=ifelse(treatment %in% c('warming','warming + nutrient addition'), 1.5, 0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -569,6 +589,7 @@ warmnut<-read.delim("Finse_WarmNut.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='nutrient addition', 'mult_nutrient', ifelse(treatment=='warming', 'temp', ifelse(treatment=='warming + nutrient addition', 'mult_nutrient*temp', 'control'))))%>%
   unique()
 
 face<-read.delim("GVN_FACE.txt")%>%
@@ -596,19 +617,20 @@ face<-read.delim("GVN_FACE.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='A', 'CO2', 'control'))%>%
   unique()
 
 nde<-read.csv("IMGERS_NDE.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=="N1M0"|treatment=="N1M1", 1,ifelse(treatment=="N2M0"|treatment=="N2M1", 2, ifelse(treatment=="N3M0"|treatment=="N3M1", 3, ifelse(treatment=="N4M0"|treatment=="N4M1",5, ifelse(treatment=="N5M0"|treatment=="N5M1", 10, ifelse(treatment=="N6M0"|treatment=="N6M1",15, ifelse(treatment=="N7M0"|treatment=="N7M1", 20, ifelse(treatment=="N8M0"|treatment=="N8M1",50,0)))))))), 
+         n=ifelse(treatment %in% c("N1M0","N1M1"), 1,ifelse(treatment %in% c("N2M0","N2M1"), 2, ifelse(treatment %in% c("N3M0","N3M1"), 3, ifelse(treatment %in% c("N4M0","N4M1"),5, ifelse(treatment %in% c("N5M0","N5M1"), 10, ifelse(treatment %in% c("N6M0","N6M1"),15, ifelse(treatment %in% c("N7M0","N7M1"), 20, ifelse(treatment %in% c("N8M0","N8M1"),50,0)))))))), 
          p=0, 
          k=0, 
          CO2=0,
          precip=0, 
          temp=0, 
-         mow_clip=ifelse(treatment=="N0M1"|treatment=="N1M1"|treatment=="N2M1"|treatment=="N3M1"|treatment=="N4M1"|treatment=="N5M1"|treatment=="N6M1"|treatment=="N7M1"|treatment=="N8M1", 1,0), 
+         mow_clip=ifelse(treatment %in% c("N0M1","N1M1","N2M1","N3M1","N4M1","N5M1","N6M1","N7M1","N8M1"), 1,0), 
          burn=0, 
          herb_removal=0, 
          management=0,
@@ -618,11 +640,12 @@ nde<-read.csv("IMGERS_NDE.csv")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=="N0M0", 0, ifelse(treatment=="N1M0"|treatment=='N0M1'|treatment=="N1M0"|treatment=="N2M0"|treatment=="N3M0"|treatment=="N4M0"|treatment=="N5M0"|treatment=="N6M0"|treatment=="N7M0"|treatment=="N8M0", 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=="N0M0", 0, ifelse(treatment %in% c("N1M0",'N0M1',"N1M0","N2M0","N3M0","N4M0","N5M0","N6M0","N7M0","N8M0"), 1, 2)))%>%
   mutate(resource_mani=ifelse(treatment=="N0M1", 0, 1))%>%
-  mutate(max_trt=ifelse(treatment=='N0M0'|treatment=='N8M0'|treatment=='N0M1'|treatment=='N8M1', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('N0M0','N8M0','N0M1','N8M1'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='N0M0', 'control', ifelse(treatment=='N0M1', 'mow_clip', ifelse(treatment %in% c('N1M0','N2M0','N3M0','N4M0','N5M0','N6M0','N7M0','N8M0'), 'N', 'N*mow_clip'))))%>%
   unique()
 
 yu<-read.delim("IMGERS_Yu.txt")%>%
@@ -650,6 +673,7 @@ yu<-read.delim("IMGERS_Yu.txt")%>%
   mutate(max_trt=ifelse(treatment=='N0'|treatment=='N1'|treatment=='N6', 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='N0', 'control', 'N'))%>%
   unique()
 
 study119<-read.delim("JRN_Study119.txt")%>%
@@ -677,17 +701,18 @@ study119<-read.delim("JRN_Study119.txt")%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
   filter(calendar_year<1986)%>%
+  mutate(trt_type=ifelse(treatment=='T', 'N', 'control'))%>%
   unique()
 
 study278<-read.delim("JRN_study278.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
-         n=ifelse(treatment=='P1N1'|treatment=='P2N1'|treatment=='P3N1'|treatment=='P4N1'|treatment=='P5N1', 10, 0),
+         n=ifelse(treatment %in% c('P1N1','P2N1','P3N1','P4N1','P5N1'), 10, 0),
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='P1N0'|treatment=='P1N1', -80, ifelse(treatment=='P2N0'|treatment=='P2N1', -50, ifelse(treatment=='P4N0'|treatment=='P4N1', 50, ifelse(treatment=='P5N0'|treatment=='P5N1', 80, 0)))),
+         precip=ifelse(treatment %in% c('P1N0','P1N1'), -80, ifelse(treatment %in% c('P2N0','P2N1'), -50, ifelse(treatment %in% c('P4N0','P4N1'), 50, ifelse(treatment %in% c('P5N0','P5N1'), 80, 0)))),
          temp=0, 
          mow_clip=0, 
          burn=0, 
@@ -699,38 +724,40 @@ study278<-read.delim("JRN_study278.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='P3N0', 0, ifelse(treatment=='P1N0'|treatment=='P2N0'|treatment=='P3N1'|treatment=='P4N0'|treatment=='P5N0', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='P3N0', 0, ifelse(treatment %in% c('P1N0','P2N0','P3N1','P4N0','P5N0'), 1, 2)))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='P1N0'|treatment=='P1N1'|treatment=='P3N0'|treatment=='P3N1'|treatment=='P5N0'|treatment=='P5N1', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('P1N0','P1N1','P3N0','P3N1','P5N0','P5N1'), 1, 0))%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='P3N0', 'control', ifelse(treatment %in% c('P1N0','P2N0'), 'drought', ifelse(treatment %in% c('P4N0','P5N0'), 'irr', ifelse(treatment=='P3N1', 'N', ifelse(treatment %in% c('P1N1','P2N1'), 'N*drought', 'N*irr'))))))%>%
   unique()
 
 gce<-read.delim("JSP_GCE2.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=1, water=1, other_manipulation=1,
-         n=ifelse(treatment=='N'|treatment=='RN'|treatment=='HN'|treatment=='HRN'|treatment=='CN'|treatment=='CRN'|treatment=='CHN'|treatment=='CHRN', 7, 0),
+         n=ifelse(treatment %in% c('N','RN','HN','HRN','CN','CRN','CHN','CHRN'), 7, 0),
          p=0, 
          k=0, 
-         CO2=ifelse(treatment=='C'|treatment=='CN'|treatment=='CR'|treatment=='CRN'|treatment=='CH'|treatment=='CHN'|treatment=='CHR'|treatment=='CHRN', 300, 0),
-         precip=ifelse(treatment=='R'|treatment=='RN'|treatment=='HR'|treatment=='HRN'|treatment=='CR'|treatment=='CRN'|treatment=='CHR'|treatment=='CHRN', 50, 0),
-         temp=ifelse(treatment=='H'|treatment=='HN'|treatment=='HR'|treatment=='HRN'|treatment=='CH'|treatment=='CHN'|treatment=='CHR'|treatment=='CHRN', 1.5, 0),
+         CO2=ifelse(treatment %in% c('C','CN','CR','CRN','CH','CHN','CHR','CHRN'), 300, 0),
+         precip=ifelse(treatment %in% c('R','RN','HR','HRN','CR','CRN','CHR','CHRN'), 50, 0),
+         temp=ifelse(treatment %in% c('H','HN','HR','HRN','CH','CHN','CHR','CHRN'), 1.5, 0),
          mow_clip=0,
          burn=0, 
          herb_removal=0,
          management=0,
-         other_trt=0, 
+         other_trt=0,
          trt_details=0,
          successional=0, 
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='amb', 0, ifelse(treatment=='N'|treatment=='R'|treatment=='H'|treatment=='C', 1, ifelse(treatment=='HRN'|treatment=='CRN'|treatment=='CHN'|treatment=='CHR', 3, ifelse(treatment=='CHRN', 4, 2)))))%>%
+  mutate(plot_mani=ifelse(treatment=='amb', 0, ifelse(treatment %in% c('N','R','H','C'), 1, ifelse(treatment %in% c('HRN','CRN','CHN','CHR'), 3, ifelse(treatment=='CHRN', 4, 2)))))%>%
   mutate(resource_mani=ifelse(treatment=='H', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='amb', 'control', ifelse(treatment=='C', 'CO2', ifelse(treatment=='R', 'irr', ifelse(treatment=='N', 'N', ifelse(treatment=='H', 'temp', ifelse(treatment=='CR', 'irr*CO2', ifelse(treatment=='CHR', 'irr*CO2*temp', ifelse(treatment=='HR', 'irr*temp', ifelse(treatment=='CH', 'CO2*temp', ifelse(treatment=='CN', 'N*CO2', ifelse(treatment=='CHN', 'N*CO2*temp', ifelse(treatment=='RN', 'N*irr', ifelse(treatment=='CRN', 'N*irr*CO2', ifelse(treatment=='HN', 'N*temp', ifelse(treatment=='HRN', 'N*irr*temp', 'N*irr*CO2*temp'))))))))))))))))%>%
   unique()
 
 wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
@@ -741,9 +768,9 @@ wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='U CH'|treatment=='U WH'|treatment=='C CH'|treatment=='C WH', -50, ifelse(treatment=='U CD'|treatment=='U WD'|treatment=='C CD'|treatment=='C WD', 50, 0)),
-         temp=ifelse(treatment=='U WC'|treatment=='U WH'|treatment=='U WD'|treatment=='C WC'|treatment=='C WH'|treatment=='C WD', 3, 0),
-         mow_clip=ifelse(treatment=='C CC'|treatment=='C CH'|treatment=='C CD'|treatment=='C WC'|treatment=='C WH'|treatment=='C WD', 1, 0),
+         precip=ifelse(treatment %in% c('U CH','U WH','C CH','C WH'), -50, ifelse(treatment %in% c('U CD','U WD','C CD','C WD'), 50, 0)),
+         temp=ifelse(treatment %in% c('U WC','U WH','U WD','C WC','C WH','C WD'), 3, 0),
+         mow_clip=ifelse(treatment %in% c('C CC','C CH','C CD','C WC','C WH','C WD'), 1, 0),
          burn=0, 
          herb_removal=0,
          management=0,
@@ -753,18 +780,19 @@ wapaclip<-read.delim("KAEFS_WaPaClip.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='U CC', 0, ifelse(treatment=='U CH', 1, ifelse(treatment=='U CD', 1, ifelse(treatment=='U WC', 1, ifelse(treatment=='C CC', 1, ifelse(treatment=='C WH', 3, ifelse(treatment=='C WD', 3, 2))))))))%>%
-  mutate(resource_mani=ifelse(treatment=='U WC', 0, ifelse(treatment=='C CC', 0, ifelse(treatment=='C WC', 0, 1))))%>%
+  mutate(plot_mani=ifelse(treatment=='U CC', 0, ifelse(treatment %in% c('U CH','U CD','U WC','C CC'), 1, ifelse(treatment=='C WH', 3, ifelse(treatment=='C WD', 3, 2)))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('U WC','C CC','C WC'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='C CC', 'mow_clip', ifelse(treatment=='C CD', 'irr*mow_clip', ifelse(treatment=='C CH', 'drought*mow_clip', ifelse(treatment=='C WC', 'temp*mow_clip', ifelse(treatment=='C WD', 'irr*temp*mow_clip', ifelse(treatment=='C WH', 'drought*temp*mow_clip', ifelse(treatment=='U CC', 'control', ifelse(treatment=='U CD', 'irr', ifelse(treatment=='U CH', 'drought', ifelse(treatment=='U WC', 'temp', ifelse(treatment=='U WD', 'irr*temp', 'drought*temp'))))))))))))%>%
   unique()
 
 t7<-read.delim("KBS_T7.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='T0F1'|treatment=='T1F1', 12.3, 0),
+         n=ifelse(treatment %in% c('T0F1','T1F1'), 12.3, 0),
          p=0, 
          k=0, 
          CO2=0, 
@@ -774,7 +802,7 @@ t7<-read.delim("KBS_T7.txt")%>%
          burn=0, 
          herb_removal=0, 
          management=1,
-         other_trt=ifelse(treatment=='T1F0'|treatment=='T1F1', 'tilled', 0),
+         other_trt=ifelse(treatment %in% c('T1F0','T1F1'), 'tilled', 0),
          trt_details=0,
          successional=1, 
          plant_mani=0,  
@@ -785,21 +813,22 @@ t7<-read.delim("KBS_T7.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='T0F0', 'control', ifelse(treatment=='T1F1', 'N*till', ifelse(treatment=='T0F1', 'N', 'till'))))%>%
   unique()
 
 bffert<-read.delim("KLU_BFFert.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='N1F0'|treatment=='N1F1', 17.5, 0),
-         p=ifelse(treatment=='N1F0'|treatment=='N1F1', 5, 0),
-         k=ifelse(treatment=='N1F0'|treatment=='N1F1', 1.5, 0),
+         n=ifelse(treatment %in% c('N1F0','N1F1'), 17.5, 0),
+         p=ifelse(treatment %in% c('N1F0','N1F1'), 5, 0),
+         k=ifelse(treatment %in% c('N1F0','N1F1'), 1.5, 0),
          CO2=0, 
          precip=0, 
          temp=0,
          mow_clip=0, 
          burn=0,
-         herb_removal=ifelse(treatment=='N0F1'|treatment=='N1F1', 1, 0),
+         herb_removal=ifelse(treatment %in% c('N0F1','N1F1'), 1, 0),
          management=0,
          trt_details=0,
          other_trt=0, 
@@ -807,20 +836,21 @@ bffert<-read.delim("KLU_BFFert.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(resource_mani=ifelse(treatment=='N0F0'|treatment=='N0F1', 0, 1))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('N0F0','N0F1'), 0, 1))%>%
   mutate(plot_mani=ifelse(treatment=='N0F0', 0, ifelse(treatment=='N1F0',3, ifelse(treatment=='N1F1', 4, 1))))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='N0F0', 'control', ifelse(treatment=='N0F1', 'herb_removal', ifelse(treatment=='N1F0', 'mult_nutrient', 'mult_nutrient*herb_removal'))))%>%
   unique()
 
 kgfert<-read.delim("KLU_KGFert.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='N1B0'|treatment=='N1B1', 17.5, 0),
-         p=ifelse(treatment=='N1B0'|treatment=='N1B1', 5.8, 0),
-         k=ifelse(treatment=='N1B0'|treatment=='N1B1', 5.8, 0),
+         n=ifelse(treatment %in% c('N1B0','N1B1'), 17.5, 0),
+         p=ifelse(treatment %in% c('N1B0','N1B1'), 5.8, 0),
+         k=ifelse(treatment %in% c('N1B0','N1B1'), 5.8, 0),
          CO2=0, 
          precip=0, 
          temp=0,
@@ -828,7 +858,7 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
          burn=0, 
          herb_removal=0, 
          management=0,
-         other_trt=ifelse(treatment=='N0B1'|treatment=='N1B1', "fungicide added", 0), 
+         other_trt=ifelse(treatment %in% c('N0B1','N1B1'), "fungicide added", 0), 
          trt_details=0,
          successional=0, 
          plant_mani=0,  
@@ -839,20 +869,21 @@ kgfert<-read.delim("KLU_KGFert.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='N0B0', 'control', ifelse(treatment=='N0B1', 'fungicide', ifelse(treatment=='N1B0', 'mult_nutrient', 'mult_nutrient*fungicide'))))%>%
   unique()
 
 bgp<-read.delim("KNZ_BGP.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='u_u_p'|treatment=='u_u_c'|treatment=='u_m_p'|treatment=='u_m_c'|treatment=='b_u_p'|treatment=='b_u_c'|treatment=='b_m_p'|treatment=='b_m_c', 0, 10),
-         p=ifelse(treatment=='u_u_n'|treatment=='u_u_c'|treatment=='u_m_n'|treatment=='u_m_c'|treatment=='b_u_n'|treatment=='b_u_c'|treatment=='b_m_n'|treatment=='b_m_c', 0, 1),
+         n=ifelse(treatment %in% c('u_u_p','u_u_c','u_m_p','u_m_c','b_u_p','b_u_c','b_m_p','b_m_c'), 0, 10),
+         p=ifelse(treatment %in% c('u_u_n','u_u_c','u_m_n','u_m_c','b_u_n','b_u_c','b_m_n','b_m_c'), 0, 1),
          k=0, 
          CO2=0, 
          precip=0, 
          temp=0,
-         mow_clip=ifelse(treatment=='u_u_n'|treatment=='u_u_p'|treatment=='u_u_c'|treatment=='u_u_b'|treatment=='b_u_n'|treatment=='b_u_p'|treatment=='b_u_c'|treatment=='b_u_b', 0, 1),
-         burn=ifelse(treatment=='u_u_n'|treatment=='u_u_p'|treatment=='u_u_c'|treatment=='u_u_b'|treatment=='u_m_n'|treatment=='u_m_p'|treatment=='u_m_c'|treatment=='u_m_b', 0, 1),
+         mow_clip=ifelse(treatment %in% c('u_u_n','u_u_p','u_u_c','u_u_b','b_u_n','b_u_p','b_u_c','b_u_b'), 0, 1),
+         burn=ifelse(treatment %in% c('u_u_n','u_u_p','u_u_c','u_u_b','u_m_n','u_m_p','u_m_c','u_m_b'), 0, 1),
          herb_removal=0,
          management=0,
          other_trt=0, 
@@ -861,11 +892,12 @@ bgp<-read.delim("KNZ_BGP.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='u_u_c', 0, ifelse(treatment=='u_u_n'|treatment=='u_u_p'|treatment=='u_m_c'|treatment=='b_u_c', 1, ifelse(treatment=='b_u_b'|treatment=='b_m_n'|treatment=='b_m_p'|treatment=='u_m_b', 3, ifelse(treatment=='b_u_n'|treatment=='b_u_p'|treatment=='u_u_b'|treatment=='u_m_n'|treatment=='u_m_p'|treatment=='b_m_c', 2, 4)))))%>%
-  mutate(resource_mani=ifelse(treatment=='u_m_c'|treatment=='b_u_c'|treatment=='b_m_c', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='u_u_c', 0, ifelse(treatment %in% c('u_u_n','u_u_p','u_m_c','b_u_c'), 1, ifelse(treatment %in% c('b_u_b','b_m_n','b_m_p','u_m_b'), 3, ifelse(treatment %in% c('b_u_n','b_u_p','u_u_b','u_m_n','u_m_p','b_m_c'), 2, 4)))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('u_m_c','b_u_c','b_m_c'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='b_m_b', 'N*P*burn*mow_clip', ifelse(treatment=='b_m_c', 'burn*mow_clip', ifelse(treatment=='b_m_n', 'N*burn*mow_clip', ifelse(treatment=='b_m_p', 'P*burn*mow_clip', ifelse(treatment=='b_u_b', 'N*P*burn', ifelse(treatment=='b_u_c', 'burn', ifelse(treatment=='b_u_n', 'N*burn', ifelse(treatment=='b_u_p', 'P*burn', ifelse(treatment=='u_m_b', 'N*P*mow_clip', ifelse(treatment=='u_m_c', 'mow_clip', ifelse(treatment=='u_m_n', 'N*mow_clip', ifelse(treatment=='u_m_p', 'P*mow_clip', ifelse(treatment=='u_u_b', 'N*P', ifelse(treatment=='u_u_c', 'control', ifelse(treatment=='u_u_n', 'N', 'P'))))))))))))))))%>%
   unique()
 
 irg<-read.delim("KNZ_IRG.txt")%>%
@@ -892,6 +924,7 @@ irg<-read.delim("KNZ_IRG.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='i', 'irr', 'control'))%>%
   unique()
 
 gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
@@ -901,9 +934,9 @@ gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
         p=0, 
         k=0, 
         CO2=0,
-        precip=ifelse(treatment=='Rainout_Grazed'|treatment=="Rainout_Ungrazed", -50, 0),
+        precip=ifelse(treatment %in% c('Rainout_Grazed',"Rainout_Ungrazed"), -50, 0),
         temp=0, 
-        mow_clip=ifelse(treatment=="Rainout_Ungrazed"|treatment=="Open_Ungrazed",0,1), 
+        mow_clip=ifelse(treatment %in% c("Rainout_Ungrazed","Open_Ungrazed"),0,1), 
         burn=0, 
         herb_removal=0,
         management=1,
@@ -918,14 +951,15 @@ gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='Open_Ungrazed', 'control', ifelse(treatment=='Open_Grazed', 'mow_clip', ifelse(treatment=='Rainout_Ungrazed', 'irr', 'irr*mow_clip'))))%>%
   unique()
 
 pplots<-read.csv("KNZ_PPLOTS.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
-         n=ifelse(treatment=='N1P0'|treatment=='N1P1'|treatment=='N1P2'|treatment=='N1P3', 0, 10),
-         p=ifelse(treatment=='N1P1'|treatment=='N2P1', 2.5, ifelse(treatment=='N1P2'|treatment=='N2P2', 5, ifelse(treatment=='N1P3'|treatment=='N2P3', 10, 0))),
+         n=ifelse(treatment %in% c('N1P0','N1P1','N1P2','N1P3'), 0, 10),
+         p=ifelse(treatment %in% c('N1P1','N2P1'), 2.5, ifelse(treatment %in% c('N1P2','N2P2'), 5, ifelse(treatment %in% c('N1P3','N2P3'), 10, 0))),
          k=0, 
          CO2=0, 
          precip=0, 
@@ -940,11 +974,12 @@ pplots<-read.csv("KNZ_PPLOTS.csv")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N1P0', 0, ifelse(treatment=='N1P1'|treatment=='N1P2'|treatment=='N1P3'|treatment=='N2P0', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='N1P0', 0, ifelse(treatment %in% c('N1P1','N1P2','N1P3','N2P0'), 1, 2)))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='N1P0'|treatment=='N1P3'|treatment=='N2P0'|treatment=='N2P3', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('N1P0','N1P3','N2P0','N2P3'), 1, 0))%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment %in% c('N1P1','N1P2','N1P3'), 'P', ifelse(treatment=='N1P0', 'control', ifelse(treatment=='N2P0', 'N', 'N*P'))))%>%
   unique()
 
 ramps<-read.csv("KNZ_Ramps.csv")%>%
@@ -956,12 +991,12 @@ ramps<-read.csv("KNZ_Ramps.csv")%>%
          k=0, 
          CO2=0,
          precip=0,
-         temp=ifelse(treatment=='ambient_heated'|treatment=="delayed_heated", 1, 0),
+         temp=ifelse(treatment %in% c('ambient_heated',"delayed_heated"), 1, 0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
          management=1,
-         other_trt=ifelse(treatment=='delayed_control'|treatment=="delayed_heated",'increased precip vari', 'ambient'), 
+         other_trt=ifelse(treatment %in% c('delayed_control',"delayed_heated"),'increased precip vari', 'ambient'), 
          trt_details=0,
          successional=0, 
          plant_mani=0,  
@@ -972,13 +1007,14 @@ ramps<-read.csv("KNZ_Ramps.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='ambient_control', 'control', ifelse(treatment=='ambient_heated', 'temp', ifelse(treatment=='delayed_control', 'precip_vari', 'precip_vari*temp'))))%>%
   unique()
 
 rhps<-read.delim("KNZ_RHPs.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='N'|treatment=='stone+N', 5, 0),
+         n=ifelse(treatment %in% c('N','stone+N'), 5, 0),
          p=0, 
          k=0, 
          CO2=0, 
@@ -989,7 +1025,7 @@ rhps<-read.delim("KNZ_RHPs.txt")%>%
          herb_removal=0,
          management=1,
          pulse=0,
-         other_trt=ifelse(treatment=='stone'|treatment=='stone+N', 'shallow soil', 0),
+         other_trt=ifelse(treatment %in% c('stone','stone+N'), 'shallow soil', 0),
          trt_details=0,
          successional=1, 
          plant_mani=1,  
@@ -1001,13 +1037,14 @@ rhps<-read.delim("KNZ_RHPs.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment=='N', 'N', ifelse(treatment=='stone', 'stone', 'N*stone'))))%>%
   unique()
 
 e6<-read.delim("KUFS_E6.txt")%>%
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
-         n=ifelse(treatment=='N0P0S0'|treatment=='N0P8S0', 0, ifelse(treatment=='N4P0S0'|treatment=='N4P8S0', 4, ifelse(treatment=='N8P0S0'|treatment=='N8P8S0', 8, 16))),
-         p=ifelse(treatment=='N0P0S0'|treatment=='N4P0S0'|treatment=='N8P0S0'|treatment=='N16P0S0', 0, 8),
+         n=ifelse(treatment %in% c('N0P0S0','N0P8S0'), 0, ifelse(treatment %in% c('N4P0S0','N4P8S0'), 4, ifelse(treatment %in% c('N8P0S0','N8P8S0'), 8, 16))),
+         p=ifelse(treatment %in% c('N0P0S0','N4P0S0','N8P0S0','N16P0S0'), 0, 8),
          k=0, 
          CO2=0, 
          precip=0, 
@@ -1022,22 +1059,23 @@ e6<-read.delim("KUFS_E6.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='N0P0S0', 0, ifelse(treatment=='N4P0S0'|treatment=='N8P0S0'|treatment=='N16P0S0'|treatment=='N0P8S0', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='N0P0S0', 0, ifelse(treatment %in% c('N4P0S0','N8P0S0','N16P0S0','N0P8S0'), 1, 2)))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='N0P0S0'|treatment=='N16P0S0'|treatment=='N0P8S0'|treatment=='N16P8S0', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('N0P0S0','N16P0S0','N0P8S0','N16P8S0'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='N0P0S0', 'control', ifelse(treatment=='N0P8S0', 'P', ifelse(treatment %in% c('N16P0S0','N8P0S0','N4P0S0'), 'N', 'N*P'))))%>%
   unique()
 
 clip<-read.delim("LATNJA_CLIP.txt")%>%
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='N'|treatment=='TN', 5, 0),
-         p=ifelse(treatment=='N'|treatment=='TN', 5, 0), 
+         n=ifelse(treatment %in% c('N','TN'), 5, 0),
+         p=ifelse(treatment %in% c('N','TN'), 5, 0), 
          k=0, 
          CO2=0, 
          precip=0,
-         temp=ifelse(treatment=='T'|treatment=='TN', 2, 0),
+         temp=ifelse(treatment %in% c('T','TN'), 2, 0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -1053,6 +1091,7 @@ clip<-read.delim("LATNJA_CLIP.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='CONTROL', 'control', ifelse(treatment=='N', 'N*P', ifelse(treatment=='T', 'temp', 'N*P*temp'))))%>%
   unique()
 
 pme<-read.csv("LEFT_PME.csv")%>%
@@ -1075,11 +1114,12 @@ pme<-read.csv("LEFT_PME.csv")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='control', 0, 1))%>%#We are considering this to be 1 manipulation, even when they manipulated precip in the winter and summer .
+  mutate(plot_mani=ifelse(treatment=='control', 0, 1))%>% #we are considering this to be 1 manipulation, even when they manipulated precip in the winter and summer .
   mutate(resource_mani=1)%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment %in% c('windry_sumwet','winwet_sumdry'), 'precip_vari', 'irr')))%>%
   unique()
 
 herbwood<-read.delim("LG_HerbWood.txt")%>%
@@ -1107,44 +1147,46 @@ herbwood<-read.delim("LG_HerbWood.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='F', 'mult_nutrient', ifelse(treatment=='W', 'irr', ifelse(treatment=='FW', 'mult_nutrient*irr', 'control'))))%>%
   unique()
 
 fireplots<-read.delim("MAERC_fireplots.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='snpu'|treatment=='snuu'|treatment=='unpu'|treatment=='unuu'|treatment=='wnpg'|treatment=='wnpu'|treatment=='wnug'|treatment=='wnuu', 5, 0),
-         p=ifelse(treatment=='snpu'|treatment=='supu'|treatment=='unpu'|treatment=='uupu'|treatment=='wnpg'|treatment=='wnpu'|treatment=='wupg'|treatment=='wupu', 2, 0),
+         n=ifelse(treatment %in% c('snpu','snuu','unpu','unuu','wnpg','wnpu','wnug','wnuu'), 5, 0),
+         p=ifelse(treatment %in% c('snpu','supu','unpu','uupu','wnpg','wnpu','wupg','wupu'), 2, 0),
          k=0, 
          CO2=0, 
          precip=0, 
          temp=0,
          mow_clip=0,
-         burn=ifelse(treatment=='uuuu'|treatment=='uupu'|treatment=='unpu'|treatment=='unuu', 0, 1),
-         herb_removal=ifelse(treatment=='wnpg'|treatment=='wnug'|treatment=='wupg'|treatment=='wuug', 1, 0), 
+         burn=ifelse(treatment %in% c('uuuu','uupu','unpu','unuu'), 0, 1),
+         herb_removal=ifelse(treatment %in% c('wnpg','wnug','wupg','wuug'), 1, 0), 
          management=0,
          other_trt=0,
-         trt_details=ifelse(treatment=='snpu'|treatment=='snuu'|treatment=='supu'|treatment=='suuu', 'summer burn', ifelse(treatment=='wnpg'|treatment=='wnpu'|treatment=='wnug'|treatment=='wnuu'|treatment=='wupg'|treatment=='wupu'|treatment=='wuug'|treatment=='wuuu', 'winter burn', 0)),
+         trt_details=ifelse(treatment %in% c('snpu','snuu','supu','suuu'), 'summer burn', ifelse(treatment %in% c('wnpg','wnpu','wnug','wnuu','wupg','wupu','wuug','wuuu'), 'winter burn', 0)),
          successional=0, 
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='wnpg', 4, ifelse(treatment=='unpu'|treatment=='snpu'|treatment=='wnpu'|treatment=='wupg'|treatment=='wnug', 3, ifelse(treatment=='uupu'|treatment=='unuu'|treatment=='suuu'|treatment=='wuuu', 1, ifelse(treatment=='uuuu', 0, 2)))))%>%
-  mutate(resource_mani=ifelse(treatment=='uuuu'|treatment=='wuuu'|treatment=='suuu'|treatment=='wuug', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='wnpg', 4, ifelse(treatment %in% c('unpu','snpu','wnpu','wupg','wnug'), 3, ifelse(treatment %in% c('uupu','unuu','suuu','wuuu'), 1, ifelse(treatment=='uuuu', 0, 2)))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('uuuu','wuuu','suuu','wuug'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='uuuu', 'control', ifelse(treatment=='wuug', 'burn*graze', ifelse(treatment=='unuu', 'N', ifelse(treatment=='wnug', 'N*burn*graze', ifelse(treatment=='unpu', 'N*P', ifelse(treatment=='wnpg', 'N*P*burn*graze', ifelse(treatment=='uupu', 'P', ifelse(treatment=='wupg', 'P*burn*graze', ifelse(treatment %in% c('suuu','wuuu'), 'burn', ifelse(treatment %in% c('snuu','wnuu'), 'N*burn', ifelse(treatment %in% c('supu','wupu'), 'P*burn', 'N*P*burn'))))))))))))%>%
   unique()
 
 mwatfer<-read.csv("MNR_watfer.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
-         n=ifelse(treatment=='F'|treatment=='FW', 10, 0),
-         p=ifelse(treatment=='F'|treatment=='FW', 10, 0),
-         k=ifelse(treatment=='F'|treatment=='FW', 10, 0),
+         n=ifelse(treatment %in% c('F','FW'), 10, 0),
+         p=ifelse(treatment %in% c('F','FW'), 10, 0),
+         k=ifelse(treatment %in% c('F','FW'), 10, 0),
          CO2=0,
-         precip=ifelse(treatment=='W'|treatment=='FW', 18, 0),
+         precip=ifelse(treatment %in% c('W','FW'), 18, 0),
          temp=0, 
          mow_clip=0, 
          burn=0, 
@@ -1161,13 +1203,14 @@ mwatfer<-read.csv("MNR_watfer.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment=='F', 'mult_nutrient', ifelse(treatment=='W', 'irr', 'mult_nutrient*irr'))))%>%
   unique()
 
 wet<-read.delim("NANT_wet.txt")%>%
   select(site_code, project_name, community_type, calendar_year, treatment_year, treatment)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
-         n=ifelse(treatment=='1N0P'|treatment=='1N1P', 67.2, 0),
-         p=ifelse(treatment=='0N0P'|treatment=='1N0P', 0, 33.6),
+         n=ifelse(treatment %in% c('1N0P','1N1P'), 67.2, 0),
+         p=ifelse(treatment %in% c('0N0P','1N0P'), 0, 33.6),
          k=0, 
          CO2=0, 
          precip=0, 
@@ -1187,6 +1230,7 @@ wet<-read.delim("NANT_wet.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='0N0P', 'control', ifelse(treatment=='0N1P', 'P', ifelse(treatment=='1N0P', 'N', 'N*P'))))%>%
   unique()
 
 gb<-read.delim("NGBER_gb.txt")%>%
@@ -1197,7 +1241,7 @@ gb<-read.delim("NGBER_gb.txt")%>%
          p=0, 
          k=0, 
          CO2=0, 
-         precip=ifelse(treatment=='SPRING'|treatment=='WINTER', 10, 0), 
+         precip=ifelse(treatment %in% c('SPRING','WINTER'), 10, 0), 
          temp=0,
          mow_clip=0, 
          burn=0, 
@@ -1214,33 +1258,35 @@ gb<-read.delim("NGBER_gb.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment %in% c('AMBIENT','CURRENT'), 'control', 'irr'))%>%
   unique()
 
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='1NF'|treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 12),
-         p=ifelse(treatment=='1NF'|treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 3.3),
-         k=ifelse(treatment=='1NF'|treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 8),
+         n=ifelse(treatment %in% c('1NF','2NF','3NF','4NF','5NF'), 0, 12),
+         p=ifelse(treatment %in% c('1NF','2NF','3NF','4NF','5NF'), 0, 3.3),
+         k=ifelse(treatment %in% c('1NF','2NF','3NF','4NF','5NF'), 0, 8),
          CO2=0, 
          precip=0, 
          temp=0,
          mow_clip=0, 
          burn=0, 
-         herb_removal=ifelse(treatment=='1NF'|treatment=='1F', 0, 1),
+         herb_removal=ifelse(treatment %in% c('1NF','1F'), 0, 1),
          management=1,
          other_trt=0,
-         trt_details=ifelse(treatment=='2NF'|treatment=='2F', 'aboveground exclosure', ifelse(treatment=='3NF'|treatment=='3F', 'insecticide', ifelse(treatment=='4NF'|treatment=='4F', 'aboveground exclosure/insecticide', ifelse(treatment=='5NF'|treatment=='5F', 'above/below exclosure/insecticide', 0)))), 
+         trt_details=ifelse(treatment %in% c('2NF','2F'), 'aboveground exclosure', ifelse(treatment %in% c('3NF','3F'), 'insecticide', ifelse(treatment %in% c('4NF','4F'), 'aboveground exclosure/insecticide', ifelse(treatment %in% c('5NF','5F'), 'above/below exclosure/insecticide', 0)))), 
          successional=0, 
          plant_mani=1,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment=='2NF'|treatment=='3NF', 1, ifelse(treatment=='4NF', 2, ifelse(treatment=='2F'|treatment=='3F', 4, ifelse(treatment=='4F', 5, ifelse(treatment=='1F'|treatment=='5NF', 3, 6)))))))%>%
-  mutate(resource_mani=ifelse(treatment=='2NF'|treatment=='3NF'|treatment=='4NF'|treatment=='5NF', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='1NF', 0, ifelse(treatment %in% c('2NF','3NF'), 1, ifelse(treatment=='4NF', 2, ifelse(treatment %in% c('2F','3F'), 4, ifelse(treatment=='4F', 5, ifelse(treatment %in% c('1F','5NF'), 3, 6)))))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('2NF','3NF','4NF','5NF'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='1NF', 'control', ifelse(treatment=='1F', 'mult_nutrient', ifelse(treatment  %in% c('2F','3F','4F','5F'), 'mult_nutrient', 'mult_nutrient*herb_removal'))))%>%
   unique()
 
 ccd<-read.delim("NTG_CCD.txt")%>%
@@ -1251,24 +1297,25 @@ ccd<-read.delim("NTG_CCD.txt")%>%
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='CH-'|treatment=='CL-'|treatment=='CN-'|treatment=='WH-'|treatment=='WL-'|treatment=='WN-', -60, ifelse(treatment=='CH+'|treatment=='CL+'|treatment=='CN+'|treatment=='WH+'|treatment=='WL+'|treatment=='WN+', 60, 0)),
-         temp=ifelse(site_code=='Alberta'&treatment=='WH-'|site_code=='Alberta'&treatment=='WHA'|site_code=='Alberta'&treatment=='WH+'|site_code=='Alberta'&treatment=='WL-'|site_code=='Alberta'&treatment=='WLA'|site_code=='Alberta'&treatment=='WL+'|site_code=='Alberta'&treatment=='WN-'|site_code=='Alberta'&treatment=='WNA'|site_code=='Alberta'&treatment=='WN+', 2.9,ifelse(site_code=='Manitoba'&treatment=='WH-'|site_code=='Manitoba'&treatment=='WHA'|site_code=='Manitoba'&treatment=='WH+'|site_code=='Manitoba'&treatment=='WL-'|site_code=='Manitoba'&treatment=='WLA'|site_code=='Manitoba'&treatment=='WL+'|site_code=='Manitoba'&treatment=='WN-'|site_code=='Manitoba'&treatment=='WNA'|site_code=='Manitoba'&treatment=='WN+', 1.4,ifelse(site_code=='Saskatchewan'&treatment=='WH-'|site_code=='Saskatchewan'&treatment=='WHA'|site_code=='Saskatchewan'&treatment=='WH+'|site_code=='Saskatchewan'&treatment=='WL-'|site_code=='Saskatchewan'&treatment=='WLA'|site_code=='Saskatchewan'&treatment=='WL+'|site_code=='Saskatchewan'&treatment=='WN-'|site_code=='Saskatchewan'&treatment=='WNA'|site_code=='Saskatchewan'&treatment=='WN+', 1.3,0))),
-         mow_clip=ifelse(treatment=='CN-'|treatment=='CNA'|treatment=='CN+'|treatment=='WN-'|treatment=='WN+'|treatment=='WNA', 0, 1),
+         precip=ifelse(treatment %in% c('CH-','CL-','CN-','WH-','WL-','WN-'), -60, ifelse(treatment %in% c('CH+','CL+','CN+','WH+','WL+','WN+'), 60, 0)),
+         temp=ifelse(site_code=='Alberta'&treatment %in% c('WH-','WHA','WH+','WL-','WLA','WL+','WN-','WNA','WN+'), 2.9,ifelse(site_code=='Manitoba'&treatment %in% c('WH-','WHA','WH+','WL-','WLA','WL+','WN-','WNA','WN+'), 1.4,ifelse(site_code=='Saskatchewan'&treatment %in% c('WH-','WHA','WH+','WL-','WLA','WL+','WN-','WNA','WN+'), 1.3,0))),
+         mow_clip=ifelse(treatment %in% c('CN-','CNA','CN+','WN-','WN+','WNA'), 0, 1),
          burn=0, 
          herb_removal=0, 
          management=0,
          pulse=0,
          other_trt=0,
-         trt_details=ifelse(treatment=='CH-'|treatment=='CHA'|treatment=='WH-'|treatment=='CH+'|treatment=='WHA'|treatment=='WH+', 'high intensity defoliation', ifelse(treatment=='CL-'|treatment=='CLA'|treatment=='CL+'|treatment=='WL-'|treatment=='WLA'|treatment=='WL+', 'low intensity defoliation', 0)),
+         trt_details=ifelse(treatment %in% c('CH-','CHA','WH-','CH+','WHA','WH+'), 'high intensity defoliation', ifelse(treatment %in% c('CL-','CLA','CL+','WL-','WLA','WL+'), 'low intensity defoliation', 0)),
          successional=0, 
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='CN-'|treatment=='CN+'|treatment=='WNA', 1,ifelse(treatment=='CNA', 0,ifelse(treatment=='CH-'|treatment=='CH+'|treatment=='CL-'|treatment=='CL+'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA'|treatment=='WN-'|treatment=='WN+', 2, 3))))%>%
-  mutate(resource_mani=ifelse(treatment=='CHA'|treatment=='CLA'|treatment=='WHA'|treatment=='WLA'|treatment=='WNA', 0, 1))%>%
-  mutate(max_trt=ifelse(treatment=='CH-'|treatment=='CHA'|treatment=='CH+'|treatment=='CN-'|treatment=='CNA'|treatment=='CN+'|treatment=='WH-'|treatment=='WHA'|treatment=='WH+'|treatment=='WN-'|treatment=='WNA'|treatment=='WN+', 1, 0))%>%
+  mutate(plot_mani=ifelse(treatment %in% c('CHA','CLA','CN-','CN+','WNA'), 1,ifelse(treatment=='CNA', 0,ifelse(treatment %in% c('CH-','CH+','CL-','CL+','WHA','WLA','WNA','WN-','WN+'), 2, 3))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('CHA','CLA','WHA','WLA','WNA'), 0, 1))%>%
+  mutate(max_trt=ifelse(treatment %in% c('CH-','CHA','CH+','CN-','CNA','CN+','WH-','WHA','WH+','WN-','WNA','WN+'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='CNA', 'control', ifelse(treatment=='CN-', 'drought', ifelse(treatment %in% c('CH-','CL-'), 'drought*mow_clip', ifelse(treatment=='WN-', 'drought*temp', ifelse(treatment %in% c('WH-','WL-'),'drought*temp*mow_clip', ifelse(treatment=='CN+', 'irr', ifelse(treatment %in% c('CH+','CL+'), 'irr*mow_clip', ifelse(treatment=='WN+', 'irr*temp', ifelse(treatment %in% c('WH+','WL+'), 'irr*temp*mow_clip', ifelse(treatment %in% c('CHA','CLA'), 'mow_clip', ifelse(treatment=='WNA', 'temp', 'temp*mow_clip'))))))))))))%>%
   unique()
 
 nfert<-read.delim("NWT_246NFert.txt")%>%
@@ -1293,16 +1340,17 @@ nfert<-read.delim("NWT_246NFert.txt")%>%
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='x', 0, 1))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='x'|treatment=='high', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('x','high'), 1, 0))%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='x', 'control', 'N'))%>%
   unique()
 
 bowman<-read.delim("NWT_bowman.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment, community_type)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
-         n=ifelse(treatment=='N'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control'|treatment=='P', 0, 10))),
-         p=ifelse(treatment=='P'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment=='Control'|treatment=='N', 0, 10))),
+         n=ifelse(treatment=='N'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment %in% c('Control','P'), 0, 10))),
+         p=ifelse(treatment=='P'&calendar_year<=1991, 25, ifelse(treatment=='NP'&calendar_year<=1991, 25, ifelse(treatment %in% c('Control','N'), 0, 10))),
          k=0, 
          CO2=0, 
          precip=0, 
@@ -1322,6 +1370,7 @@ bowman<-read.delim("NWT_bowman.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='Control', 'control', ifelse(treatment=='N', 'N', ifelse(treatment=='P', 'P', 'N*P'))))%>%
   unique()
 
 snow<-read.delim("NWT_snow.txt")%>%
@@ -1332,8 +1381,8 @@ snow<-read.delim("NWT_snow.txt")%>%
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='XXX'|treatment=='XXW'|treatment=='XNX'|treatment=='XNW', 0, 116),
-         temp=ifelse(treatment=='XXW'|treatment=='XNW'|treatment=='PXW'|treatment=='PNW', 1, 0),
+         precip=ifelse(treatment %in% c('XXX','XXW','XNX','XNW'), 0, 116),
+         temp=ifelse(treatment %in% c('XXW','XNW','PXW','PNW'), 1, 0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -1344,11 +1393,12 @@ snow<-read.delim("NWT_snow.txt")%>%
          plant_mani=1,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='XXX', 0, ifelse(treatment=='XXW'|treatment=='XNX'|treatment=='PXX', 1, ifelse(treatment=='XNW'|treatment=='PXW'|treatment=='PNX', 2, 3))))%>%
+  mutate(plot_mani=ifelse(treatment=='XXX', 0, ifelse(treatment %in% c('XXW','XNX','PXX'), 1, ifelse(treatment %in% c('XNW','PXW','PNX'), 2, 3))))%>%
   mutate(resource_mani=ifelse(treatment=='XXW', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='XXX', 'control', ifelse(treatment=='XXW', 'temp', ifelse(treatment=='XNX', 'N', ifelse(treatment=='XNW', 'N*temp', ifelse(treatment=='PXX', 'irr', ifelse(treatment=='PXW', 'irr*temp', ifelse(treatment=='PNX', 'N*irr', 'N*irr*temp'))))))))%>%
   unique()
 
 oface<-read.delim("ORNL_FACE.txt")%>%
@@ -1376,6 +1426,7 @@ oface<-read.delim("ORNL_FACE.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='ambient', 'control', 'CO2'))%>%
   unique()
 
 tide<-read.delim("PIE_Tide.txt")%>%
@@ -1403,33 +1454,35 @@ tide<-read.delim("PIE_Tide.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='Reference', 'control', 'N'))%>%
   unique()
 
 interaction<-read.delim("RIO_interaction.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=1, other_manipulation=0,
-         n=ifelse(treatment=='N1W1'|treatment=='N1W2'|treatment=='N1W0', 5, 0),
+         n=ifelse(treatment %in% c('N1W1','N1W2','N1W0'), 5, 0),
          p=0, 
          k=0,
          CO2=0,
-         precip=ifelse(treatment=='N0W0'|treatment=='N1W0'|treatment=='control', 0, 27),
+         precip=ifelse(treatment %in% c('N0W0','N1W0','control'), 0, 27),
          temp=0,
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
          management=0,
          other_trt=0,
-         trt_details=ifelse(treatment=='N0W1'|treatment=='N1W1', 'small precip pulse', ifelse(treatment=='N0W2'|treatment=='N1W2', 'large precip pulse', 0)),
+         trt_details=ifelse(treatment %in% c('N0W1','N1W1'), 'small precip pulse', ifelse(treatment %in% c('N0W2','N1W2'), 'large precip pulse', 0)),
          successional=0, 
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment=='N1W0'|treatment=='N0W1'|treatment=='N0W2', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='control', 0, ifelse(treatment %in% c('N1W0','N0W1','N0W2'), 1, 2)))%>%
   mutate(resource_mani=1)%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment=='N1W0', 'N', ifelse(treatment %in% c('N0W1','N0W2'), 'irr', 'N*irr'))))%>%
   unique()
 
 lucero<-read.csv("SCL_Lucero.csv")%>%
@@ -1457,19 +1510,20 @@ lucero<-read.csv("SCL_Lucero.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='N1', 'control', 'N'))%>%
   unique()
 
 ter<-read.csv("SCL_TER.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='OF'|treatment=='CF', 20, 0),
+         n=ifelse(treatment %in% c('OF','CF'), 20, 0),
          p=0, 
          k=0, 
          CO2=0, 
          precip=0, 
          temp=0,
-         mow_clip=ifelse(treatment=='CO'|treatment=='CF', 1, 0), 
+         mow_clip=ifelse(treatment %in% c('CO','CF'), 1, 0), 
          burn=0, 
          herb_removal=0,
          management=0,
@@ -1484,16 +1538,17 @@ ter<-read.csv("SCL_TER.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='OO', 'control', ifelse(treatment=='OF', 'N', ifelse(treatment=='CO', 'mow_clip', 'N*mow_clip'))))%>%
   unique()
 
 cxn<-read.csv("SERC_CXN.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
         nutrients=1, light=0, carbon=1, water=0, other_manipulation=0,
-        n=ifelse(treatment=='t2'|treatment=='t4', 25, 0),
+        n=ifelse(treatment %in% c('t2','t4'), 25, 0),
         p=0, 
         k=0, 
-        CO2=ifelse(treatment=='t3'|treatment=='t4', 340,0),
+        CO2=ifelse(treatment %in% c('t3','t4'), 340,0),
         precip=0, 
         temp=0,
         mow_clip=0, 
@@ -1511,6 +1566,7 @@ cxn<-read.csv("SERC_CXN.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='t1', 'control', ifelse(treatment=='t2', 'N', ifelse(treatment=='t3', 'CO2', 'N*CO2'))))%>%
   unique()
 
 tmece<-read.csv("SERC_TMECE.csv")%>%
@@ -1537,6 +1593,7 @@ tmece<-read.csv("SERC_TMECE.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='E', 'CO2', 'control'))%>%
   unique()
 
 snfert<-read.delim("SEV_NFert.txt")%>%
@@ -1564,17 +1621,18 @@ snfert<-read.delim("SEV_NFert.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='F', 'N', 'control'))%>%
   unique()
 
 wenndex<-read.delim("SEV_WENNDEx.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, nutrients=1, light=0, carbon=0, water=1, other_manipulation=1,
-         n=ifelse(treatment=='C'|treatment=='P'|treatment=='T'|treatment=='TP', 0, 2),
+         n=ifelse(treatment %in% c('C','P','T','TP'), 0, 2),
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='C'|treatment=='N'|treatment=='T'|treatment=='TN', 0, 50),
-         temp=ifelse(treatment=='C'|treatment=='N'|treatment=='P'|treatment=='PN', 0, 1),
+         precip=ifelse(treatment %in% c('C','N','T','TN'), 0, 50),
+         temp=ifelse(treatment %in% c('C','N','P','PN'), 0, 1),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -1590,6 +1648,7 @@ wenndex<-read.delim("SEV_WENNDEx.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=1)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='C', 'control', ifelse(treatment=='N', 'N', ifelse(treatment=='P', 'irr', ifelse(treatment=='PN', 'N*irr', ifelse(treatment=='T', 'temp', ifelse(treatment=='TN', 'N*temp', ifelse(treatment=='TP', 'irr*temp', 'N*irr*temp'))))))))%>%
   unique()
 
 grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
@@ -1616,6 +1675,7 @@ grazeprecip<-read.csv("SFREC_GrazePrecip.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='C', 'control', ifelse(treatment=='W', 'irr', 'drought')))%>%
   unique()
 
 uk<-read.delim("SKY_UK.txt")%>%
@@ -1626,8 +1686,8 @@ uk<-read.delim("SKY_UK.txt")%>%
          p=0, 
          k=0, 
          CO2=0,
-         precip=ifelse(treatment=='C'|treatment=='H', 0, 30),
-         temp=ifelse(treatment=='C'|treatment=='P', 0, 3),
+         precip=ifelse(treatment %in% c('C','H'), 0, 30),
+         temp=ifelse(treatment %in% c('C','P'), 0, 3),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -1643,12 +1703,13 @@ uk<-read.delim("SKY_UK.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='C', 'control', ifelse(treatment=='H', 'temp', ifelse(treatment=='P', 'irr', 'irr*temp'))))%>%
   unique()
 
 nitrogen<-read.csv("SR_Nitrogen.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment, community_type)%>%
   mutate(nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='1_NITROGEN'|treatment=='0_NITROGEN', 4, 0),
+         n=ifelse(treatment %in% c('1_NITROGEN','0_NITROGEN'), 4, 0),
          p=0, 
          k=0, 
          CO2=0, 
@@ -1661,14 +1722,15 @@ nitrogen<-read.csv("SR_Nitrogen.csv")%>%
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=ifelse(treatment=='1_CONTROL'|treatment=='1_NITROGEN',1,0),  
-         plant_trt=ifelse(treatment=='1_CONTROL'|treatment=='1_NITROGEN',1,0),
+         plant_mani=ifelse(treatment %in% c('1_CONTROL','1_NITROGEN'),1,0),  
+         plant_trt=ifelse(treatment %in% c('1_CONTROL','1_NITROGEN'),1,0),
          pulse=0)%>%
   mutate(plot_mani=ifelse(treatment=='0_CONTROL', 0, ifelse(treatment=='1_NITROGEN',2,1)))%>%
   mutate(resource_mani=ifelse(treatment=='1_CONTROL',0,1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='0_CONTROL', 'control', ifelse(treatment=='0_NITROGEN', 'N', ifelse(treatment=='1_CONTROL', 'plant_mani', 'N*plant_mani'))))%>%
   unique()
 
 water<-read.csv("SR_Water.csv")%>%
@@ -1678,31 +1740,32 @@ water<-read.csv("SR_Water.csv")%>%
          p=0,
          k=0, 
          CO2=0, 
-         precip=ifelse(treatment=='0_WATER_0'|treatment=='0_WATER_1'|treatment=='1_WATER_0'|treatment=='1_WATER_1', 34.1,0), 
+         precip=ifelse(treatment %in% c('0_WATER_0','0_WATER_1','1_WATER_0','1_WATER_1'), 34.1,0), 
          temp=0,
          mow_clip=0, 
          burn=0, 
-         herb_removal=ifelse(treatment=='0_CONTROL_0'|treatment=='1_CONTROL_0'|treatment=="0_WATER_0"|treatment=='1_WATER_0', 1,0),
+         herb_removal=ifelse(treatment %in% c('0_CONTROL_0','1_CONTROL_0',"0_WATER_0",'1_WATER_0'), 1,0),
          management=0,
          other_trt=0, 
          trt_details=0,
          successional=1, 
-         plant_mani=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0), 
-         plant_trt=ifelse(treatment=='1_CONTROL_0'|treatment=='1_CONTROL_1'|treatment=="1_WATER_0"|treatment=='1_WATER_1',1,0),
+         plant_mani=ifelse(treatment %in% c('1_CONTROL_0','1_CONTROL_1',"1_WATER_0",'1_WATER_1'),1,0), 
+         plant_trt=ifelse(treatment %in% c('1_CONTROL_0','1_CONTROL_1',"1_WATER_0",'1_WATER_1'),1,0),
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='0_CONTROL_1', 0, ifelse(treatment=='1_WATER_0',3,ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=='0_WATER_1',1,2))))%>%
-  mutate(resource_mani=ifelse(treatment=='1_CONTROL_1'|treatment=='0_CONTROL_0'|treatment=="1_CONTROL_0",0,1))%>%
+  mutate(plot_mani=ifelse(treatment=='0_CONTROL_1', 0, ifelse(treatment=='1_WATER_0',3,ifelse(treatment %in% c('1_CONTROL_1','0_CONTROL_0','0_WATER_1'),1,2))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('1_CONTROL_1','0_CONTROL_0',"1_CONTROL_0"),0,1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='0_CONTROL_1', 'control', ifelse(treatment=='0_CONTROL_0', 'herb_removal', ifelse(treatment=='0_WATER_1', 'irr', ifelse(treatment=='1_CONTROL_0', 'plant_mani*herb_removal', ifelse(treatment=='1_CONTROL_1', 'plant_mani', ifelse(treatment=='1_WATER_0', 'irr*plant_mani*herb_removal', 'irr*plant_mani')))))))%>%
   unique()
 
 gane<-read.delim("SVA_GANE.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0, 
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=0,
-         n=ifelse(treatment=='C'|treatment=='P', 0, ifelse(treatment=='LN'|treatment=='LNP', 0.5, 5)),
-         p=ifelse(treatment=='P'|treatment=='LNP'|treatment=='HNP', 1, 0),
+         n=ifelse(treatment %in% c('C','P'), 0, ifelse(treatment %in% c('LN','LNP'), 0.5, 5)),
+         p=ifelse(treatment %in% c('P','LNP','HNP'), 1, 0),
          k=0, 
          CO2=0, 
          precip=0, 
@@ -1717,11 +1780,12 @@ gane<-read.delim("SVA_GANE.txt")%>%
          plant_mani=0, 
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment=='LN'|treatment=='HN'|treatment=='P', 1, 2)))%>%
+  mutate(plot_mani=ifelse(treatment=='C', 0, ifelse(treatment %in% c('LN','HN','P'), 1, 2)))%>%
   mutate(resource_mani=1)%>%
-  mutate(max_trt=ifelse(treatment=='C'|treatment=='HN'|treatment=='P'|treatment=='HNP', 1, 0))%>%
+  mutate(max_trt=ifelse(treatment %in% c('C','HN','P','HNP'), 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='C', 'control', ifelse(treatment=='P', 'P', ifelse(treatment %in% c('HN','LN'), 'N', 'N*P'))))%>%
   unique()
 
 tface<-read.csv("TAS_FACE.csv")%>%
@@ -1731,9 +1795,9 @@ tface<-read.csv("TAS_FACE.csv")%>%
          n=0, 
          p=0, 
          k=0, 
-         CO2=ifelse(treatment=='UnwarmedFACE'|treatment=="WarmedFACE", 170,0), 
+         CO2=ifelse(treatment %in% c('UnwarmedFACE',"WarmedFACE"), 170,0), 
          precip=0, 
-         temp=ifelse(treatment=='WarmedControl'|treatment=="WarmedFACE",2,0),
+         temp=ifelse(treatment %in% c('WarmedControl',"WarmedFACE"),2,0),
          mow_clip=0, 
          burn=0, 
          herb_removal=0,
@@ -1749,33 +1813,35 @@ tface<-read.csv("TAS_FACE.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='UnwarmedControl', 'control', ifelse(treatment=='UnwarmedFACE', 'CO2', ifelse(treatment=='WarmedControl', 'temp', 'CO2*temp'))))%>%
   unique()
 
 lovegrass<-read.csv("TRA_Lovegrass.csv")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
   mutate(community_type=0,
          nutrients=1, light=0, carbon=0, water=0, other_manipulation=1,
-         n=ifelse(treatment=='gcc'|treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 0.432), 
-         p=ifelse(treatment=='gcc'|treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 0.022), 
-         k=ifelse(treatment=='gcc'|treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 0.082), 
+         n=ifelse(treatment %in% c('gcc','ghc','gsc',"ncc",'nhc','nsc'), 0, 0.432), 
+         p=ifelse(treatment %in% c('gcc','ghc','gsc',"ncc",'nhc','nsc'), 0, 0.022), 
+         k=ifelse(treatment %in% c('gcc','ghc','gsc',"ncc",'nhc','nsc'), 0, 0.082), 
          CO2=0, 
          precip=0, 
          temp=0,
-         mow_clip=ifelse(treatment=='gsc'|treatment=='gsn'|treatment=='nsc'|treatment=="nsn",1, 0), 
+         mow_clip=ifelse(treatment %in% c('gsc','gsn','nsc',"nsn"),1, 0), 
          burn=0, 
-         herb_removal=ifelse(treatment=='ncc'|treatment=='ncn'|treatment=='nhc'|treatment=="nhn"|treatment=="nsc"|treatment=='nsn',1,0),
+         herb_removal=ifelse(treatment %in% c('ncc','ncn','nhc',"nhn","nsc",'nsn'),1,0),
          management=0,
          other_trt=0,
          trt_details=0, 
          successional=0, 
-         plant_mani=ifelse(treatment=='ghc'|treatment=='ghn'|treatment=='nhc'|treatment=='nhn',1,0), 
-         plant_trt=ifelse(treatment=='ghc'|treatment=='ghn'|treatment=='nhc'|treatment=='nhn',1,0),
+         plant_mani=ifelse(treatment %in% c('ghc','ghn','nhc','nhn'),1,0), 
+         plant_trt=ifelse(treatment %in% c('ghc','ghn','nhc','nhn'),1,0),
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='gcc',0,ifelse(treatment=='ghc'|treatment=='gsc'|treatment=='ncc',1, ifelse(treatment=='nhc'|treatment=='nsc',2,ifelse(treatment=="gcn",3,ifelse(treatment=='nhn'|treatment=='nsn',5,4))))))%>%
-  mutate(resource_mani=ifelse(treatment=='ghc'|treatment=='gsc'|treatment=="ncc"|treatment=='nhc'|treatment=='nsc', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='gcc',0,ifelse(treatment %in% c('ghc','gsc','ncc'),1, ifelse(treatment %in% c('nhc','nsc'),2,ifelse(treatment=="gcn",3,ifelse(treatment %in% c('nhn','nsn'),5,4))))))%>%
+  mutate(resource_mani=ifelse(treatment %in% c('ghc','gsc',"ncc",'nhc','nsc'), 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
+  mutate(trt_type=ifelse(treatment=='gcc', 'control', ifelse(treatment=='gcn', 'mult_nutrient', ifelse(treatment=='ghc', 'plant_mani', ifelse(treatment=='ghn', 'mult_nutrient*plant_mani', ifelse(treatment=='gsc', 'mow_clip', ifelse(treatment=='gsn', 'mult_nutrient*mow_clip', ifelse(treatment=='ncc', 'herb_removal', ifelse(treatment=='ncn', 'mult_nutrient*herb_removal', ifelse(treatment=='nhc', 'plant_mani*herb_removal', ifelse(treatment=='nhn', 'mult_nutrient*plant_mani*herb_removal', ifelse(treatment=='nsc', 'herb_removal*mow_clip', 'mult_nutrient*herb_removal*mow_clip'))))))))))))%>%
   unique()
 
 edge<-read.csv('USA_EDGE.csv')%>%
@@ -1802,6 +1868,7 @@ edge<-read.csv('USA_EDGE.csv')%>%
   mutate(max_trt=0)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='con', 'control', ifelse(treatment=='del', 'precip_vari', 'drought')))%>%
   unique()
 
 nitadd<-read.csv("YMN_NitAdd.csv")%>%
@@ -1829,13 +1896,18 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
   mutate(max_trt=ifelse(treatment=='N0'|treatment=='N80', 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
+  mutate(trt_type=ifelse(treatment=='N0', 'control', 'N'))%>%
   unique()
 
 ###merge all datasets
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, edge, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
 #kim's desktop
-write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_Nov2017.csv')
+write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
+
+#kim's laptop
+write.csv(combine, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
+
 
 #meghan's
 write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv")
