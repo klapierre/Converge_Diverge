@@ -59,7 +59,7 @@ expInfo <- expRaw%>%
 trtInfo <- read.csv('ExperimentInformation_Nov2017.csv')%>%
   select(-X)
 
-rawData <- read.csv('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\20yr_expH_PC\\ForAnalysis_allAnalysis20yr_expH_PC.csv')
+rawData <- read.csv('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\La Pierre_comm difference_final model results_01122018\\20yr_expH_PC\\ForAnalysis_allAnalysis20yr_expH_PC.csv')
 
 test <- rawData%>%
   select(site_code, project_name, community_type, treatment, experiment_length)%>%
@@ -1208,35 +1208,17 @@ chainsCommunityOverall <- chainsCommunitySummary%>%
 
 
 ###overall responses from bayesian output --------------------------------------------------------
-meanOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='mean' & predictor2!='trt_type'), aes(x=type, y=median)) +
+ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
   geom_point(size=4) +
   geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.4)) +
   scale_y_continuous(limits=c(-0.8, 0.5), breaks=seq(-0.5, 0.5, 0.5)) +
   scale_x_discrete(limits=c('rrich_quadratic', 'ANPP_quadratic', 'overall_quadratic', 'rrich_linear', 'ANPP_linear', 'overall_linear', 'rrich_intercept', 'ANPP_intercept', 'overall_intercept'),
                    labels=c('Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
+  theme(axis.title.x=element_text(size=30), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
   geom_hline(aes(yintercept=0)) +
   geom_vline(aes(xintercept=3.5), linetype='dashed') +
   geom_vline(aes(xintercept=6.5), linetype='dashed') +
   coord_flip() +
-  ggtitle('Community Difference') +
-  annotate('text', x=9.2, y=-0.8, label='(b)', size=10, hjust='left')
-
-richnessOverallPlot <- ggplot(data=subset(chainsCommunityOverall, variable=='richness' & predictor2!='trt_type'), aes(x=type, y=median)) +
-  geom_point(size=4) +
-  geom_errorbar(aes(ymin=median-CI, ymax=median+CI, width=0.4)) +
-  scale_y_continuous(limits=c(-0.8, 0.5), breaks=seq(-0.5, 0.5, 0.5)) +
-  scale_x_discrete(limits=c('rrich_quadratic', 'ANPP_quadratic', 'overall_quadratic', 'rrich_linear', 'ANPP_linear', 'overall_linear', 'rrich_intercept', 'ANPP_intercept', 'overall_intercept'),
-                   labels=c('Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall', 'Gamma', 'ANPP', 'Overall')) +
-  theme(axis.title.x=element_blank(), axis.title.y=element_blank(), plot.title=element_text(size=40, vjust=2, margin=margin(b=15))) +
-  geom_hline(aes(yintercept=0)) +
-  geom_vline(aes(xintercept=3.5), linetype='dashed') +
-  geom_vline(aes(xintercept=6.5), linetype='dashed') +
-  coord_flip() +
-  ggtitle('Effective Species Number Difference') +
-  annotate('text', x=9.2, y=-0.8, label='(a)', size=10, hjust='left')
-
-pushViewport(viewport(layout=grid.layout(1,2)))
-print(richnessOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 1))
-print(meanOverallPlot, vp=viewport(layout.pos.row = 1, layout.pos.col = 2))
-#export at 1600x1000
+  ggtitle('Effective Species Number Response') +
+  ylab('Standardized Parameter Estimate')
+#export at 800x1000
