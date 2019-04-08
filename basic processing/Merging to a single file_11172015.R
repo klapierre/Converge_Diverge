@@ -417,7 +417,8 @@ gb<-read.delim("NGBER_gb.txt")%>%
 gb_names<-read.delim("NGBER_gb_specieslist.txt")
 gb2<-merge(gb, gb_names, by="species_code", all=T)%>%
   filter(abundance!=0)%>%
-  select(-species_code)
+  select(-species_code)%>%
+  filter(treatment!="AMBIENT")
 
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
   select(-data_type)%>%
