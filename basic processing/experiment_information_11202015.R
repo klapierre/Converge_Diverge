@@ -169,7 +169,7 @@ exp1<-read.delim("ASGA_Exp1.txt")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
-  mutate(trt_type=ifelse(treatment %in% c('1_0_PA','1_0_UN'), 'N', ifelse(treatment %in% c('2_0_PA','2_0_UN'), 'N*other', ifelse(treatment %in% c('1_1_PA','1_1_UN'), 'N*plant_mani', ifelse(treatment=='2_1_CO', 'plant_mani*other', ifelse(treatment %in% c('2_1_PA','2_1_UN'), 'N*plant_mani*other', ifelse(treatment=='2_0_CO', 'other', ifelse(treatment=='1_1_CO', 'plant_mani', 'control'))))))))%>%
+  mutate(trt_type=ifelse(treatment %in% c('1_0_PA','1_0_UN'), 'N', ifelse(treatment %in% c('2_0_PA','2_0_UN'), 'N*disturbance', ifelse(treatment %in% c('1_1_PA','1_1_UN'), 'N*plant_mani', ifelse(treatment=='2_1_CO', 'plant_mani*disturbance', ifelse(treatment %in% c('2_1_PA','2_1_UN'), 'N*plant_mani*disturbance', ifelse(treatment=='2_0_CO', 'disturbance', ifelse(treatment=='1_1_CO', 'plant_mani', 'control'))))))))%>%
   unique()
 
 nitphos<-read.csv("AZI_NitPhos.csv")%>%
@@ -673,7 +673,7 @@ yu<-read.delim("IMGERS_Yu.txt")%>%
   mutate(max_trt=ifelse(treatment=='N0'|treatment=='N1'|treatment=='N6', 1, 0))%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
-  mutate(trt_type=ifelse(treatment=='N0', 'control', 'N'))%>%
+  mutate(trt_type=ifelse(treatment=='N0', 'control', 'mult_nutrient'))%>%
   unique()
 
 study119<-read.delim("JRN_Study119.txt")%>%
@@ -951,7 +951,7 @@ gfp<-read.csv("KNZ_KNP_GFP.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
-  mutate(trt_type=ifelse(treatment=='Open_Ungrazed', 'control', ifelse(treatment=='Open_Grazed', 'mow_clip', ifelse(treatment=='Rainout_Ungrazed', 'irr', 'irr*mow_clip'))))%>%
+  mutate(trt_type=ifelse(treatment=='Open_Ungrazed', 'control', ifelse(treatment=='Open_Grazed', 'mow_clip', ifelse(treatment=='Rainout_Ungrazed', 'drought', 'drought*mow_clip'))))%>%
   unique()
 
 pplots<-read.csv("KNZ_PPLOTS.csv")%>%
@@ -1203,7 +1203,7 @@ mwatfer<-read.csv("MNR_watfer.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
-  mutate(trt_type=ifelse(treatment=='control', 'control', ifelse(treatment=='F', 'mult_nutrient', ifelse(treatment=='W', 'irr', 'mult_nutrient*irr'))))%>%
+  mutate(trt_type=ifelse(treatment=='C', 'control', ifelse(treatment=='F', 'mult_nutrient', ifelse(treatment=='W', 'irr', 'mult_nutrient*irr'))))%>%
   unique()
 
 wet<-read.delim("NANT_wet.txt")%>%
@@ -1235,13 +1235,14 @@ wet<-read.delim("NANT_wet.txt")%>%
 
 gb<-read.delim("NGBER_gb.txt")%>%
   select(site_code, project_name, calendar_year, treatment_year, treatment)%>%
+  filter(treatment!='AMBIENT')%>%
   mutate(community_type=0, 
          nutrients=0, light=0, carbon=0, water=1, other_manipulation=0,
          n=0, 
          p=0, 
          k=0, 
          CO2=0, 
-         precip=ifelse(treatment %in% c('SPRING','WINTER'), 10, 0), 
+         precip=0, 
          temp=0,
          mow_clip=0, 
          burn=0, 
@@ -1253,12 +1254,12 @@ gb<-read.delim("NGBER_gb.txt")%>%
          plant_mani=0,  
          plant_trt=0,
          pulse=0)%>%
-  mutate(plot_mani=ifelse(treatment=='AMBIENT', 0, 1))%>%
+  mutate(plot_mani=ifelse(treatment=='CURRENT', 0, 1))%>%
   mutate(resource_mani=ifelse(treatment=='CURRENT', 0, 1))%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=0)%>%
-  mutate(trt_type=ifelse(treatment %in% c('AMBIENT','CURRENT'), 'control', 'irr'))%>%
+  mutate(trt_type=ifelse(treatment %in% c('CURRENT'), 'control', 'precip_vari'))%>%
   unique()
 
 herbdiv<-read.csv("NIN_herbdiv.csv")%>%
@@ -1286,7 +1287,7 @@ herbdiv<-read.csv("NIN_herbdiv.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
-  mutate(trt_type=ifelse(treatment=='1NF', 'control', ifelse(treatment=='1F', 'mult_nutrient', ifelse(treatment  %in% c('2F','3F','4F','5F'), 'mult_nutrient', 'mult_nutrient*herb_removal'))))%>%
+  mutate(trt_type=ifelse(treatment=='1NF', 'control', ifelse(treatment=='1F', 'mult_nutrient', ifelse(treatment  %in% c('2F','3F','4F','5F'), 'mult_nutrient*herb_removal', 'herb_removal'))))%>%
   unique()
 
 ccd<-read.delim("NTG_CCD.txt")%>%
@@ -1757,7 +1758,7 @@ water<-read.csv("SR_Water.csv")%>%
   mutate(max_trt=1)%>%
   mutate(public=0)%>%
   mutate(factorial=1)%>%
-  mutate(trt_type=ifelse(treatment=='0_CONTROL_1', 'control', ifelse(treatment=='0_CONTROL_0', 'herb_removal', ifelse(treatment=='0_WATER_1', 'irr', ifelse(treatment=='1_CONTROL_0', 'plant_mani*herb_removal', ifelse(treatment=='1_CONTROL_1', 'plant_mani', ifelse(treatment=='1_WATER_0', 'irr*plant_mani*herb_removal', 'irr*plant_mani')))))))%>%
+  mutate(trt_type=ifelse(treatment=='0_CONTROL_1', 'control', ifelse(treatment=='0_CONTROL_0', 'herb_removal', ifelse(treatment=='0_WATER_1', 'irr', ifelse(treatment=='1_CONTROL_0', 'plant_mani*herb_removal', ifelse(treatment=='1_CONTROL_1', 'plant_mani', ifelse(treatment=='1_WATER_0', 'irr*plant_mani*herb_removal', ifelse(treatment=='1_WATER_1', 'irr*plant_mani', 'irr*herb_removal'))))))))%>%
   unique()
 
 gane<-read.delim("SVA_GANE.txt")%>%
@@ -1903,14 +1904,14 @@ nitadd<-read.csv("YMN_NitAdd.csv")%>%
 combine<-rbind(bffert, bgp, biocon, bowman, ccd, clip, clonal, culardoch, cxn, e001, e002, e6, edge, events, exp1, face, fireplots,gane, gap2, gb, gce, gfp, grazeprecip, herbdiv, herbwood, imagine, interaction, irg, kgfert, lind, lovegrass, lucero, mat2, megarich, mnt, mwatfer, nde, nfert, nitadd, nitphos, nitrogen,nsfc, oface, pennings, pplots,pme, pq, ramps, rhps, rmapc, snfert, snow, study119, study278, t7, ter, tface,tide,tmece, uk, wapaclip, warmnut, water, watering, wenndex, wet, yu)
 
 #kim's desktop
-write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
+# write.csv(combine, 'C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
 
 #kim's laptop
-write.csv(combine, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
+# write.csv(combine, 'C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv')
 
 
 #meghan's
-write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv")
+# write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\ExperimentInformation_March2019.csv")
 
 # ##checking
 # check<-combine%>%
