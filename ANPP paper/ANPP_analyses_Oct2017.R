@@ -29,7 +29,7 @@ Nlevels<-anpp_expInfo%>%
   unique()%>%
   filter(n!=0)
 
-site_info<-read.csv("SiteExperimentDetails_Dec2016.csv")%>%
+site_info<-read.csv("SiteExperimentDetails_March2019.csv")%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, MAP, MAT, rrich, anpp)
 
@@ -111,12 +111,7 @@ anpp_spc<-all_anpp_dat%>%
   unique()
 
 #read in community data
-community<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Oct2017.csv")%>%
-  select(-X)%>%
-  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
-  right_join(anpp_spc)
-
-community<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Oct2017.csv")%>%
+community<-read.csv("SpeciesRelativeAbundance_Oct2017.csv")%>%
   select(-X)%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
   right_join(anpp_spc)
@@ -245,9 +240,9 @@ CT_comp<-cont_temp%>%
   left_join(trt_temp)%>%
   mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
   left_join(trtint)%>%
-  mutate(PC_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv),
-         PC_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd),
-         PC_mean=(anpp_temp_mean-cont_temp_mean)/cont_temp_mean)
+  mutate(PC_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100,
+         PC_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
+         PC_mean=((anpp_temp_mean-cont_temp_mean)/cont_temp_mean)*100)
 
 
 # Q1 how does gcds effect temporal vari? -----------------------
@@ -1336,4 +1331,51 @@ ggplot(data=sem2, aes(x=treatment_year, y=anpp_PC, group=trt_type5))+
   geom_point(size=0.1, aes(color=trt_type))+
   geom_hline(yintercept=0)+
   facet_wrap(~trt_type, ncol=4, scales="free")
+
+
+#####getting rarefied species richness
+#import species abundance data
+species <- read.csv("SpeciesRawAbundance_March2019.csv")%>%
+  select(site_code, project_name, community_type, treatment, plot_id, calendar_year, genus_species, abundance)%>%
+  mutate(exp=paste(site_code, project_name, community_type, sep='::'))%>%
+  tbl_df()
+
+#determine sampling intensity for each project
+sampleIntensity<-species%>%
+  left_join(read.csv('ExperimentInformation_March2019.csv'))%>%
+  filter(plot_mani==0)%>%
+  group_by(exp, plot_id, calendar_year)%>%
+  summarize(sample_intensity=length(abundance))%>%
+  ungroup()%>%
+  group_by(exp)%>%
+  summarize(sample_intensity=length(sample_intensity))%>% #how many plots were sampled over the course of the experiment
+  ungroup()
+
+#generate list of projects to calculate rarefied richness for
+set<-sampleIntensity%>%
+  select(exp)
+
+#create empty dataframe for loop
+rarefiedRichness=data.frame(row.names=1) 
+
+for(i in 1:length(set$exp)) {
+  
+  #creates a dataset for each unique experiment
+  subset <- species%>%
+    filter(exp==set$exp[i])%>%
+    select(exp, plot_id, calendar_year, genus_species, abundance)
+  
+  #transpose data into wide form
+  speciesData <- subset%>%
+    spread(genus_species, abundance, fill=0)
+  
+  #calculate species accumulation curves
+  pool <- specaccum(speciesData[,4:ncol(speciesData)], permutations=100, method='random')
+  estRichness <- as.data.frame(as.matrix(pool$richness))#this gives us estimated richness from 1-X samples
+  estRichness$n<-row.names(estRichness)
+  estRichness$exp<-set$exp[i]
+  
+  #rbind back
+  rarefiedRichness<-rbind(estRichness, rarefiedRichness)
+}
 
