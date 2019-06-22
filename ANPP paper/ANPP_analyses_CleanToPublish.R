@@ -4,6 +4,9 @@ library(codyn)
 library(rsq)
 library(MVN)
 library(lmodel2)
+library(gtable)
+library(grid)
+#library(MASS)#loading this package disables select in tidyverse.
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
@@ -50,7 +53,7 @@ precip<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/climate/real_prec
   select(-year, -X, -precip)
 
 
-# 1. clean up anpp data and make calculations --------------------------------------------------------
+# Clean up anpp data and make calculations --------------------------------------------------------
 
 
 ###select the data to use
@@ -244,7 +247,7 @@ nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 t.test(nuts$PD_mean, mu=0)
 
 
-# Slope 1:1 line diff from zero? ------------------------------------------
+# Analysis 2. Slope 1:1 line diff from zero? ------------------------------------------
 
 ##t-test - do the slopes differ from 1?
 #model 2 regression
@@ -443,7 +446,7 @@ nquest<-CT_comp%>%
 summary(lm(PD_CV~n, data=nquest))
 
 
-###graphing this
+# Making figure 1 ---------------------------------------------------------
 
 tograph_color<-CT_comp%>%
   left_join(ave_prod)%>%
@@ -608,6 +611,8 @@ fig1<-
 grid.arrange(sd_fig, sd1fig, ncol=2)
 
 
+# Analysis 3, appenxis Site-level responses ----------------------------------------------------
+
 ####bar graph of difference across ecosystems
 PD_ecosystems_test<-CT_comp%>%
   left_join(site_char)%>%
@@ -671,20 +676,51 @@ fig1<-
 
 grid.arrange(eco_mn, eco_sd, eco_cv)
 
-###what correlates with PC_CV?
+
+# Analysis 4 abiotic and biotic drivers of PD ANPP and CV of ANPP --------------------
+
+
+###what correlates with PD_CV?
 
 PD_cor<-CT_comp%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)%>%
-  left_join(cont_rich)%>%
-  left_join(site_info)
+  left_join(site_char)
 
+#shouldn't use site ANPP as predictive, because it alone is correlated with CV of anpp for the treated and control plots and it is in the 
+with(PD_cor, plot(manpp, cont_temp_cv))
+with(PD_cor, plot(manpp, anpp_temp_cv))
+with(PD_cor, cor.test(manpp, cont_temp_cv))
+with(PD_cor, cor.test(manpp, anpp_temp_cv))
+
+
+#how well does MAP correlated with manpp? Very strongly
+with(PD_cor, plot(manpp, MAP))
+with(PD_cor, cor.test(manpp, MAP))
+
+#library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
+
+##how correlated are the predictor variables?
+pairs(PD_cor[,c(21:24,26)])
+
+stepAIC(lm(PD_CV~MAP+MAT+sdppt+rrich+Evar, data=PD_cor))
+summary(model.cv<-lm(PD_CV~sdppt+Evar+MAT, data=PD_cor))
+rsq.partial(model.cv, adj = T)
+
+# stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
+# summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
+# rsq.partial(model.sd, adj =T)
+
+stepAIC(lm(PD_mean~MAT+MAP+sdppt+rrich+Evar, data=PD_cor))
+summary(model.mn<-lm(PD_CV~MAT+rrich+Evar, data=PD_cor))
+rsq.partial(model.mn)
+
+
+# Making figure 2 ---------------------------------------------------------
 
 tograph_cor<-PD_cor%>%
-  select(site_project_comm, treatment,PD_CV, PD_sd, PD_mean, anpp, MAP, sdppt, MAT, cont_rich, Evar)%>%
-  gather(parm, value, manpp:Evar)%>%
+  select(site_project_comm, treatment,PD_CV, PD_sd, PD_mean, MAP, sdppt, MAT, rrich, Evar)%>%
+  gather(parm, value, MAP:Evar)%>%
   gather(vari_metric, vari_value, PD_CV:PD_mean)%>%
-  mutate(parm_group=factor(parm, levels = c("cont_rich", "Evar","manpp","MAP","sdppt","MAT")),
+  mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","sdppt","MAT")),
          vari_group=factor(vari_metric, levels=c("PD_mean","PD_sd","PD_CV")))
 
 rvalues <- tograph_cor %>% 
@@ -693,115 +729,42 @@ rvalues <- tograph_cor %>%
             p.value = (cor.test(vari_value, value)$p.value))
 
 parameter<-c(
-  anpp = "Site ANPP",
   MAP = "MAP",
   sdppt = "SD of Precip.",
   MAT = "MAT",
-  cont_rich = "Sp Richness",
+  rrich = "Sp Richness",
   Evar = "Evenness"
 )
 
 vari<-c(
-  PC_CV = "CV of ANPP",
-  PC_mean = "ANPP",
-  PC_sd = "SD of ANPP"
+  PD_CV = "CV of ANPP",
+  PD_mean = "ANPP"
 )
 
-ggplot(data=tograph_cor, aes(x = value, y = vari_value))+
+tograph_cor2<-tograph_cor%>%
+  filter(vari_metric!="PD_sd")
+rvalues2<-rvalues %>% 
+  filter(vari_group!="PD_sd")
+
+ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
   geom_point()+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_sd"&parm_group=="anpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PC_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+  
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
+  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
   xlab("Value")+
   ylab("Percent Difference")+
-  geom_text(data=rvalues, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)
-
-#library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
-
-stepAIC(lm(PC_CV~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.cv<-lm(PC_CV~anpp+sdppt+Evar+MAP, data=PC_cor))
-rsq.partial(model.cv, adj = T)
-
-stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
-rsq.partial(model.sd, adj =T)
-
-stepAIC(lm(PC_mean~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
-summary(model.mn<-lm(PC_CV~anpp+Evar, data=PC_cor))
-rsq.partial(model.mn)
+  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)
 
 
-
-# # Q2 what is the relationship between control CV and PC in ANPP? ---------
-# C_PC<-PC_anpp%>%
-#   left_join(cont_temp)%>%
-#   left_join(trtint)%>%
-#   left_join(site_info)
-# 
-# #test the relationship between control_temp and PC using model2 regressions
-# #CV
-# dat<-C_PC[,c(7,2)]
-# mvn(data=dat, univariatePlot = "qqplot")
-# contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-# #Don't use MA bc not the same units. 
-# cor.test(dat$mPC, dat$cont_temp_cv)#don't use SMA b/c not a significant regression.
-# hist(dat$mPC)
-# hist(dat$cont_temp_cv)# no outliers should use RMA
-# #not sig
-# 
-# #SD
-# sddat<-C_PC[,c(9,2)]
-# mvn(data=sddat, univariatePlot = "qqplot")
-# contSD<-lmodel2(mPC~cont_temp_sd, range.x = "relative", range.y = "interval", data=sddat, nperm=99)
-# #not sig
-
-
-
-# #looking at three seperate GCDs - NONE are sig.
-# subdat<-subset(C_PC, trt_type6=="Nitrogen")
-# dat<-subdat[,c(7,2)]
-# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-# 
-# subdat<-subset(C_PC, trt_type6=="Multiple Nutrients")
-# dat<-subdat[,c(7,2)]
-# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-# 
-# subdat<-subset(C_PC, trt_type6=="Water")
-# dat<-subdat[,c(7,2)]
-# lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-# 
-# ##graphing this
-# 
-# graphQ2<-C_PC%>%
-#   left_join(ave_prod)%>%
-#   left_join(precip_vari)
-# 
-# dat<-C_PC[,c(7,2)]
-# mvn(data=dat, univariatePlot = "qqplot")
-# contCV<-lmodel2(mPC~cont_temp_cv, range.x = "relative", range.y = "interval", data=dat, nperm=99)
-# slopem<-contCV$regression.results[4,3]#something is funky with MA USE RMA
-# interceptm<-contCV$regression.results[4,2]
-# 
-# ggplot(data=graphQ2, aes(x=cont_temp_cv, y=mPC, color = cont_temp_sd, size = cont_temp_mean))+
-#     geom_point()+
-#     scale_color_gradient(low = "lightblue", high = "darkred", name = "SD of ANPP")+
-#     scale_size(name = "Mean ANPP", range = c(1,6))+
-#   ylab("Percent Difference in ANPP")+
-#   xlab("Temporal CV Control Plots")+
-#   geom_abline(slope=slopem, intercept=interceptm, size=1)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# Analysis 5 appendix are sites more responsvie to GCDs in low anpp years? ---------
 
 ###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
 
@@ -888,7 +851,7 @@ summary(aov(lm(Diff~treatment_year*site_project_comm, data=PD_anpp_yr)))# sig p 
 
 summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr)))#sig negative slope
 
-# precipitation analysis --------------------------------------------------
+# Analysis 6, sensitivity of anpp to precip --------------------------------------------------
 
 #precip analysis #1986 in CDR has no precip data, this one year is being dropped.
 
@@ -902,10 +865,11 @@ anpp_precip<-merge(all_anpp_dat, precip, by=c("site_code","calendar_year"))%>%
   summarize(anpp=mean(anpp))%>%
   mutate(spc_trt=paste(site_project_comm, treatment, sep="::"))
 
-ggplot(data=anpp_precip, aes(x=precip_mm, y=anpp, group=treatment, color=trt))+
-  geom_point()+
-  geom_smooth(method="lm", se=F)+
-  facet_wrap(~site_project_comm, ncol=8, scales = "free")
+# #visually inspecting the data
+# ggplot(data=anpp_precip, aes(x=precip_mm, y=anpp, group=treatment, color=trt))+
+#   geom_point()+
+#   geom_smooth(method="lm", se=F)+
+#   facet_wrap(~site_project_comm, ncol=8, scales = "free")
 
 
 ##get slopes for each treatment including controls
@@ -924,37 +888,11 @@ for (i in 1:length(spc)){
   lm.slopes<-rbind(lm.slopes, output.lm)
 }
 
-##test for sig diff between trt-control slopes
-##there are so few differences that not going to pay attention to this.
-
-# spc2<-unique(anpp_precip$site_project_comm)
-# test.lm<-data.frame()
-# for (i in 1:length(spc2)){
-#   subset<-anpp_precip%>%
-#     filter(site_project_comm==spc2[i])
-#   control<-subset%>%
-#     filter(plot_mani==0)
-#   treat<-subset%>%
-#   filter(plot_mani!=0)
-# trt_list<-unique(treat$treatment)
-# for (i in 1:length(trt_list)){
-#   subset2<-treat%>%
-#     filter(treatment==trt_list[i])
-#   trt<-trt_list[i]
-#   ct<-rbind(subset2, control)
-#   ct.lm<-lm(anpp~precip_mm*trt, data=ct)
-#   output.lm<-data.frame(site_project_comm=unique(subset$site_project_comm), 
-#                         treatment=trt, 
-#                         est=summary(ct.lm)$coef["precip_mm:trtT", c("Estimate")],
-#                         val=summary(ct.lm)$coef["precip_mm:trtT","Pr(>|t|)"])
-#   test.lm<-rbind(test.lm, output.lm)
-# }
-# }
 
 #graphing this
 c.slope<-lm.slopes%>%
   filter(plot_mani==0)%>%
-  mutate(c_est=est, c_se=st.er)%>%
+  rename(c_est=est, c_se=st.er)%>%
   select(site_project_comm, c_est, c_se)
 
 t.slope<-lm.slopes%>%
@@ -970,24 +908,22 @@ slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
 
 ###stats
 #regression of map with diff
+summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP<800)))#ns
+summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP>800)))#sig, r=0.11
+
 summary(MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph))
-#yes sig effect. p = 0.0497
-summary(MAP_diff <- lm(diff ~ sdppt,  data = slopes_tograph))
-#yes sig effect. p = 0.0005
+#not sig effect. p = 0.0497
+#summary(MAP_diff <- lm(diff ~ sdppt,  data = slopes_tograph))
+##yes sig effect. p = 0.0005
 
 summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Nitrogen"))) #not sig
 summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
 summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients"))) #sig p = 0.001
 
-summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Nitrogen")))#not sig
-summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
-summary(lm(diff ~ sdppt,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients")))#sig. 
-
-
 #try without MAERC
-MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"))
+MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"&trt_type7=="Multiple Nutrients"))
 summary(MAP_diff)
-#yes, still sig. p = 0.049
+#yes, still sig. p = 0.039
 
 
 #overall ttest
@@ -1003,6 +939,8 @@ t.test(nit$diff, mu=0)
 nuts<-subset(slopes_tograph, trt_type5=="Multiple Nutrients")
 t.test(nuts$diff, mu=0)
 
+
+# Making figure 3 ---------------------------------------------------------
 slopes_bar_trt<-slopes_tograph%>%
   group_by(trt_type6)%>%
   summarise(mdiff=mean(diff),
@@ -1018,24 +956,6 @@ slopes_bar_overall<-slopes_tograph%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
   mutate(trt_type6="All Treatments")
 
-
-##does this differ for wet/dry sites
-slopes_bar_site<-slopes_tograph%>%
-  group_by(site_code, MAP)%>%
-  summarise(mdiff=mean(diff),
-            ndiff=length(diff),
-            sddiff=sd(diff))%>%
-  mutate(sediff=sddiff/sqrt(ndiff))
-
-
-
-ggplot(data=slopes_bar_site, aes(x=reorder(toupper(site_code), MAP), y=mdiff, fill=MAP))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
-  ylab("Difference in Slopes")+
-  xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #graphing diff
@@ -1087,37 +1007,31 @@ bar<-
 
 grid.arrange(bar, map, ncol=2)
 
-bar_poster<-
-  ggplot(data=slopes_bar_overall, aes(x=trt_type6, y=mdiff))+
+# analysis 7 appendix is sensitivity related to MAP? ----------------------
+
+##does this differ for wet/dry sites
+slopes_bar_site<-slopes_tograph%>%
+  group_by(site_code, MAP)%>%
+  summarise(mdiff=mean(diff),
+            ndiff=length(diff),
+            sddiff=sd(diff))%>%
+  mutate(sediff=sddiff/sqrt(ndiff))
+
+ggplot(data=slopes_bar_site, aes(x=reorder(toupper(site_code), MAP), y=mdiff, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Difference in Slopes")+
-  xlab("")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-  geom_vline(xintercept = 1.5, size = 1)+
-  geom_text(x=1, y=0.255, label="*", size=8)
+  xlab("Site Code")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
-# overall PC anpp ---------------------------------------------------------
-all_anpp_dat_mean<-all_anpp_dat%>%
-  group_by(site_project_comm, site_code, project_name, community_type, calendar_year, treatment_year, treatment, plot_mani)%>%
-  summarize(anpp=mean(anpp))%>%
-  ungroup()
-
-controls<-all_anpp_dat_mean%>%
-  filter(plot_mani==0)%>%
-  mutate(c_anpp=anpp)%>%
-  select(site_project_comm, c_anpp, calendar_year, treatment_year)
-treatment<-all_anpp_dat_mean%>%
-  filter(plot_mani!=0)
-
-fig1<-merge(controls, treatment, by=c("site_project_comm","calendar_year","treatment_year"))%>%
-  mutate(anpp_PC=(anpp-c_anpp)/c_anpp)
-fig<-merge(fig1, trtint, by=c("site_project_comm",'treatment'))%>%
+# appendix analysis PD anpp over time ---------------------------------------------------------
+fig<-PD_anpp_yr%>%
+  left_join(trtint)%>%
   mutate(id=paste(site_project_comm, treatment, sep="::"))
 
-ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
+ggplot(data=fig, aes(x=treatment_year, y=PD))+
   geom_smooth(method="lm", formula = y ~  poly(x, 2), size=0.5, color="gray", aes(group=id), se=F)+
   geom_point(size=0.05, color="gray")+
   geom_smooth(method="lm", formula = y ~  poly(x, 2), size=1, color="black", se=F)+
@@ -1126,140 +1040,3 @@ ggplot(data=fig, aes(x=treatment_year, y=anpp_PC))+
   ylab("Percent Difference in ANPP")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   facet_wrap(~trt_type5, ncol=5, scales="free")
-
-
-
-# Biodiversity effects ----------------------------------------------------
-#project-treatment level temporal anpp
-
-###relationship between change in richness and change in variabilty
-Vari_rich<-PC_rich%>%
-  left_join(CT_comp)%>%
-  left_join(trtint)
-
-#overall CV
-dat<-Vari_rich[,c(7,22)]
-mvn(data=dat, univariatePlot = "qqplot")
-biod<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopecv<-biod$regression.results[2,3]
-interceptcv<-biod$regression.results[2,2]
-##overall SD
-dat<-Vari_rich[,c(7,23)]
-mvn(data=dat, univariatePlot = "qqplot")
-biod_sd<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopesd<-biod_sd$regression.results[2,3]
-interceptsd<-biod_sd$regression.results[2,2]
-##overall mean
-dat<-Vari_rich[,c(7,24)]
-mvn(data=dat, univariatePlot = "qqplot")
-biod_mn<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopemn<-biod_mn$regression.results[2,3]
-interceptmn<-biod_mn$regression.results[2,2]
-
-##treatments seperately CV
-#N not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
-dat<-subdat[,c(7,22)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_n<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#water not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
-dat<-subdat[,c(7,22)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_w<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#mult nuts not sig.
-subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(7,22)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_mn<-lmodel2(PC_CV~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-
-###SD
-#N not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
-dat<-subdat[,c(7,23)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_n<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#water not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
-dat<-subdat[,c(7,23)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_w<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#sig.
-subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(7,23)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_mn<-lmodel2(PC_sd~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopesd.mn<-biod_mn$regression.results[2,3]
-interceptsd.mn<-biod_mn$regression.results[2,2]
-
-###Mean
-#N not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Nitrogen"))
-dat<-subdat[,c(7,24)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_n<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#water not sig
-subdat<-subset(subset(Vari_rich, trt_type6=="Water"))
-dat<-subdat[,c(7,24)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_w<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-#sig.
-subdat<-subset(subset(Vari_rich, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(7,24)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-biod_mn<-lmodel2(PC_mean~PC_rich, range.x = "interval", range.y = "interval", data=dat, nperm=99)
-slopemn.mn<-biod_mn$regression.results[2,3]
-interceptmn.mn<-biod_mn$regression.results[2,2]
-
-#CV pic for paper
-cv_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_CV, color=trt_type7))+
-  geom_point()+
-  geom_point(size=3)+
-  xlab('Percent Difference Richness')+
-  ylab('Percent Difference CV of ANPP ')+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_vline(xintercept = 0)+
-  geom_hline(yintercept = 0)+
-  geom_abline(slope=slopecv, intercept=interceptcv, size=1)+
-  geom_text(x=-75, y=1, label="C", size=4, color="black")
-#sd for appendix
-sd_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_sd, color=trt_type7))+
-  geom_point()+
-  geom_point(size=3)+
-  xlab('Percent Difference Richness')+
-  ylab('Percent Difference SD of ANPP ')+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_vline(xintercept = 0)+
-  geom_hline(yintercept = 0)+
-  geom_abline(slope=slopesd, intercept=interceptsd, size=1)+
-  geom_abline(slope=slopesd.mn, intercept=interceptsd.mn, size=1, color="orange")+
-  geom_text(x=-75, y=1.5, label="B", size=4, color="black")
-
-#mean for appendix
-mn_rich<-ggplot(data = Vari_rich, aes(x = PC_rich, y = PC_mean, color=trt_type7))+
-  geom_point()+
-  geom_point(size=3)+
-  xlab('Percent Difference Richness')+
-  ylab('Percent Difference of ANPP ')+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  geom_vline(xintercept = 0)+
-  geom_hline(yintercept = 0)+
-  geom_abline(slope=slopemn, intercept=interceptmn, size=1)+
-  geom_abline(slope=slopemn.mn, intercept=interceptmn.mn, size=1, color="orange")+
-  geom_text(x=-75, y=1.5, label="A", size=4, color="black")
-
-legend=gtable_filter(ggplot_gtable(ggplot_build(cv_rich)), "guide-box") 
-grid.draw(legend)
-
-fig1<-
-  grid.arrange(arrangeGrob(mn_rich+theme(legend.position="none"),
-                           sd_rich+theme(legend.position="none"),
-                           cv_rich+theme(legend.position="none"),
-                           ncol=1), legend, 
-               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
-
-grid.arrange(mn_rich, sd_rich, cv_rich, ncol=1)
-
