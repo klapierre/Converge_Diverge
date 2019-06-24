@@ -232,12 +232,12 @@ t.test(nit$PD_CV, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 t.test(nuts$PD_CV, mu=0)
 ## for SD sig for all
-irr<-subset(CT_comp, trt_type6=="Water")
-t.test(irr$PD_sd, mu=0)
-nit<-subset(CT_comp, trt_type6=="Nitrogen")
-t.test(nit$PD_sd, mu=0)
-nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
-t.test(nuts$PD_sd, mu=0)
+# irr<-subset(CT_comp, trt_type6=="Water")
+# t.test(irr$PD_sd, mu=0)
+# nit<-subset(CT_comp, trt_type6=="Nitrogen")
+# t.test(nit$PD_sd, mu=0)
+# nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
+# t.test(nuts$PD_sd, mu=0)
 ##for mean sig for all
 irr<-subset(CT_comp, trt_type6=="Water")
 t.test(irr$PD_mean, mu=0)
@@ -456,7 +456,12 @@ tograph_color<-CT_comp%>%
 dat<-CT_comp[,c(4,10)]
 model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA 
 slopem<-model2.lm$regression.results[2,3]
+lowm<-model2.lm$confidence.intervals[2,4]
+highm<-model2.lm$confidence.intervals[2,5]
+
 interceptm<-model2.lm$regression.results[2,2]
+linterceptm<-model2.lm$confidence.intervals[2,2]
+hinterceptm<-model2.lm$confidence.intervals[2,3]
 
 #main figure for paper
 cv1fig<-
@@ -465,11 +470,13 @@ cv1fig<-
   scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   geom_abline(slope=slopem, intercept=interceptm, size=1)+
+  geom_abline(slope=lowm, intercept=linterceptm, size=1,linetype="dotted", color="gray")+
+  geom_abline(slope=highm, intercept=hinterceptm, size=1,linetype="dotted", color="gray")+
   ylab("CV of ANPP Trt Plots")+
   xlab("CV of ANPP Control Plots")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(10,100))+
-  scale_y_continuous(limits=c(10,100))+
+  scale_x_continuous(limits=c(0,100))+
+  scale_y_continuous(limits=c(0,100))+
   geom_text(x=15, y=100, label="D", size=4, color="black")
 
 ##sd figure
@@ -502,6 +509,12 @@ model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y 
 slopeA<-model2.lm$regression.results[2,3]
 interceptA<-model2.lm$regression.results[2,2]
 
+lowA<-model2.lm$confidence.intervals[2,4]
+highA<-model2.lm$confidence.intervals[2,5]
+
+linterceptA<-model2.lm$confidence.intervals[2,2]
+hinterceptA<-model2.lm$confidence.intervals[2,3]
+
 subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
 mndat<-subdat[,c(5,11)]
 model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
@@ -513,7 +526,9 @@ mean1fig<-
   geom_point(size=3)+
   geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
   scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=slopeA, intercept=interceptA, size=1)+
+  geom_abline(slope=lowA, intercept=linterceptA, size=1)+
+  geom_abline(slope=highA, intercept=hinterceptA, size=1, color = "gray", linetype="dotted")+
+  geom_abline(slope=slopeA, intercept=interceptA, size=1, color = "gray", linetype="dotted")+
   geom_abline(slope=slopeMN, intercept=interceptMN, size=1, color = "orange")+
   ylab("ANPP Trt Plots")+
   xlab("ANPP Control Plots")+
