@@ -248,17 +248,53 @@ CT_all<-CT_comp_trt%>%
             PD_mean=mean(PD_mean), 
             PD_CV=mean(PD_CV))%>%
   left_join(ttest_out)%>%
-  mutate(sig_mean=ifelse(p_mean<0.05, 1, 0),
-         sig_CV=ifelse(p_cv<0.05, 1, 0))%>%
+  mutate(resp_mean=ifelse(p_mean>0.05, "not sig", ifelse(p_mean<0.05&PD_mean<0, "dec", ifelse(p_mean<0.05&PD_mean>0, "inc", 999))),
+         resp_cv=ifelse(p_cv>0.05, "not sig", ifelse(p_cv<0.05&PD_CV<0, "dec", ifelse(p_cv<0.05&PD_CV>0, "inc", 999))))%>%
   separate(spc_t, into=c("site_project_comm", "treatment"), sep="::")%>%
   left_join(trtint)
 
+mean.overall<-CT_all%>%
+  group_by(resp_mean)%>%
+  summarize(n=length(resp_mean))%>%
+  mutate(response="ANPP")%>%
+  rename(effect=resp_mean)%>%
+  mutate(trt_type7="All Trts")
+  
+mean.trt<-CT_all%>%
+  group_by(trt_type7, resp_mean)%>%
+  summarize(n=length(resp_mean))%>%
+  mutate(response="ANPP")%>%
+  rename(effect=resp_mean)
 
-explore_cv<-CT_all%>%
-  filter(sig_CV!=0)
+cv.overall<-CT_all%>%
+  group_by(resp_cv)%>%
+  summarize(n=length(resp_cv))%>%
+  mutate(response="CV of ANPP")%>%
+  rename(effect=resp_cv)%>%
+  mutate(trt_type7="All Trts")
 
-explore_mean<-CT_all%>%
-  filter(sig_mean!=0)
+cv.trt<-CT_all%>%
+  group_by(trt_type7, resp_cv)%>%
+  summarize(n=length(resp_cv))%>%
+  mutate(response="CV of ANPP")%>%
+  rename(effect=resp_cv)
+
+vote.fig<-mean.trt%>%
+  bind_rows(cv.trt)%>%
+  bind_rows(cv.overall)%>%
+  bind_rows(mean.overall)%>%
+  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+
+ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  facet_wrap(~response, ncol=1)+
+  xlab("Treatment")+
+  ylab("Proportion of Treatments Different from Control")+
+  scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 4.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
 ##num postive or negative PD
@@ -407,7 +443,7 @@ t_value_one <- (slope - 1) / se
 2*pt(t_value_one, df=df, lower=F)
 #yes p = 0.026
 
-# ###looking at three well replicated treatmetns.
+# ###looking at three well replicated treatments.
 # #nitrogen - temporal
 subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
 mndat<-subdat[,c(5,11)]
@@ -749,22 +785,25 @@ rsq.partial(model.mn)
 # Making figure 2 ---------------------------------------------------------
 
 tograph_cor.cv<-PD_cor%>%
+  ungroup()%>%
   filter(sig_CV!=0)%>%
   select(site_project_comm, treatment,PD_CV, MAP, sdppt, MAT, rrich, Evar)%>%
   gather(parm, value, MAP:Evar)%>%
-  mutate(vari_metric="PD_CV")
+  mutate(vari_metric="PD_CV")%>%
   rename(vari_value=PD_CV)
   
   tograph_cor.mn<-PD_cor%>%
+    ungroup()%>%
     filter(sig_mean!=0)%>%
-    select(site_project_comm, treatment,PD_CV, MAP, sdppt, MAT, rrich, Evar)%>%
+    select(site_project_comm, treatment,PD_mean, MAP, sdppt, MAT, rrich, Evar)%>%
     gather(parm, value, MAP:Evar)%>%
-    mutate(vari_metric="PD_mean")
-  rename(vari_value=PD_mean)
+    mutate(vari_metric="PD_mean")%>%
+    rename(vari_value=PD_mean)
   
-  %>%
-  mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","sdppt","MAT")),
-         vari_group=factor(vari_metric, levels=c("PD_mean","PD_sd","PD_CV")))
+  tograph_cor<-tograph_cor.cv%>%
+    bind_rows(tograph_cor.mn)%>%
+   mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","sdppt","MAT")),
+         vari_group=factor(vari_metric, levels=c("PD_mean","PD_CV")))
 
 rvalues <- tograph_cor %>% 
   group_by(vari_group, parm_group) %>%
@@ -792,9 +831,9 @@ rvalues2<-rvalues %>%
 ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
   geom_point()+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+  
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
@@ -804,7 +843,8 @@ ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
   xlab("Value")+
   ylab("Percent Difference")+
-  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)
+  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
 # Analysis 5 appendix are sites more responsvie to GCDs in low anpp years? ---------
