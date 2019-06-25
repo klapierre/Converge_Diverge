@@ -92,11 +92,7 @@ anpp_temp_cv<-all_anpp_dat%>%
   group_by(site_code, project_name, community_type, treatment,plot_mani, plot_id)%>%
   summarize(anpp_temp_mean=mean(anpp, na.rm=T),
             anpp_temp_sd=sd(anpp, na.rm=T),
-            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)%>%
-  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
-  summarize(anpp_temp_cv=mean(anpp_temp_cv, na.rm=T),
-            anpp_temp_mean = mean(anpp_temp_mean, na.rm = T),
-            anpp_temp_sd = mean(anpp_temp_sd, na.rm = T))
+            anpp_temp_cv=(anpp_temp_sd/anpp_temp_mean)*100)
 
 ##calculating PD ANPP for each year
 meandat<-all_anpp_dat%>%
@@ -117,21 +113,21 @@ PD_anpp_yr<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","cal
   mutate(treatment=treatment.x)%>%
   left_join(site_info)
 
-###Calculating PD of ANPP and CV of ANPP
+###Calculating PD of ANPP and CV of ANPP for each treatment plot
 cont_temp<-anpp_temp_cv%>%
   filter(plot_mani==0)%>%
-  mutate(cont_temp_cv=anpp_temp_cv, 
-         cont_temp_mean= anpp_temp_mean,
-         cont_temp_sd = anpp_temp_sd)%>%
+  group_by(site_code, project_name, community_type)%>%
+  summarize(cont_temp_cv=mean(anpp_temp_cv), 
+            cont_temp_mean=mean(anpp_temp_mean),
+            cont_temp_sd = mean(anpp_temp_sd))%>%
   ungroup()%>%
-  select(site_code, project_name, community_type, treatment, cont_temp_cv, cont_temp_mean,cont_temp_sd)%>%
-  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(-treatment)
+  select(site_code, project_name, community_type, cont_temp_cv, cont_temp_mean,cont_temp_sd)%>%
+  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))
 
 trt_temp<-anpp_temp_cv%>%
   filter(plot_mani>0)
 
-CT_comp<-cont_temp%>%
+CT_comp_plot<-cont_temp%>%
   left_join(trt_temp)%>%
   mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
   left_join(trtint)%>%
@@ -139,6 +135,23 @@ CT_comp<-cont_temp%>%
          PD_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
          PD_mean=((anpp_temp_mean-cont_temp_mean)/cont_temp_mean)*100)
 
+trt_temp_mean<-anpp_temp_cv%>%
+  filter(plot_mani>0)%>%
+  group_by(site_code, project_name, community_type, treatment)%>%
+  summarize(anpp_temp_cv=mean(anpp_temp_cv), 
+            anpp_temp_mean=mean(anpp_temp_mean),
+            anpp_temp_sd = mean(anpp_temp_sd))%>%
+  ungroup()%>%
+  select(site_code, project_name, community_type, anpp_temp_cv, anpp_temp_mean,anpp_temp_sd, treatment)%>%
+  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))
+
+
+CT_comp<-cont_temp%>%
+  left_join(trt_temp_mean)%>%
+  left_join(trtint)%>%
+  mutate(PD_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100,
+         PD_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
+         PD_mean=((anpp_temp_mean-cont_temp_mean)/cont_temp_mean)*100)
 
 # Getting site characteristics --------------------------------------------
 
@@ -208,7 +221,97 @@ site_char<-site_info%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
-# Analysis 1. PD diff from zero? -----------------------
+# Analysis 1. PD diff from zero for each treatment? -----------------------
+
+tvalues <- CT_comp_plot %>% 
+  group_by(site_project_comm) %>%
+  summarize(t.mean = round(t.test(CT_comp$PD_mean, mu=0)$statistic, digits=3),
+            p.mean = t.test(CT_comp$PD_mean, mu=0)$p.value,
+            t.cv = round(t.test(CT_comp$PD_CV, mu=0)$statistic, digits=3),
+            p.cv = t.test(CT_comp$PD_CV, mu=0)$p.value)
+
+CT_comp_trt<-CT_comp_plot%>%
+  mutate(spc_t=paste(site_project_comm, treatment, sep="::"))
+
+spct<-unique(CT_comp_trt$spc_t)
+ttest_out<-data.frame()
+
+for (i in 1:length(spct)){
+  
+  subset<-CT_comp_trt%>%
+    filter(spc_t==spct[i])
+  
+  t.mean = round(t.test(subset$PD_mean, mu=0)$statistic, digits=3)
+  p.mean = t.test(subset$PD_mean, mu=0)$p.value
+  t.cv = round(t.test(subset$PD_CV, mu=0)$statistic, digits=3)
+  p.cv = t.test(subset$PD_CV, mu=0)$p.value
+  
+  out<-data.frame(spc_t=spct[i],
+                  t_mean=t.mean, p_mean=p.mean, t_cv=t.cv, p_cv=p.cv)
+  
+  ttest_out<-rbind(ttest_out, out)
+  
+}
+
+CT_all<-CT_comp_trt%>%
+  group_by(spc_t, cont_temp_cv, cont_temp_mean)%>%
+  summarise(anpp_temp_mean=mean(anpp_temp_mean),
+            anpp_temp_cv=mean(anpp_temp_cv),
+            PD_mean=mean(PD_mean), 
+            PD_CV=mean(PD_CV))%>%
+  left_join(ttest_out)%>%
+  mutate(resp_mean=ifelse(p_mean>0.05, "not sig", ifelse(p_mean<0.05&PD_mean<0, "dec", ifelse(p_mean<0.05&PD_mean>0, "inc", 999))),
+         resp_cv=ifelse(p_cv>0.05, "not sig", ifelse(p_cv<0.05&PD_CV<0, "dec", ifelse(p_cv<0.05&PD_CV>0, "inc", 999))))%>%
+  separate(spc_t, into=c("site_project_comm", "treatment"), sep="::")%>%
+  left_join(trtint)
+
+mean.overall<-CT_all%>%
+  group_by(resp_mean)%>%
+  summarize(n=length(resp_mean))%>%
+  mutate(response="ANPP")%>%
+  rename(effect=resp_mean)%>%
+  mutate(trt_type7="All Trts")
+
+mean.trt<-CT_all%>%
+  group_by(trt_type7, resp_mean)%>%
+  summarize(n=length(resp_mean))%>%
+  mutate(response="ANPP")%>%
+  rename(effect=resp_mean)
+
+cv.overall<-CT_all%>%
+  group_by(resp_cv)%>%
+  summarize(n=length(resp_cv))%>%
+  mutate(response="CV of ANPP")%>%
+  rename(effect=resp_cv)%>%
+  mutate(trt_type7="All Trts")
+
+cv.trt<-CT_all%>%
+  group_by(trt_type7, resp_cv)%>%
+  summarize(n=length(resp_cv))%>%
+  mutate(response="CV of ANPP")%>%
+  rename(effect=resp_cv)
+
+vote.fig<-mean.trt%>%
+  bind_rows(cv.trt)%>%
+  bind_rows(cv.overall)%>%
+  bind_rows(mean.overall)%>%
+  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+
+ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  facet_wrap(~response, ncol=1)+
+  xlab("Treatment")+
+  ylab("Proportion of Treatments Different from Control")+
+  scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 4.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        strip.background = element_rect(fill="white"))
+
+
+# Analysis 2. is PD different from 0 for each treatment overall -----------
+
 
 ##first overall for PD_CV
 t.test(CT_comp$PD_CV, mu=0) # overall No, and not for the difference GCDs
@@ -245,198 +348,6 @@ nit<-subset(CT_comp, trt_type6=="Nitrogen")
 t.test(nit$PD_mean, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 t.test(nuts$PD_mean, mu=0)
-
-
-# Analysis 2. Slope 1:1 line diff from zero? ------------------------------------------
-
-##t-test - do the slopes differ from 1?
-#model 2 regression
-#first check data is it bivariate normal?
-dat<-CT_comp[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can do a ttest.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-93
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#yes p < 0.001
-
-# ###looking at three well replicated treatments.
-# #nitrogen - temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-9
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#not sig.
-
-# # nuts temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-31
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#not sig.
-
-
-# #water temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Water"))
-dat<-subdat[,c(4,10)]
-normal<-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package.
-#first, I can just use the 97.5% CI interval to say slope does differ from one.
-#or I can try to do a ttest.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-5
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#not sig.
-
-##doing the same thing for SD 
-sddat<-CT_comp[,c(6,12)]
-normal<-mvn(data=log(sddat), univariatePlot = "qqplot")#data are somewhat bivaiate normal
-
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA to estimate slope according to package.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-93
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-#yes p < 0.001
-
-# ###looking at three well replicated treatmetns.
-# #nitrogen - temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
-dat<-subdat[,c(6,12)]
-mvn(data=log(dat), univariatePlot = "qqplot")#data are bivaiate normal
-
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-9
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df)
-# sig p = 0.036
-
-# # nuts temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
-dat<-subdat[,c(6,12)]
-mvn(data=log(dat), univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-31
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower = F)
-#not sig.
-
-
-# #water temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Water"))
-dat<-subdat[,c(6,12)]
-mvn(data=log(dat), univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA to estimate slope according to package
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-5
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#not sig.
-
-##doing the same thing for ANPP overall
-
-mndat<-CT_comp[,c(5,11)]
-mvn(data=mndat, univariatePlot = "qqplot")#data are somewhat bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99) #use MA to estimate slope according to package.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-93
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#yes p = 0.026
-
-# ###looking at three well replicated treatmetns.
-# #nitrogen - temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
-mndat<-subdat[,c(5,11)]
-mvn(data=dat, univariatePlot = "qqplot")#data are bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-9
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#not sig.
-
-# # nuts temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
-mndat<-subdat[,c(5,11)]
-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-31
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#sig p < 0.001
-
-# #water temporal
-subdat<-subset(subset(CT_comp, trt_type6=="Water"))
-mndat<-subdat[,c(5,11)]
-mvn(data=dat, univariatePlot = "qqplot")#data are not and log transfrom doesn't help bivaiate normal
-
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99) #use MA to estimate slope according to package.
-slope<-model2.lm$regression.results[2,3]
-low<-model2.lm$confidence.intervals[2,4]
-high<-model2.lm$confidence.intervals[2,5]
-se<-((high-low)/2)/2.24
-df<-5
-t_value_one <- (slope - 1) / se
-2*pt(t_value_one, df=df, lower=F)
-#not sig.
 
 ###is there a relationship with N level?
 nquest<-CT_comp%>%
