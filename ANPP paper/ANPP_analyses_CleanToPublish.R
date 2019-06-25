@@ -2,8 +2,6 @@ library(tidyverse)
 library(gridExtra)
 library(codyn)
 library(rsq)
-library(MVN)
-library(lmodel2)
 library(gtable)
 library(grid)
 #library(MASS)#loading this package disables select in tidyverse.
@@ -223,81 +221,102 @@ site_char<-site_info%>%
 
 # Analysis 1. PD diff from zero for each treatment? -----------------------
 
-tvalues <- CT_comp_plot %>% 
-  group_by(site_project_comm) %>%
-  summarize(t.mean = round(t.test(CT_comp$PD_mean, mu=0)$statistic, digits=3),
-            p.mean = t.test(CT_comp$PD_mean, mu=0)$p.value,
-            t.cv = round(t.test(CT_comp$PD_CV, mu=0)$statistic, digits=3),
-            p.cv = t.test(CT_comp$PD_CV, mu=0)$p.value)
+anpp_temp_cv2<-anpp_temp_cv%>%
+  mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))
 
-CT_comp_trt<-CT_comp_plot%>%
-  mutate(spc_t=paste(site_project_comm, treatment, sep="::"))
-
-spct<-unique(CT_comp_trt$spc_t)
+spc<-unique(anpp_temp_cv2$site_project_comm)
 ttest_out<-data.frame()
 
-for (i in 1:length(spct)){
+for (i in 1:length(spc)){
   
-  subset<-CT_comp_trt%>%
-    filter(spc_t==spct[i])
+  subset<-anpp_temp_cv2%>%
+    filter(site_project_comm==spc[i])
   
-  t.mean = round(t.test(subset$PD_mean, mu=0)$statistic, digits=3)
-  p.mean = t.test(subset$PD_mean, mu=0)$p.value
-  t.cv = round(t.test(subset$PD_CV, mu=0)$statistic, digits=3)
-  p.cv = t.test(subset$PD_CV, mu=0)$p.value
+  trts<-unique(subset(subset, plot_mani!=0)$treatment)
   
-  out<-data.frame(spc_t=spct[i],
-                  t_mean=t.mean, p_mean=p.mean, t_cv=t.cv, p_cv=p.cv)
+  sub_controls<-subset(subset, plot_mani==0)%>%
+    rename(cont_mean=anpp_temp_mean,
+           cont_cv=anpp_temp_cv)%>%
+    ungroup()%>%
+    select(cont_mean, cont_cv, site_project_comm)
   
-  ttest_out<-rbind(ttest_out, out)
+  
+  for (j in 1:length(trts)){
+    
+    sub_treat<-subset(subset, treatment==trts[j])%>%
+    ungroup()%>%
+      select(anpp_temp_mean, anpp_temp_cv, site_project_comm, treatment)
+    
+    combined<-sub_treat%>%
+      bind_cols(sub_controls)
+  
+    t.mean = round(t.test(combined$cont_mean, combined$anpp_temp_mean)$statistic, digits=3)
+    p.mean = t.test(combined$cont_mean, combined$anpp_temp_mean)$p.value
+    cont.mean=t.test(combined$cont_mean, combined$anpp_temp_mean)$estimate[1]
+    treat.mean=t.test(combined$cont_mean, combined$anpp_temp_mean)$estimate[2]
+    t.cv = round(t.test(combined$cont_cv, combined$anpp_temp_cv)$statistic, digits=3)
+    p.cv = t.test(combined$cont_cv, combined$anpp_temp_cv)$p.value
+    cont.cv=t.test(combined$cont_cv, combined$anpp_temp_cv)$estimate[1]
+    treat.cv=t.test(combined$cont_cv, combined$anpp_temp_cv)$estimate[2]
+    
+    
+    out<-data.frame(site_project_comm=spc[i],
+                    treatment=trts[j],
+                    t_mean=t.mean, 
+                    p_mean=p.mean, 
+                    c.mean=cont.mean, 
+                    t.mean=treat.mean, 
+                    t_cv=t.cv, 
+                    p_cv=p.cv, 
+                    c.cv=cont.cv, 
+                    t.cv=treat.cv)
+    
+    ttest_out<-rbind(ttest_out, out)
+    }
   
 }
 
-CT_all<-CT_comp_trt%>%
-  group_by(spc_t, cont_temp_cv, cont_temp_mean)%>%
-  summarise(anpp_temp_mean=mean(anpp_temp_mean),
-            anpp_temp_cv=mean(anpp_temp_cv),
-            PD_mean=mean(PD_mean), 
-            PD_CV=mean(PD_CV))%>%
-  left_join(ttest_out)%>%
-  mutate(resp_mean=ifelse(p_mean>0.05, "not sig", ifelse(p_mean<0.05&PD_mean<0, "dec", ifelse(p_mean<0.05&PD_mean>0, "inc", 999))),
-         resp_cv=ifelse(p_cv>0.05, "not sig", ifelse(p_cv<0.05&PD_CV<0, "dec", ifelse(p_cv<0.05&PD_CV>0, "inc", 999))))%>%
-  separate(spc_t, into=c("site_project_comm", "treatment"), sep="::")%>%
+ttest_summary<-ttest_out%>%
+  mutate(meandiff=t.mean-c.mean,
+         cvdiff=t.cv-c.cv)%>%
+  mutate(resp_mean=ifelse(p_mean>0.05, "not sig", ifelse(p_mean<0.05&meandiff<0, "dec", ifelse(p_mean<0.05&meandiff>0, "inc", 999))),
+         resp_cv=ifelse(p_cv>0.05, "not sig", ifelse(p_cv<0.05&cvdiff<0, "dec", ifelse(p_cv<0.05&cvdiff>0, "inc", 999))))%>%
   left_join(trtint)
 
-mean.overall<-CT_all%>%
+mean.overall<-ttest_summary%>%
   group_by(resp_mean)%>%
   summarize(n=length(resp_mean))%>%
-  mutate(response="ANPP")%>%
+  mutate(response="A) ANPP")%>%
   rename(effect=resp_mean)%>%
   mutate(trt_type7="All Trts")
 
-mean.trt<-CT_all%>%
+mean.trt<-ttest_summary%>%
   group_by(trt_type7, resp_mean)%>%
   summarize(n=length(resp_mean))%>%
-  mutate(response="ANPP")%>%
+  mutate(response="A) ANPP")%>%
   rename(effect=resp_mean)
 
-cv.overall<-CT_all%>%
+cv.overall<-ttest_summary%>%
   group_by(resp_cv)%>%
   summarize(n=length(resp_cv))%>%
-  mutate(response="CV of ANPP")%>%
+  mutate(response="B) CV of ANPP")%>%
   rename(effect=resp_cv)%>%
   mutate(trt_type7="All Trts")
 
-cv.trt<-CT_all%>%
+cv.trt<-ttest_summary%>%
   group_by(trt_type7, resp_cv)%>%
   summarize(n=length(resp_cv))%>%
-  mutate(response="CV of ANPP")%>%
+  mutate(response="B) CV of ANPP")%>%
   rename(effect=resp_cv)
 
+# Making figure 1 ---------------------------------------------------------
 vote.fig<-mean.trt%>%
   bind_rows(cv.trt)%>%
   bind_rows(cv.overall)%>%
   bind_rows(mean.overall)%>%
   mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
 
-ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
+vot<-ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
   facet_wrap(~response, ncol=1)+
@@ -309,9 +328,7 @@ ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         strip.background = element_rect(fill="white"))
 
-
 # Analysis 2. is PD different from 0 for each treatment overall -----------
-
 
 ##first overall for PD_CV
 t.test(CT_comp$PD_CV, mu=0) # overall No, and not for the difference GCDs
@@ -357,96 +374,7 @@ nquest<-CT_comp%>%
 summary(lm(PD_CV~n, data=nquest))
 
 
-# Making figure 1 ---------------------------------------------------------
-
-tograph_color<-CT_comp%>%
-  left_join(ave_prod)%>%
-  left_join(precip_vari)
-
-##CV figure
-dat<-CT_comp[,c(4,10)]
-model2.lm<-lmodel2(anpp_temp_cv~cont_temp_cv, range.x = "relative", range.y = "relative", data=dat, nperm=99) #use MA 
-slopem<-model2.lm$regression.results[2,3]
-lowm<-model2.lm$confidence.intervals[2,4]
-highm<-model2.lm$confidence.intervals[2,5]
-
-interceptm<-model2.lm$regression.results[2,2]
-linterceptm<-model2.lm$confidence.intervals[2,2]
-hinterceptm<-model2.lm$confidence.intervals[2,3]
-
-#main figure for paper
-cv1fig<-
-  ggplot(data=CT_comp, aes(x=cont_temp_cv, y=anpp_temp_cv, color = trt_type7))+
-  geom_point(size=3)+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  geom_abline(slope=slopem, intercept=interceptm, size=1)+
-  geom_abline(slope=lowm, intercept=linterceptm, size=1,linetype="dotted", color="gray")+
-  geom_abline(slope=highm, intercept=hinterceptm, size=1,linetype="dotted", color="gray")+
-  ylab("CV of ANPP Trt Plots")+
-  xlab("CV of ANPP Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(0,100))+
-  scale_y_continuous(limits=c(0,100))+
-  geom_text(x=15, y=100, label="D", size=4, color="black")
-
-##sd figure
-sddat<-CT_comp[,c(6,12)]
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=sddat, nperm=99) #use MA 
-slopeA<-model2.lm$regression.results[2,3]
-interceptA<-model2.lm$regression.results[2,2]
-
-subdat<-subset(subset(CT_comp, trt_type6=="Nitrogen"))
-dat<-subdat[,c(6,12)]
-model2.lm<-lmodel2(log(anpp_temp_sd)~log(cont_temp_sd), range.x = "relative", range.y = "relative", data=dat, nperm=99) 
-slopeN<-model2.lm$regression.results[2,3]
-interceptN<-model2.lm$regression.results[2,2]
-sd1fig<-
-  ggplot(data=CT_comp, aes(x=log(cont_temp_sd), y=log(anpp_temp_sd), color=trt_type7))+
-  geom_point(size=3)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=slopeA, intercept=interceptA, size=1)+
-  geom_abline(slope=slopeN, intercept=interceptN, size=1, color = "green2")+
-  ylab("Log (SD of ANPP Trt Plots)")+
-  xlab("Log (SD of ANPP Control Plots)")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(3,7))+
-  scale_y_continuous(limits=c(3,7))
-
-##mean figure
-mndat<-CT_comp[,c(5,11)]
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
-slopeA<-model2.lm$regression.results[2,3]
-interceptA<-model2.lm$regression.results[2,2]
-
-lowA<-model2.lm$confidence.intervals[2,4]
-highA<-model2.lm$confidence.intervals[2,5]
-
-linterceptA<-model2.lm$confidence.intervals[2,2]
-hinterceptA<-model2.lm$confidence.intervals[2,3]
-
-subdat<-subset(subset(CT_comp, trt_type6=="Multiple Nutrients"))
-mndat<-subdat[,c(5,11)]
-model2.lm<-lmodel2(anpp_temp_mean~cont_temp_mean, range.x = "relative", range.y = "relative", data=mndat, nperm=99)
-slopeMN<-model2.lm$regression.results[2,3]
-interceptMN<-model2.lm$regression.results[2,2]
-
-mean1fig<-
-  ggplot(data=CT_comp, aes(x=cont_temp_mean, y=anpp_temp_mean, color=trt_type7))+
-  geom_point(size=3)+
-  geom_abline(slope=1, intercept=0, size=1, linetype="dashed")+
-  scale_color_manual(name = "GCD treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green2","darkgray","blue"))+
-  geom_abline(slope=lowA, intercept=linterceptA, size=1)+
-  geom_abline(slope=highA, intercept=hinterceptA, size=1, color = "gray", linetype="dotted")+
-  geom_abline(slope=slopeA, intercept=interceptA, size=1, color = "gray", linetype="dotted")+
-  geom_abline(slope=slopeMN, intercept=interceptMN, size=1, color = "orange")+
-  ylab("ANPP Trt Plots")+
-  xlab("ANPP Control Plots")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  scale_x_continuous(limits=c(50,1100))+
-  scale_y_continuous(limits=c(50,1100))+
-  geom_text(x=100, y=1100, label="C", size=4, color="black")
+# Making figure 2 ---------------------------------------------------------
 
 ##making a bar graph of this
 PD_bargraph_trt<-CT_comp%>%
@@ -476,7 +404,7 @@ PD_bargraph_all<-CT_comp%>%
          se_mn=sd_mn/sqrt(num))%>%
   mutate(trt_type6="All Treatments")
 
-PD_bargraph<-rbind(PC_bargraph_trt, PC_bargraph_all)
+PD_bargraph<-rbind(PD_bargraph_trt, PD_bargraph_all)
 
 
 cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
@@ -491,19 +419,19 @@ cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=0.6, y=12, label="B", size=4)
 
-sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
-  ylab("Percent Difference\nSD of ANPP")+
-  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-  xlab("")+
-  scale_fill_manual(values=c("orange","green3","blue","black"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-  geom_vline(xintercept = 1.5, size = 1)+  
-  geom_text(x=1, y=35, label="*", size=8)+
-  geom_text(x=2, y=75, label="*", size=8)+
-  scale_y_continuous(limits=c(0, 80))
+# sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
+#   geom_bar(position=position_dodge(), stat="identity")+
+#   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
+#   ylab("")+
+#   ylab("Percent Difference\nSD of ANPP")+
+#   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+#   xlab("")+
+#   scale_fill_manual(values=c("orange","green3","blue","black"))+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+#   geom_vline(xintercept = 1.5, size = 1)+  
+#   geom_text(x=1, y=35, label="*", size=8)+
+#   geom_text(x=2, y=75, label="*", size=8)+
+#   scale_y_continuous(limits=c(0, 80))
 
 mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
@@ -512,7 +440,7 @@ mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   ylab("Percent Difference\nANPP")+
   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
-  scale_fill_manual(values=c("orange","green3","blue","black"))+
+  scale_fill_manual(name = "GCD Treatment", values=c("orange","green3","blue","black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=35, label="*", size=8)+
@@ -522,22 +450,19 @@ mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   scale_y_continuous(limits=c(0, 60))+
   geom_text(x=0.6, y=55, label="A", size=4)
 
-legend=gtable_filter(ggplot_gtable(ggplot_build(mean1fig)), "guide-box") 
+legend=gtable_filter(ggplot_gtable(ggplot_build(mn_fig)), "guide-box") 
 grid.draw(legend)
 
 fig1<-
   grid.arrange(arrangeGrob(mn_fig+theme(legend.position="none"),
-                           mean1fig+theme(legend.position="none"),
                            cv_fig+theme(legend.position="none"),
-                           cv1fig+theme(legend.position="none"),
-                           ncol=2), legend, 
+                           ncol=1), legend, 
                widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
 
 
-grid.arrange(sd_fig, sd1fig, ncol=2)
 
 
-# Analysis 3, appenxis Site-level responses ----------------------------------------------------
+# Analysis 3, appendix Site-level responses ----------------------------------------------------
 
 ####bar graph of difference across ecosystems
 PD_ecosystems_test<-CT_comp%>%
