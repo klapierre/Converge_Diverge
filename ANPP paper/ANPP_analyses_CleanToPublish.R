@@ -112,40 +112,37 @@ PD_anpp_yr<-merge(mtrt, mcontrol, by=c("site_project_comm","treatment_year","cal
   left_join(site_info)
 
 ###Calculating PD of ANPP and CV of ANPP for each treatment plot
-cont_temp<-anpp_temp_cv%>%
-  filter(plot_mani==0)%>%
-  group_by(site_code, project_name, community_type)%>%
-  summarize(cont_temp_cv=mean(anpp_temp_cv), 
-            cont_temp_mean=mean(anpp_temp_mean),
-            cont_temp_sd = mean(anpp_temp_sd))%>%
-  ungroup()%>%
-  select(site_code, project_name, community_type, cont_temp_cv, cont_temp_mean,cont_temp_sd)%>%
-  mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))
-
-trt_temp<-anpp_temp_cv%>%
-  filter(plot_mani>0)
-
-CT_comp_plot<-cont_temp%>%
-  left_join(trt_temp)%>%
-  mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
-  left_join(trtint)%>%
-  mutate(PD_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100,
-         PD_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
-         PD_mean=((anpp_temp_mean-cont_temp_mean)/cont_temp_mean)*100)
-
-trt_temp_mean<-anpp_temp_cv%>%
-  filter(plot_mani>0)%>%
-  group_by(site_code, project_name, community_type, treatment)%>%
+Means<-anpp_temp_cv%>%
+  group_by(site_code, project_name, community_type, treatment, plot_mani)%>%
   summarize(anpp_temp_cv=mean(anpp_temp_cv), 
             anpp_temp_mean=mean(anpp_temp_mean),
             anpp_temp_sd = mean(anpp_temp_sd))%>%
   ungroup()%>%
-  select(site_code, project_name, community_type, anpp_temp_cv, anpp_temp_mean,anpp_temp_sd, treatment)%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))
 
+# trt_temp<-anpp_temp_cv%>%
+#   filter(plot_mani>0)
+# 
+# CT_comp_plot<-cont_temp%>%
+#   left_join(trt_temp)%>%
+#   mutate(id=paste(site_code, project_name, community_type, sep="_"))%>%
+#   left_join(trtint)%>%
+#   mutate(PD_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100,
+#          PD_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
+#          PD_mean=((anpp_temp_mean-cont_temp_mean)/cont_temp_mean)*100)
+# 
 
-CT_comp<-cont_temp%>%
-  left_join(trt_temp_mean)%>%
+cont_temp<-Means%>%
+  filter(plot_mani==0)%>%
+  rename(cont_temp_cv=anpp_temp_cv,
+         cont_temp_sd=anpp_temp_sd,
+         cont_temp_mean=anpp_temp_mean)%>%
+  select(-plot_mani, -treatment)
+
+
+CT_comp<-Means%>%
+  filter(plot_mani!=0)%>%
+  left_join(cont_temp)%>%
   left_join(trtint)%>%
   mutate(PD_CV=((anpp_temp_cv-cont_temp_cv)/cont_temp_cv)*100,
          PD_sd=((anpp_temp_sd-cont_temp_sd)/cont_temp_sd)*100,
@@ -249,27 +246,20 @@ for (i in 1:length(spc)){
     
     combined<-sub_treat%>%
       bind_cols(sub_controls)
-  
-    t.mean = round(t.test(combined$cont_mean, combined$anpp_temp_mean)$statistic, digits=3)
-    p.mean = t.test(combined$cont_mean, combined$anpp_temp_mean)$p.value
-    cont.mean=t.test(combined$cont_mean, combined$anpp_temp_mean)$estimate[1]
-    treat.mean=t.test(combined$cont_mean, combined$anpp_temp_mean)$estimate[2]
-    t.cv = round(t.test(combined$cont_cv, combined$anpp_temp_cv)$statistic, digits=3)
-    p.cv = t.test(combined$cont_cv, combined$anpp_temp_cv)$p.value
-    cont.cv=t.test(combined$cont_cv, combined$anpp_temp_cv)$estimate[1]
-    treat.cv=t.test(combined$cont_cv, combined$anpp_temp_cv)$estimate[2]
     
-    
+    t.test.mean<-t.test(combined$cont_mean, combined$anpp_temp_mean)
+    t.test.cv<-t.test(combined$cont_cv, combined$anpp_temp_cv)
+
     out<-data.frame(site_project_comm=spc[i],
                     treatment=trts[j],
-                    t_mean=t.mean, 
-                    p_mean=p.mean, 
-                    c.mean=cont.mean, 
-                    t.mean=treat.mean, 
-                    t_cv=t.cv, 
-                    p_cv=p.cv, 
-                    c.cv=cont.cv, 
-                    t.cv=treat.cv)
+                    t_mean=round(t.test.mean$statistic, digits=3),
+                    p_mean=t.test.mean$p.value,
+                    c.mean=t.test.mean$estimate[1], 
+                    t.mean=t.test.mean$estimate[2],
+                    t_cv=round(t.test.cv$statistic, digits=3), 
+                    p_cv=t.test.cv$p.value,
+                    c.cv=t.test.cv$estimate[1],
+                    t.cv=t.test.cv$estimate[2])
     
     ttest_out<-rbind(ttest_out, out)
     }
