@@ -409,19 +409,19 @@ cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=0.6, y=12, label="B", size=4)
 
-# sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
-#   geom_bar(position=position_dodge(), stat="identity")+
-#   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
-#   ylab("")+
-#   ylab("Percent Difference\nSD of ANPP")+
-#   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-#   xlab("")+
-#   scale_fill_manual(values=c("orange","green3","blue","black"))+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
-#   geom_vline(xintercept = 1.5, size = 1)+  
-#   geom_text(x=1, y=35, label="*", size=8)+
-#   geom_text(x=2, y=75, label="*", size=8)+
-#   scale_y_continuous(limits=c(0, 80))
+sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
+  geom_bar(position=position_dodge(), stat="identity")+
+  geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
+  ylab("")+
+  ylab("Percent Difference\nSD of ANPP")+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  xlab("")+
+  scale_fill_manual(values=c("orange","green3","blue","black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_vline(xintercept = 1.5, size = 1)+
+  geom_text(x=1, y=35, label="*", size=8)+
+  geom_text(x=2, y=75, label="*", size=8)+
+  scale_y_continuous(limits=c(0, 80))
 
 mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
@@ -440,14 +440,11 @@ mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   scale_y_continuous(limits=c(0, 60))+
   geom_text(x=0.6, y=55, label="A", size=4)
 
-legend=gtable_filter(ggplot_gtable(ggplot_build(mn_fig)), "guide-box") 
-grid.draw(legend)
 
 fig1<-
   grid.arrange(arrangeGrob(mn_fig+theme(legend.position="none"),
                            cv_fig+theme(legend.position="none"),
-                           ncol=1), legend, 
-               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
+                           ncol=1))
 
 
 
@@ -582,13 +579,22 @@ vari<-c(
   PD_mean = "ANPP"
 )
 
+ttest_sig<-ttest_out%>%
+  mutate(PD_mean=ifelse(p_mean>0.05,0,1),
+         PD_CV=ifelse(p_cv>0.05, 0, 1))%>%
+  gather(vari_metric, sig, PD_mean:PD_CV)%>%
+  select(site_project_comm, treatment, vari_metric, sig)
+
+
 tograph_cor2<-tograph_cor%>%
-  filter(vari_metric!="PD_sd")
+  filter(vari_metric!="PD_sd")%>%
+  left_join(ttest_sig)
 rvalues2<-rvalues %>% 
   filter(vari_group!="PD_sd")
 
 ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
-  geom_point()+
+  geom_point(aes(color=as.factor(sig)))+
+  scale_color_manual(name="", values=c("darkgray", 'black'))+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+  
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
@@ -602,7 +608,9 @@ ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
   facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
   xlab("Value")+
   ylab("Percent Difference")+
-  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)
+  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_hline(yintercept = 0, linetype="dashed", color="black")
 
 
 # Analysis 5 appendix are sites more responsvie to GCDs in low anpp years? ---------
@@ -740,31 +748,71 @@ t.slope<-lm.slopes%>%
   filter(plot_mani!=0)%>%
   select(-p.val)
 
-slopes_tograph1<-merge(c.slope, t.slope, by="site_project_comm")
-slopes_tograph2<-merge(slopes_tograph1, trtint, by=c("site_project_comm","treatment"))
-slopes_tograph<-merge(slopes_tograph2, site_info, by="site_project_comm")%>%
+slopes_tograph<-c.slope%>%
+  left_join(t.slope)%>%
+  left_join(site_char)%>%
   mutate(diff=est-c_est)%>%
-  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)%>%
-  left_join(precip_vari)
+  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
+
+# slopes_tograph2<-slopes_tograph%>%
+#   gather(parm, value, MAP:sdppt)%>%
+#   filter(parm!="manpp")%>%
+#   mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","sdppt","MAT")))
+# 
+# rvalues.slope <- slopes_tograph2 %>% 
+#   group_by(parm_group) %>%
+#   summarize(r.value = round((cor.test(diff, value)$estimate), digits=3),
+#             p.value = (cor.test(diff, value)$p.value))
+# 
+# parameter<-c(
+#   MAP = "MAP",
+#   sdppt = "SD of Precip.",
+#   MAT = "MAT",
+#   rrich = "Sp Richness",
+#   Evar = "Evenness"
+# )
+# 
+# ggplot(data=slopes_tograph2, aes(x = value, y = diff))+
+#  geom_point()+
+#     facet_wrap(~parm_group, scales="free", labeller=labeller(parm_group = parameter), ncol=2)+
+#   ylab("Difference in slopes")+
+#   geom_smooth(data=subset(slopes_tograph2, parm_group=="sdppt"), method="lm", se=F, color = "black")+  
+#   geom_smooth(data=subset(slopes_tograph2, parm_group=="MAP"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(slopes_tograph2, parm_group=="MAT"), method="lm", se=F, color = "black")+
+#   geom_text(data=rvalues, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=4.5, vjust=1.5)+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+#   geom_hline(yintercept = 0, linetype="dashed", color="black")
+
 
 ###stats
-#regression of map with diff
-summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP<800)))#ns
-summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP>800)))#sig, r=0.11
+#library(MASS) # MASS masks select in tidyverse, so only load this when doing mutliple regressions
 
-summary(MAP_diff <- lm(diff ~ MAP,  data = slopes_tograph))
-#not sig effect. p = 0.0497
-#summary(MAP_diff <- lm(diff ~ sdppt,  data = slopes_tograph))
-##yes sig effect. p = 0.0005
-
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Nitrogen"))) #not sig
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
-summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients"))) #sig p = 0.001
-
-#try without MAERC
-MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"&trt_type7=="Multiple Nutrients"))
-summary(MAP_diff)
-#yes, still sig. p = 0.039
+##how correlated are the predictor variables?
+# pairs(PD_cor[,c(21:24,26)])
+# 
+# stepAIC(lm(diff~MAP+MAT+sdppt+rrich+Evar, data=slopes_tograph))
+# summary(model.diff<-lm(diff~MAP+MAT+sdppt+rrich+Evar, data=slopes_tograph))
+# rsq.partial(model.diff, adj = T)
+# 
+# 
+# 
+# #regression of map with diff
+# summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP<800)))#ns
+# summary(MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, MAP>800)))#sig, r=0.11
+# 
+# summary(MAP_diff <- lm(diff ~ MAT+ MAP+sdppt+rrich+Evar,  data = slopes_tograph))
+# #not sig effect. p = 0.0497
+# #summary(MAP_diff <- lm(diff ~ sdppt,  data = slopes_tograph))
+# ##yes sig effect. p = 0.0005
+# 
+# summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Nitrogen"))) #not sig
+# summary(lm(diff ~ MAP,  data = subset(slopes_tograph, trt_type7 == "Water")))#not sig
+# summary(lm(diff ~ Evar,  data = subset(slopes_tograph, trt_type7 == "Multiple Nutrients"))) #sig p = 0.001
+# 
+# #try without MAERC
+# MAP_diff <- lm(diff ~ MAP,  data = subset(slopes_tograph, site_code!="maerc"&trt_type7=="Multiple Nutrients"))
+# summary(MAP_diff)
+# #yes, still sig. p = 0.039
 
 
 #overall ttest
@@ -783,6 +831,7 @@ t.test(nuts$diff, mu=0)
 
 # Making figure 3 ---------------------------------------------------------
 slopes_bar_trt<-slopes_tograph%>%
+  left_join(trtint)%>%
   group_by(trt_type6)%>%
   summarise(mdiff=mean(diff),
             ndiff=length(diff),
@@ -801,28 +850,28 @@ slopes_bar_overall<-slopes_tograph%>%
 slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #graphing diff
 
-map<-
-  ggplot(data=slopes_tograph, aes(x=MAP, y=diff, color = trt_type7))+
-  scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
-  geom_point(size=3)+
-  # geom_smooth(method="lm", se=F, color="black", size = 1)+
-  geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  ylab("Difference in Slopes")+
-  xlab("Site MAP")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  annotate("text", x=275, y=1.6, label="B", size=8)
-
-sdppt<-
-  ggplot(data=slopes_tograph, aes(x=sdppt, y=diff, color = trt_type7))+
-  scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
-  geom_point(size=3)+
-  geom_smooth(method="lm", se=F, color="black", size = 1)+
-  geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
-  ylab("Difference in Slopes")+
-  xlab("Site SD of Precipitation")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  annotate("text", x=275, y=1.6, label="B", size=8)
+# map<-
+#   ggplot(data=slopes_tograph, aes(x=MAT, y=diff, color = trt_type7))+
+#   scale_color_manual(name = "GCD Treatment", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+#   geom_point(size=3)+
+#   # geom_smooth(method="lm", se=F, color="black", size = 1)+
+#   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+#   ylab("Difference in Slopes")+
+#   xlab("Site MAP")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   #annotate("text", x=275, y=1.6, label="B", size=8)
 # 
+# sdppt<-
+#   ggplot(data=slopes_tograph, aes(x=sdppt, y=diff, color = trt_type7))+
+#   scale_color_manual(name = "GCD Trt", breaks = c("Multiple Nutrients","Nitrogen","Water","Other GCD"),values = c("orange", "green3","darkgray","blue"), labels=c("Multiple\nNutrients","Nitrogen","Water","Other GCD"))+
+#   geom_point(size=3)+
+#   geom_smooth(method="lm", se=F, color="black", size = 1)+
+#   geom_smooth(data=subset(slopes_tograph, trt_type6 =="Multiple Nutrients"), method="lm", se=F, color="orange", size = 1)+
+#   ylab("Difference in Slopes")+
+#   xlab("Site SD of Precipitation")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+#   annotate("text", x=275, y=1.6, label="B", size=8)
+# # 
 # control<-
 # ggplot(data=slopes_tograph, aes(x=MAP, y=c_est))+
 #   geom_point(size=3)+
@@ -830,8 +879,7 @@ sdppt<-
 #   xlab("Site MAP")+
 #   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-bar<-
-  ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
+ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
   ylab("")+
@@ -843,10 +891,11 @@ bar<-
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=0.255, label="*", size=8)+
-  geom_text(x=2, y=0.24, label="*", size=8)+
-  geom_text(x=0.6, y=0.24, label="A", size=8)
+  geom_text(x=2, y=0.24, label="*", size=8)#+
+  #geom_text(x=0.6, y=0.24, label="A", size=8)
 
-grid.arrange(bar, map, ncol=2)
+
+
 
 # analysis 7 appendix is sensitivity related to MAP? ----------------------
 
@@ -881,3 +930,48 @@ ggplot(data=fig, aes(x=treatment_year, y=PD))+
   ylab("Percent Difference in ANPP")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   facet_wrap(~trt_type5, ncol=5, scales="free")
+
+
+####katies comment. Is a good year in controls a good year in plots?
+
+with(subset(PD_anpp_yr, site_project_comm=="KNZ_pplots_0"&treatment=="N2P0"), cor.test(contanpp, manpp))
+
+with(subset(PD_anpp_yr, site_project_comm=="ANG_watering_0"&treatment=="S"), plot(contanpp, manpp))
+
+
+rvalues.ct <- PD_anpp_yr %>% 
+  group_by(site_project_comm, treatment) %>%
+  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+  left_join(trtint)%>%
+  group_by(sig, trt_type7)%>%
+  summarize(n=length(sig))%>%
+  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+
+
+rvalues.overall <- PD_anpp_yr %>% 
+  group_by(site_project_comm, treatment) %>%
+  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+  left_join(trtint)%>%
+  group_by(sig)%>%
+  summarize(n=length(sig))%>%
+  mutate(prop=n/95, 
+         trt_type7 ="All Trts")%>%
+  bind_rows(rvalues.ct)
+
+ggplot(data=rvalues.overall, aes(y=prop, x=trt_type7, fill=as.factor(sig)))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  xlab("Treatment")+
+  ylab("Proportion of Treatments")+
+ scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "skyblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        strip.background = element_rect(fill="white"))+
+  geom_vline(xintercept = 4.5)
+
+sum(rvalues.ct$sig)            
+66/95
