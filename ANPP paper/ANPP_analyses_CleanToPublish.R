@@ -216,6 +216,46 @@ site_char<-site_info%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
+# Analysis 1. is a good year in the controls a good year in treate --------
+
+rvalues.ct <- PD_anpp_yr %>% 
+  group_by(site_project_comm, treatment) %>%
+  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+  left_join(trtint)%>%
+  group_by(sig, trt_type7)%>%
+  summarize(n=length(sig))%>%
+  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+
+
+rvalues.overall <- PD_anpp_yr %>% 
+  group_by(site_project_comm, treatment) %>%
+  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+  left_join(trtint)%>%
+  group_by(sig)%>%
+  summarize(n=length(sig))%>%
+  mutate(prop=n/95, 
+         trt_type7 ="All Trts")%>%
+  bind_rows(rvalues.ct)
+
+ggplot(data=rvalues.overall, aes(y=prop, x=trt_type7, fill=as.factor(sig)))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  xlab("Treatment")+
+  ylab("Proportion of Treatments")+
+  scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "black"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        strip.background = element_rect(fill="white"))+
+  geom_vline(xintercept = 4.5)
+
+sum(rvalues.ct$sig)            
+66/95
+
+
 # Analysis 1. PD diff from zero for each treatment? -----------------------
 
 anpp_temp_cv2<-anpp_temp_cv%>%
@@ -306,17 +346,36 @@ vote.fig<-mean.trt%>%
   bind_rows(mean.overall)%>%
   mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
 
-vot<-ggplot(data=vote.fig, aes(y=prop, x=trt_type7, fill=effect))+
+vot_mean<-ggplot(data=subset(vote.fig, response=="A) ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
-  facet_wrap(~response, ncol=1)+
+  xlab("Treatment")+
+  ylab("")+
+  scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 4.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("A) ANPP")
+
+vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV of ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+  geom_bar(stat="identity")+
+  coord_flip()+
   xlab("Treatment")+
   ylab("Proportion of Treatments Different from Control")+
   scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
   scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
   geom_vline(xintercept = 4.5)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        strip.background = element_rect(fill="white"))
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("B) CV of ANPP")
+
+legend=gtable_filter(ggplot_gtable(ggplot_build(vot_mean)), "guide-box") 
+grid.draw(legend)
+
+fig1<-
+  grid.arrange(arrangeGrob(vot_mean+theme(legend.position="none"),
+                           vot_cv+theme(legend.position="none"),
+                           ncol=1), legend, 
+               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
 
 # Analysis 2. is PD different from 0 for each treatment overall -----------
 
@@ -407,7 +466,7 @@ cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
   scale_fill_manual(values=c("orange","green3","blue","black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
-  geom_text(x=0.6, y=12, label="B", size=4)
+  geom_text(x=0.6, y=12, label="D", size=4)
 
 sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
@@ -438,16 +497,15 @@ mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_text(x=3, y=35, label="*", size=8)+
   geom_text(x=4, y=48, label="*", size=8)+
   scale_y_continuous(limits=c(0, 60))+
-  geom_text(x=0.6, y=55, label="A", size=4)
+  geom_text(x=0.6, y=55, label="C", size=4)
 
 
-fig1<-
+fig2<-
   grid.arrange(arrangeGrob(mn_fig+theme(legend.position="none"),
                            cv_fig+theme(legend.position="none"),
                            ncol=1))
 
-
-
+grid.arrange(fig1,fig2, ncol=2)
 
 # Analysis 3, appendix Site-level responses ----------------------------------------------------
 
@@ -512,7 +570,7 @@ fig1<-
                            ncol=1), legend, 
                widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
 
-grid.arrange(eco_mn, eco_sd, eco_cv)
+
 
 
 # Analysis 4 abiotic and biotic drivers of PD ANPP and CV of ANPP --------------------
@@ -932,46 +990,3 @@ ggplot(data=fig, aes(x=treatment_year, y=PD))+
   facet_wrap(~trt_type5, ncol=5, scales="free")
 
 
-####katies comment. Is a good year in controls a good year in plots?
-
-with(subset(PD_anpp_yr, site_project_comm=="KNZ_pplots_0"&treatment=="N2P0"), cor.test(contanpp, manpp))
-
-with(subset(PD_anpp_yr, site_project_comm=="ANG_watering_0"&treatment=="S"), plot(contanpp, manpp))
-
-
-rvalues.ct <- PD_anpp_yr %>% 
-  group_by(site_project_comm, treatment) %>%
-  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
-            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
-  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
-  left_join(trtint)%>%
-  group_by(sig, trt_type7)%>%
-  summarize(n=length(sig))%>%
-  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
-
-
-rvalues.overall <- PD_anpp_yr %>% 
-  group_by(site_project_comm, treatment) %>%
-  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
-            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
-  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
-  left_join(trtint)%>%
-  group_by(sig)%>%
-  summarize(n=length(sig))%>%
-  mutate(prop=n/95, 
-         trt_type7 ="All Trts")%>%
-  bind_rows(rvalues.ct)
-
-ggplot(data=rvalues.overall, aes(y=prop, x=trt_type7, fill=as.factor(sig)))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  xlab("Treatment")+
-  ylab("Proportion of Treatments")+
- scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "skyblue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        strip.background = element_rect(fill="white"))+
-  geom_vline(xintercept = 4.5)
-
-sum(rvalues.ct$sig)            
-66/95
