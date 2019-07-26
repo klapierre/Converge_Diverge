@@ -8,6 +8,7 @@ library(grid)
 
 setwd('~/Dropbox/converge_diverge/datasets/LongForm')
 setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm")
+setwd("C:\\Users\\mavolio2\\Dropbox\\converge_diverge\\datasets\\LongForm")
 
 theme_set(theme_bw(12)) 
 
@@ -43,6 +44,10 @@ site_info<-read.csv("SiteExperimentDetails_March2019.csv")%>%
 
 #yearly precip data
 precip<-read.csv("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\real_precip_anppSites.csv")%>%
+  mutate(calendar_year=year, precip_mm=precip)%>%
+  select(-year, -X, -precip)
+
+precip<-read.csv("C:\\Users\\mavolio2\\Dropbox\\converge_diverge\\datasets\\LongForm\\climate\\real_precip_anppSites.csv")%>%
   mutate(calendar_year=year, precip_mm=precip)%>%
   select(-year, -X, -precip)
 
@@ -246,7 +251,7 @@ ggplot(data=rvalues.overall, aes(y=prop, x=trt_type7, fill=as.factor(sig)))+
   coord_flip()+
   xlab("Treatment")+
   ylab("Proportion of Treatments")+
-  scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "black"))+
+  scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "blue"))+
   scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         strip.background = element_rect(fill="white"))+
@@ -351,7 +356,7 @@ vot_mean<-ggplot(data=subset(vote.fig, response=="A) ANPP"), aes(y=prop, x=trt_t
   coord_flip()+
   xlab("Treatment")+
   ylab("")+
-  scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
+  scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "lightblue", "darkblue"))+
   scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
   geom_vline(xintercept = 4.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -376,6 +381,16 @@ fig1<-
                            vot_cv+theme(legend.position="none"),
                            ncol=1), legend, 
                widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
+
+
+###is the correlation analysis redundnat
+notsigr<-rvalues.ct%>%
+  filter(sig==0)
+sigt<-ttest_summary%>%
+  filter(resp_cv!="not sig")%>%
+  select(site_project_comm, treatment, resp_cv)%>%
+  left_join(notsigr)
+
 
 # Analysis 2. is PD different from 0 for each treatment overall -----------
 
@@ -544,7 +559,6 @@ eco_cv<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=cv, fill=MA
   xlab("Site Code")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-
 eco_sd<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=sd, fill=MAP))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
@@ -586,7 +600,8 @@ with(PD_cor, plot(manpp, cont_temp_cv))
 with(PD_cor, plot(manpp, anpp_temp_cv))
 with(PD_cor, cor.test(manpp, cont_temp_cv))
 with(PD_cor, cor.test(manpp, anpp_temp_cv))
-
+with(PD_cor, cor.test(MAT, MAP))
+with(PD_cor, cor.test(sdppt, MAP))
 
 #how well does MAP correlated with manpp? Very strongly
 with(PD_cor, plot(manpp, MAP))
@@ -597,26 +612,26 @@ with(PD_cor, cor.test(manpp, MAP))
 ##how correlated are the predictor variables?
 pairs(PD_cor[,c(21:24,26)])
 
-stepAIC(lm(PD_CV~MAP+MAT+sdppt+rrich+Evar, data=PD_cor))
-summary(model.cv<-lm(PD_CV~sdppt+Evar+MAT, data=PD_cor))
+stepAIC(lm(PD_CV~MAP+MAT+rrich+Evar, data=PD_cor))
+summary(model.cv<-lm(PD_CV~MAP+Evar+MAT, data=PD_cor))
 rsq.partial(model.cv, adj = T)
 
 # stepAIC(lm(PC_sd~MAT+MAP+anpp+sdppt+cont_rich+Evar, data=PC_cor))
 # summary(model.sd<-lm(PC_CV~MAP+anpp+sdppt, data=PC_cor))
 # rsq.partial(model.sd, adj =T)
 
-stepAIC(lm(PD_mean~MAT+MAP+sdppt+rrich+Evar, data=PD_cor))
-summary(model.mn<-lm(PD_CV~MAT+rrich+Evar, data=PD_cor))
-rsq.partial(model.mn)
+# stepAIC(lm(PD_mean~MAT+MAP+rrich+Evar, data=PD_cor))
+# summary(model.mn<-lm(PD_CV~MAT+rrich+Evar, data=PD_cor))
+# rsq.partial(model.mn)
 
 
 # Making figure 2 ---------------------------------------------------------
 
 tograph_cor<-PD_cor%>%
-  select(site_project_comm, treatment,PD_CV, PD_sd, PD_mean, MAP, sdppt, MAT, rrich, Evar)%>%
+  select(site_project_comm, treatment,PD_CV, PD_sd, PD_mean, MAP, MAT, rrich, Evar)%>%
   gather(parm, value, MAP:Evar)%>%
   gather(vari_metric, vari_value, PD_CV:PD_mean)%>%
-  mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","sdppt","MAT")),
+  mutate(parm_group=factor(parm, levels = c("rrich", "Evar","MAP","MAT")),
          vari_group=factor(vari_metric, levels=c("PD_mean","PD_sd","PD_CV")))
 
 rvalues <- tograph_cor %>% 
@@ -626,7 +641,6 @@ rvalues <- tograph_cor %>%
 
 parameter<-c(
   MAP = "MAP",
-  sdppt = "SD of Precip.",
   MAT = "MAT",
   rrich = "Sp Richness",
   Evar = "Evenness"
@@ -650,23 +664,22 @@ tograph_cor2<-tograph_cor%>%
 rvalues2<-rvalues %>% 
   filter(vari_group!="PD_sd")
 
-ggplot(data=tograph_cor2, aes(x = value, y = vari_value))+
+ggplot(data=subset(tograph_cor2, vari_metric=="PD_CV"), aes(x = value, y = vari_value))+
   geom_point(aes(color=as.factor(sig)))+
-  scale_color_manual(name="", values=c("darkgray", 'black'))+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+  
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
+  scale_color_manual(name="", values=c("darkgray", 'blue'))+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="Evar"), method="lm", se=F, color = "black")+  
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="rrich"), method="lm", se=F, color = "black")+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAT"), method="lm", se=F, color = "black")+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="MAP"), method="lm", se=F, color = "black")+
+  #geom_smooth(data=subset(tograph_cor, vari_group=="PD_mean"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="anpp"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="MAP"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="MAT"), method="lm", se=F, color = "black")+
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="sdppt"), method="lm", se=F, color = "black")+
-  facet_grid(row = vars(vari_group), cols = vars(parm_group), scales="free", labeller=labeller(vari_group = vari, parm_group = parameter))+
+  facet_wrap(~parm_group, scales="free", labeller=labeller(parm_group = parameter), ncol=4)+
   xlab("Value")+
   ylab("Percent Difference")+
-  geom_text(data=rvalues2, mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)+
+  geom_text(data=filter(rvalues2, vari_group=="PD_CV"), mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_hline(yintercept = 0, linetype="dashed", color="black")
 
