@@ -321,27 +321,27 @@ ttest_summary<-ttest_out%>%
 mean.overall<-ttest_summary%>%
   group_by(resp_mean)%>%
   summarize(n=length(resp_mean))%>%
-  mutate(response="A) ANPP")%>%
+  mutate(response="A) Mean ANPP")%>%
   rename(effect=resp_mean)%>%
   mutate(trt_type7="All Trts")
 
 mean.trt<-ttest_summary%>%
   group_by(trt_type7, resp_mean)%>%
   summarize(n=length(resp_mean))%>%
-  mutate(response="A) ANPP")%>%
+  mutate(response="A) Mean ANPP")%>%
   rename(effect=resp_mean)
 
 cv.overall<-ttest_summary%>%
   group_by(resp_cv)%>%
   summarize(n=length(resp_cv))%>%
-  mutate(response="B) CV of ANPP")%>%
+  mutate(response="B) CV ANPP")%>%
   rename(effect=resp_cv)%>%
   mutate(trt_type7="All Trts")
 
 cv.trt<-ttest_summary%>%
   group_by(trt_type7, resp_cv)%>%
   summarize(n=length(resp_cv))%>%
-  mutate(response="B) CV of ANPP")%>%
+  mutate(response="B) CV ANPP")%>%
   rename(effect=resp_cv)
 
 # Making figure 1 ---------------------------------------------------------
@@ -351,7 +351,7 @@ vote.fig<-mean.trt%>%
   bind_rows(mean.overall)%>%
   mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
 
-vot_mean<-ggplot(data=subset(vote.fig, response=="A) ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+vot_mean<-ggplot(data=subset(vote.fig, response=="A) Mean ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
   xlab("Treatment")+
@@ -360,9 +360,9 @@ vot_mean<-ggplot(data=subset(vote.fig, response=="A) ANPP"), aes(y=prop, x=trt_t
   scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
   geom_vline(xintercept = 4.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("A) ANPP")
+  ggtitle("A) Mean ANPP")
 
-vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV of ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
   xlab("Treatment")+
@@ -371,7 +371,7 @@ vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV of ANPP"), aes(y=prop, x=t
   scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
   geom_vline(xintercept = 4.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("B) CV of ANPP")
+  ggtitle("B) CV ANPP")
 
 legend=gtable_filter(ggplot_gtable(ggplot_build(vot_mean)), "guide-box") 
 grid.draw(legend)
@@ -475,7 +475,7 @@ cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
   ylab("")+
-  ylab("Percent Difference\nCV of ANPP")+
+  ylab("Difference (%) CV ANPP")+
   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
   scale_fill_manual(values=c("orange","green3","blue","black"))+
@@ -501,7 +501,7 @@ mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
   ylab("")+
-  ylab("Percent Difference\nANPP")+
+  ylab("Difference (%) Mean ANPP")+
   scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
   xlab("")+
   scale_fill_manual(name = "GCD Treatment", values=c("orange","green3","blue","black"))+
