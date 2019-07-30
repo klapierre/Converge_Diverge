@@ -522,6 +522,21 @@ fig2<-
 
 grid.arrange(fig1,fig2, ncol=2)
 
+###figure for graphical abstract
+boxfig<-CT_comp%>%
+  select(site_project_comm, treatment, PD_CV, PD_mean)%>%
+  gather(measure, value, PD_CV:PD_mean)
+
+ggplot(data=boxfig, aes(x=measure, y=value))+
+  geom_boxplot(outlier.color="black", outlier.size=2)+
+  geom_jitter(aes(color=measure))+
+  ylab("Difference (% GCD Treatment Effect)")+
+  xlab("")+
+  scale_x_discrete(limits=c("PD_mean", "PD_CV"), labels = c("Mean ANPP", "ANPP CV"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
+  geom_hline(yintercept = 0, size = 1)
+
+
 # Analysis 3, appendix Site-level responses ----------------------------------------------------
 
 ####bar graph of difference across ecosystems
