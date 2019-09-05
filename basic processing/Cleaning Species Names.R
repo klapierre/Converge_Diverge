@@ -1,14 +1,17 @@
 #Meghan
-setwd("~/Dropbox/converge_diverge/datasets/LongForm/")
+setwd("C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\")
 dir()
 
 library(gtools)
-library(reshape2)
-library(tidyr)
-library(dplyr)
+library(tidyverse)
 library(taxize)
 
-splist_raw<-read.csv("SpeciesList_Sept2016.csv")
+splist_raw<-read.csv("SpeciesRawAbundance_March2019.csv")%>%
+  select(genus_species)%>%
+  unique()
+
+write.csv(splist_raw, "CoRRE_SpList_Sept2019.csv", row.names=F)
+
 
 splist<-splist_raw%>%
   select(genus_species)%>%
