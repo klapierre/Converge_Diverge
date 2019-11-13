@@ -6,6 +6,7 @@ library(utf8)
 #from Habacuc
 
 setwd("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
+setwd("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 
 checkcorre<-read.csv("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2019.csv")
 
@@ -30,7 +31,7 @@ corre %>%
 corre$species <- Hmisc::capitalize(tolower(corre$genus_species))
 
 #load taxonomy for corre
-taxcorre <- read_csv("Species_to_check_cleaned.csv")
+taxcorre <- read_csv("Species_to_check_cleaned_2.csv")
 #get rid of taxize matches - we manually did all this
 # ii <- is.na(taxcorre$species_Taxonstand) & !is.na(taxcorre$species_taxize)
 # 
@@ -47,7 +48,8 @@ try <- fread("TryAccSpecies.txt",sep = "\t",data.table = FALSE,stringsAsFactors 
 try %>%
   mutate(species= as_utf8(AccSpeciesName))->try
 #capitalize records
-try$species <- Hmisc::capitalize(tolower(try$AccSpeciesName))
+try$species <- Hmisc::capitalize(tolower(try$AccSpeciesName))#why are we doing this?
+try$match<-ifelse(try$species==try$AccSpeciesName,1,0)
 
 #join try to updated taxonomu
 try <- left_join(try,taxdat, by = c("AccSpeciesName"="species"))
