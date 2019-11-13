@@ -3,6 +3,8 @@ library(data.table)
 library(Hmisc)
 library(utf8)
 
+#from Habacuc
+
 setwd("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 
 checkcorre<-read.csv("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2019.csv")
