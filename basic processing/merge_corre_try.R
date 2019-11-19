@@ -8,7 +8,7 @@ library(utf8)
 setwd("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 setwd("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 
-checkcorre<-read.csv("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2019.csv")
+checkcorre<-read.csv("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2019.csv")
 
 #load clean taxonomy for try
 taxdat <- read_csv("taxon_updates.csv")
@@ -40,7 +40,9 @@ taxcorre <- read_csv("Species_to_check_cleaned_2.csv")
 taxcorre %>%
   select(species, species_matched) -> taxcorre
 #join corre to updated taxonomy
-corre2 <- left_join(corre, taxcorre)
+corre2 <- left_join(corre, taxcorre)%>%
+  select(-species)%>%
+filter(species_matched!="Unknown")
 
 #read try 
 try <- fread("TryAccSpecies.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
@@ -52,12 +54,13 @@ try$species <- Hmisc::capitalize(tolower(try$AccSpeciesName))#why are we doing t
 try$match<-ifelse(try$species==try$AccSpeciesName,1,0)
 
 #join try to updated taxonomu
-try <- left_join(try,taxdat, by = c("AccSpeciesName"="species"))
+try <- left_join(try,taxdat, by = c("AccSpeciesName"="species"))%>%
+  select(-species)
 
 #join corre to try
 corre2try <- left_join(corre2,try, by="species_matched")
 
-write_csv(corre2try, path = "data/corre2trykey.csv")
+write_csv(corre2try, path = "corre2trykey.csv")
 
 #make comma separted row to submit to try 
 
