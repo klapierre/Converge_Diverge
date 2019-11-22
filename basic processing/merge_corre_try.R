@@ -66,6 +66,6 @@ write_csv(corre2try, path = "corre2trykey.csv")
 
 try_list <- corre2try[["AccSpeciesID"]][!is.na(corre2try$AccSpeciesID)]
 
-write_delim(x = as.data.frame(t(try_list)), "data/list_for_try.csv",delim = ",",col_names = FALSE)
+write_delim(x = as.data.frame(t(try_list)), "list_for_try.csv",delim = ",",col_names = FALSE)
 
 
