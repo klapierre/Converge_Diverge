@@ -2,7 +2,7 @@
 setwd('C:\\Users\\la pierrek\\Dropbox (Smithsonian)\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files')
 
 #Kim's laptop
-setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
+setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\FINAL_SEPT2014\\clean datasets - please do not touch\\sp text files")
 
 #Meghan
 setwd("~/Dropbox/converge_diverge/datasets/FINAL_SEPT2014/clean datasets - please do not touch/sp text files")
@@ -152,7 +152,8 @@ e0012<-merge(e001, e001_names, by="spcode")%>%
          genus_species!="Miscellaneous rushes",
          genus_species!="Miscellaneous sedges",
          genus_species!="Miscellaneous sp.",
-         genus_species!="Miscellaneous woody")
+         genus_species!="Miscellaneous woody",
+         genus_species!="Pine needles")
 
 e002<-read.delim("CDR_e002.txt")%>%
   select(-id, -nutrients, -light, -carbon, -water, -other_manipulation, -num_manipulations, -true_num_manipulations, -experiment_year, -p, -k, -lime, -n, -other_nut, -burn, -herb_removal, -true_plot_mani, -plot_mani, -cessation, -dist, -data_type, -species_num)%>%
@@ -596,7 +597,7 @@ combine<-rbind(bffert2, bgp2, biocon2, bowman2, ccd2, clip2, clonal2, culardoch2
 
 #take2<-aggregate(abundance~site_code+project_name+community_type, sum, data=combine)
 
-#write.csv(combine, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_March2019.csv")
+#write.csv(combine, "C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\LongForm\\SpeciesRawAbundance_Nov2019.csv")
 
 ###get species list# dont' do this anymore. We have a cleaned species list
 #species_list<-combine%>%
@@ -615,7 +616,7 @@ relcov<-merge(totcov, combine, by=c("site_code", "project_name", "community_type
   mutate(relcov=abundance/totcov)%>%
   select(-abundance, -totcov)
 
- #write.csv(relcov, "C:\\Users\\megha\\Dropbox\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_March2019.csv")
+ #write.csv(relcov, "C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\LongForm\\SpeciesRelativeAbundance_Nov2019.csv")
 
 # ##for Codyn dataset
 # expinfo<-read.csv("~/Dropbox/converge_diverge/datasets/LongForm/ExperimentInformation_Nov2015.csv")
