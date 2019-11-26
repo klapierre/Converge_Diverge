@@ -411,7 +411,19 @@ trait1187_clean <- dat3%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
   unique()
     
-    
+trait1188_clean <- dat3%>%
+  filter(TraitID==1188)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=='self', 'self-supporting', OrigValueStr))%>%
+  mutate(CleanTraitName='stem_support', CleanTraitUnit=NA)%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
+  unique()%>%
+  mutate(CleanTraitValue2=ifelse(CleanTraitValue=='self-supporting', 'self_supporting', CleanTraitValue))%>%
+  select(-CleanTraitValue)%>%
+  spread(CleanTraitValue2, CleanTraitValue2, fill='fix')%>%
+  mutate(CleanTraitValue2=paste(creeping, decumbent, procumbent, scrambling, self_supporting, tendrils, twining, sep=','))%>%
+  mutate(CleanTraitValue=ifelse(CleanTraitValue2 %in% c('creeping,fix,fix,fix,fix,fix,fix','creeping,decumbent,fix,fix,fix,fix,fix'), 'creeping', ifelse(CleanTraitValue2 %in% c('fix,decumbent,fix,fix,fix,fix,fix', 'fix,decumbent,fix,scrambling,fix,fix,fix'), 'decumbent', ifelse(CleanTraitValue2 %in% c('fix,decumbent,procumbent,fix,fix,fix,fix', 'fix,fix,procumbent,fix,fix,fix,fix'), 'procumbent', ifelse(CleanTraitValue2=='fix,fix,fix,fix,fix,fix,twining', 'twining', ifelse(CleanTraitValue2=='fix,fix,fix,fix,fix,tendrils,fix', 'tendrils', ifelse(CleanTraitValue2=='fix,fix,fix,scrambling,fix,fix,fix', 'scrambling', 'self-supporting')))))))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
     
 #combining traits
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean)
+traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean)
