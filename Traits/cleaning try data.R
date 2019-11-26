@@ -1,7 +1,11 @@
 library(tidyverse)
 library(data.table)
 
+#meghan's
 setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
+
+#kim's desktop
+setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
 dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
 
@@ -20,15 +24,9 @@ key<-read.csv("corre2trykey.csv")%>%
 length(unique(key$species_matched))
 
 dat3<-dat2%>%
-  left_join(key)%>%
+  right_join(key)%>%
   select(-ErrorRisk, -ErrorRisk2)
 
-test<-dat3%>%
-  filter(TraitID==597)
-
-table(test$OrigValueStr)
-
-length(unique(test$DatasetID))
 
 ##how many traits for sp?
 sdivtrt<-read.csv("TRY_traits_type_11252019.csv")%>%
@@ -41,10 +39,9 @@ traitnum<-dat3%>%
   summarise(nusp=length(species_matched))%>%
   right_join(sdivtrt)
 
-write.csv(traitnum, "try_traits_touse_nov2019.csv", row.names=F)
-##categorical traits dataset
-cattraits<-dat3%>%
-  filter(t)
+# write.csv(traitnum, "try_traits_export_nov2019.csv", row.names=F)
+
+
 
 ###cleaning life history traits
 trait59<-dat3%>%
@@ -60,6 +57,25 @@ trait59_test<-dat3%>%
   filter(OrigValueStr=="always biennial, always pluriennial-hapaxanthic")%>%
   select(OriglName, OrigValueStr, species_matched)%>%
   unique()
+
+
+#leaf area - merging different traits that all correspond to leaf area
+#do everything with the StdValue, which is converted to mm2
+trait3108_3109_3110_3111_3112_3113_3114<-dat3%>%
+  filter(TraitID %in% c(3114, 3108, 3110, 3112, 3109, 3111, 3113)) #all data related to leaf areas
+
+#getting averages within each species for each trait type, are they comparable?
+traitLeafAreaTest <- trait3108_3109_3110_3111_3112_3113_3114%>%
+  group_by(DatasetID, species_matched, TraitID)%>%
+  summarise(DatasetValue=mean(StdValue))%>% #averaging by trait and species within each dataset
+  ungroup()%>%
+  group_by(species_matched, TraitID)%>%
+  summarise(SppValue=mean(DatasetValue))%>% #averaging by trait and species across datasets
+  ungroup()
+
+
+
+
 
 #removing outliers by species and genus
 dat4<-dat3%>%
