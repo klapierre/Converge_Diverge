@@ -31,7 +31,8 @@ corre %>%
 corre$species <- Hmisc::capitalize(tolower(corre$genus_species))
 
 #load taxonomy for corre
-taxcorre <- read_csv("Species_to_check_cleaned_2.csv")
+taxcorre <- read_csv("Species_to_check_cleaned_2.csv")%>%
+  filter(remove==0)#this filters out only to sp., unknowns, and non-vasular plants except ferns.
 #get rid of taxize matches - we manually did all this
 # ii <- is.na(taxcorre$species_Taxonstand) & !is.na(taxcorre$species_taxize)
 # 
@@ -42,7 +43,7 @@ taxcorre %>%
 #join corre to updated taxonomy
 corre2 <- left_join(corre, taxcorre)%>%
   select(-species)%>%
-filter(species_matched!="Unknown")
+  na.omit()
 
 #read try 
 try <- fread("TryAccSpecies.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
