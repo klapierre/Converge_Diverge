@@ -48,11 +48,18 @@ cattraits<-dat3%>%
 
 ###cleaning life history traits
 trait59<-dat3%>%
+  filter(TraitID==59&OrigValueStr!="")%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="1"|OrigValueStr=="always annual"|OrigValueStr=="ann"|OrigValueStr=="annual"|OrigValueStr=="Annual"|OrigValueStr=="annual-winter annual"|OrigValueStr=="annuals"|OrigValueStr=="winter annual"|OrigValueStr=="winter annuals"|OriglName=="Plant phenology: Annual"&OrigValueStr=="yes"|OriglName=="Plant phenology: Perennial"&OrigValueStr=="no"|OrigValueStr=="summer annuals", "Annual", 
+        ifelse(OrigValueStr=="2"|OrigValueStr=="1, 2"|OrigValueStr=="1,2"|OrigValueStr=="1-2"|OriglName=="Plant phenology: Biennial"&OrigValueStr=="yes"|OrigValueStr=="always annual, always biennial"|OrigValueStr=="always biennial"|OrigValueStr=="annual-winter annual, biennial"|OrigValueStr=="annual, Biennial"|OrigValueStr=="Annual, Biennial"|OrigValueStr=="annual/bieenial"|OrigValueStr=="annual/biennial"|OrigValueStr=='annual/bisannual'|OrigValueStr=="biannual"|OrigValueStr=="biasannual"|OrigValueStr=="biennial"|OrigValueStr=="sometimes annual, always biennial"|OrigValueStr=="winter annual-biennial"|OrigValueStr=="always annual, always biennial, always pluriennial-hapaxanthic", "Biennial", 
+        ifelse(OriglName=="Plant phenology: Biennial"&OrigValueStr=="no", NA, OrigValueStr))))
+
+table(trait59$CleanTraitValue)
+
+trait59_test<-dat3%>%
   filter(TraitID==59)%>%
-  mutate(CleanValue=ifelse(OrigValueStr=="1", "Annual", NA))
-
-table(trait59$OrigValueStr)
-
+  filter(OrigValueStr=="always biennial, always pluriennial-hapaxanthic")%>%
+  select(OriglName, OrigValueStr, species_matched)%>%
+  unique()
 
 #removing outliers by species and genus
 dat4<-dat3%>%
