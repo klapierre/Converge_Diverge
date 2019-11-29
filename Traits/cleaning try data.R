@@ -228,7 +228,57 @@ trait42_test_messy<-trait42%>%
 
 trait42_clean<-rbind(trait42_fern, trait42_forb, trait42_gram, trait42_vine, trait42_woody, trait42_probelm3, trait42_probelm4)%>%
   mutate(CleanTraitName="Life_form", CleanTraitUnit=NA)
-  
+
+##c3/c4 photosynthesis
+
+trait22<-dat3%>%
+  filter(TraitID==22)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="3"|OrigValueStr=="c3"|OrigValueStr=="C3", "C3",
+                         ifelse(OrigValueStr=="C4", "C4",
+                         ifelse(OrigValueStr=="CAM", "CAM", NA))))%>%
+  filter(!is.na(CleanTraitValue))
+
+table(trait22$OrigValueStr)  
+
+trait22_clean<-trait22%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(C3)&is.na(C4), "CAM", ifelse(is.na(CAM)&is.na(C3), "C4", ifelse(is.na(C4)&is.na(CAM), "C3", NA))))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="Photo_pathway", CleanTraitUnit=NA)
+
+##mycorrhizal traits
+trait_1433_1030_clean<-dat3%>%
+  filter(TraitID==1433|TraitID==1030)%>%
+  group_by(species_matched)%>%
+  summarise(CleanTriatValue=mean(StdValue))%>%
+  mutate(CleanTriatName="Mycorrhizal_percent_colonization", CleanTraitUnit="%")
+
+#all these species are in trait7
+# trait_1433_1030_sp<-trait_1433_1030%>%
+#   filter(CleanTriatValue!=0)%>%
+#   select(species_matched)
+
+trait7<-dat3%>%
+  filter(TraitID==7)%>%
+  mutate(CleanTraitValue=ifelse(OriglName=="Stable_AM_loss_likelihood"|OriglName=="AM_Stable_likelihood"|OriglName=="AM_retained_likelihood"|OriglName=="Labile_likelihood"|OriglName=="AM_lost_likelihood"|OrigValueStr=="non-ectomycorrhizal"|OrigValueStr=="?va", NA, 
+        ifelse(OrigValueStr=="absent"|OrigValueStr=="0"|OrigValueStr=="Absent"|OrigValueStr=="Non"|OrigValueStr=="no"|OrigValueStr=="No"|OrigValueStr=="Non Mycorr"|OrigValueStr=="N", "Non Mycorr", "Mycorr")))%>%
+  filter(!is.na(CleanTraitValue))
+                        
+table(trait7$CleanTraitValue)
+
+trait7_clean<-trait7%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Mycorr=="Mycorr", "Mycorr", NA))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="Mycorrhizal", CleanTraitUnit=NA)
+
+
 
 ##leaf area - merging different traits that all correspond to leaf area
 #do everything with the StdValue, which is converted to mm2
@@ -565,4 +615,4 @@ trait1188_clean <- dat3%>%
 
     
 #combining traits
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait42_clean)
+traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait42_clean, trait22_clean, trait_1433_1030_clean, trait7_clean)
