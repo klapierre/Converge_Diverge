@@ -7,6 +7,9 @@ setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 
 #kim's desktop
 setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
+#kim's laptop
+setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
+
 dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
 
 #removing trait outliers
@@ -100,9 +103,11 @@ trait42_test_messy<-trait42%>%
   select(OriglName, OrigValueStr, species_matched, CleanTraitValue)%>%
   unique()
 
+
 ##leaf area - merging different traits that all correspond to leaf area
 #do everything with the StdValue, which is converted to mm2
 #DECISION: combine all leaf area data into one clean variable (see below); some of the regressions are very poor, however most are good (>0.7)
+#NOTE: this needs some fixing (see pipeline document for information)
 
 #filter outliers
 traitLeafAreaGenus <- dat3%>%
@@ -361,9 +366,7 @@ traitStandardContinuous_clean <- dat3%>%
 # #some traits have very skewed distributions, but looking at the data they seem ok (leaf_C:N, leaf_dry_mass, root_dry_mass, seed_dry_mass, seed_number, seedbank_density, seedbank_duration)
 
 
-##clean up categorical traits that need little cleaning
-
-#heterotrophy
+##heterotrophy
 trait201_clean <- dat3%>%
   filter(TraitID==201)%>%
   mutate(CleanTraitValue=ifelse(OrigValueStr=='always carnivorous', 'carnivorous', ifelse(OrigValueStr %in% c('always hemiparasitic', 'hemi-parasitic'), 'hemiparasitic', ifelse(OrigValueStr=='mycotrophic', 'mycotrophic', 'autotrophic'))))%>%
@@ -373,12 +376,13 @@ trait201_clean <- dat3%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
   unique()
 
-#chemical plant defense
+##chemical plant defense
 trait346_clean <- dat3%>%
   filter(TraitID==346)%>%
   filter(!is.na(OrigValueStr))%>%
   unique()
   
+##role of the clonal organ in growth (these are all from one study and categories are not mutually exclusive)
 trait357_clean <- dat3%>%
   filter(TraitID==357)%>%
   filter(OrigValueStr!='')%>%
@@ -391,6 +395,7 @@ trait357_clean <- dat3%>%
   mutate(CleanTraitValue=ifelse(CleanTraitValue2 %in% c('NA,additive,NA,NA', 'NA,additive,NA,none'), 'additive', ifelse(CleanTraitValue2 %in% c('NA,additive,regenerative,NA', 'NA,additive,regenerative,none'), 'additive,regenerative', ifelse(CleanTraitValue2=='NA,NA,NA,none', 'none', ifelse(CleanTraitValue2 %in% c('NA,NA,regenerative,NA', 'NA,NA,regenerative,none'), 'regenerative', ifelse(CleanTraitValue2 %in% c('necessary,additive,NA,NA', 'necessary,additive,NA,none'), 'necessary,additive', ifelse(CleanTraitValue2 %in% c('necessary,additive,regenerative,NA', 'necessary,additive,regenerative,none'), 'necessary,additive,regenerative', ifelse(CleanTraitValue2 %in% c('necessary,NA,NA,NA', 'necessary,NA,NA,none'), 'necessary', 'necessary,regenerative'))))))))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
+##flowering requirement
 trait597_clean <- dat3%>%
   filter(TraitID==597)%>%
   filter(!is.na(OrigValueStr))%>%
@@ -402,6 +407,7 @@ trait597_clean <- dat3%>%
   mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High')))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
+##vegetative spread rate
 trait613_clean <- dat3%>%
   filter(TraitID==613)%>%
   filter(!is.na(OrigValueStr))%>%
@@ -413,13 +419,15 @@ trait613_clean <- dat3%>%
   mutate(CleanTraitValue=ifelse(is.na(Rapid)&is.na(Moderate)&is.na(Slow), 'None', ifelse(is.na(Rapid)&is.na(Moderate), 'Slow', ifelse(is.na(Rapid), 'Moderate', 'Rapid'))))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
+##stem longevity
 trait1187_clean <- dat3%>%
   filter(TraitID==1187)%>%
   rename(CleanTraitValue=OrigValueStr)%>%
   mutate(CleanTraitName='stem_longevity', CleanTraitUnit='year')%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
   unique()
-    
+
+##stem support
 trait1188_clean <- dat3%>%
   filter(TraitID==1188)%>%
   mutate(CleanTraitValue=ifelse(OrigValueStr=='self', 'self-supporting', OrigValueStr))%>%
@@ -433,6 +441,108 @@ trait1188_clean <- dat3%>%
   mutate(CleanTraitValue=ifelse(CleanTraitValue2 %in% c('creeping,fix,fix,fix,fix,fix,fix','creeping,decumbent,fix,fix,fix,fix,fix'), 'creeping', ifelse(CleanTraitValue2 %in% c('fix,decumbent,fix,fix,fix,fix,fix', 'fix,decumbent,fix,scrambling,fix,fix,fix'), 'decumbent', ifelse(CleanTraitValue2 %in% c('fix,decumbent,procumbent,fix,fix,fix,fix', 'fix,fix,procumbent,fix,fix,fix,fix'), 'procumbent', ifelse(CleanTraitValue2=='fix,fix,fix,fix,fix,fix,twining', 'twining', ifelse(CleanTraitValue2=='fix,fix,fix,fix,fix,tendrils,fix', 'tendrils', ifelse(CleanTraitValue2=='fix,fix,fix,scrambling,fix,fix,fix', 'scrambling', 'self-supporting')))))))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
+
+###NEED CHECKING!
+
+#N-fixation capability  --  needs fixing
+trait8_clean <- dat3%>%
+  filter(TraitID==8)%>%
+  mutate(CleanTraitName='N_fixation', CleanTraitUnit=NA)%>%
+  mutate(remove=ifelse(DatasetID==444&OriglName=='Nitrogen fixation capacity', 1, ifelse(DatasetID==444&OriglName=='NFC', 1, 0)))%>% #for these categories, this study lists everything as a yes, which is not true. other categories in this study are more informative
+  filter(!is.na(OrigValueStr), remove==0)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr %in% c('0', 'n', 'N', 'no', 'No', 'NO-N-fixer', 'not N2 fixing', 'no, not an N fixer', 'low'), 'no', ifelse(DatasetID==73&OrigValueStr==1, 'no', 'yes')))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
+  group_by(species_matched, CleanTraitValue)%>%
+  summarise(count=length(CleanTraitName))%>%
+  spread(key=CleanTraitValue, value=count, fill=0)%>%
+  mutate(CleanTraitValue=ifelse(no>yes, 'no', 'yes'), check=ifelse(no>0&yes>0, 'check', '0'))
+
+
+##leaf palatability  --  needs fixing
+trait152_clean <- dat3%>%
+  filter(TraitID==152)%>%
+  mutate(CleanTraitName='leaf_palatability', CleanTraitUnit=NA)%>% #figure out what categories mean
+  rename(CleanTraitValue=OrigValueStr)%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+#palatability  --  needs fixing
+trait679 <- dat3%>% #actually 5 traits: bloat, toxicity, palatable to graze animals, palatable to browse animals, palatable to humans (then one more study with just "palatable", which I'm adding to the toxicity category)
+  ###NOTE: need to figure out what this study did and which category it should actually go into
+  filter(TraitID==679)%>%
+  filter(!is.na(OrigValueStr))%>%
+  mutate(CleanTraitName=ifelse(OriglName=='Bloat', 'palatability_bloat', ifelse(OriglName=='Palatable Browse Animal', 'palatability_browse', ifelse(OriglName=='Palatable Graze Animal', 'palatability_graze', ifelse(OriglName=='Palatable Human', 'palatability_human', ifelse(OriglName=='PA, palatability', 'check', 'toxicity'))))), CleanTraitUnit=NA)%>% 
+  rename(CleanTraitValue=OrigValueStr)%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
+  unique()
+
+#need to take out each variable and then make sure the terms are all fine, then bind them all back together in the end
+trait679_bloat <- trait679_clean%>%
+  filter(CleanTraitName=='palatability_bloat')%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium)&is.na(Low), 'None', ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High'))))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait679_browse <- trait679_clean%>%
+  filter(CleanTraitName=='palatability_browse')%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High')))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait679_graze <- trait679_clean%>%
+  filter(CleanTraitName=='palatability_graze')%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High')))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait679_human <- trait679_clean%>%
+  filter(CleanTraitName=='palatability_human')%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(No), 'Yes', 'No'))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait679_toxicity <- trait679_clean%>%
+  filter(CleanTraitName=='toxicity')%>%
+  mutate(CleanTraitValue2=ifelse(CleanTraitValue %in% c('high', 'Severe'), 'High', ifelse(CleanTraitValue %in% c('medium', 'Moderate'), 'Medium', ifelse(CleanTraitValue %in% c('low', 'Slight'), 'Low', 'None'))))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue2, CleanTraitUnit)%>%
+  unique()%>%
+  spread(CleanTraitValue2, CleanTraitValue2)%>%
+  mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium)&is.na(Low), 'None', ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High'))))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait679_clean <- rbind(trait679_bloat, trait679_browse, trait679_graze, trait679_human, trait679_toxicity)
+
+
+#physical defenses
+trait345 <- dat3%>% #all comes from one dataset; actually 3 different traits (defenses of stem, leaves, flower/fruit)
+  filter(TraitID==345)%>%
+  filter(!is.na(OrigValueStr))%>%
+  mutate(CleanTraitName=ifelse(OriglName=='Physical defences on flowers/fruits', 'defenses_fruit/flower', ifelse(OriglName=='Physical defences on leaves', 'defenses_leaves', 'defenses_stem')), CleanTraitUnit=NA)%>% 
+  mutate(CleanTraitValue=ifelse(OrigValueStr=='Scales', 'scales', ifelse(OrigValueStr %in% c('glandular hairs', 'hairy', 'dense hairs', 'soft hairs', 'stiff hairs'), 'hairs', ifelse(OrigValueStr=='stinging hairs', 'stinging', ifelse(OrigValueStr %in% c('spiny point', 'spines'), 'spines', ifelse(OrigValueStr=='thick cuticle', 'thick_cuticle', OrigValueStr))))))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)
+
+trait345_hair <- trait345%>%
+  #making two different traits: (1) hairs or glabrous and (2) other defenses
+  mutate(hair=paste(glabrous, subglabrous, hairs, sep=','), CleanTraitName=ifelse(CleanTraitName=='defenses_fruit/flower', 'hairs_fruit/flower', ifelse(CleanTraitName=='defenses_leaves', 'hairs_leaves', 'hairs_stem')))%>%
+  mutate(CleanTraitValue=ifelse(hair=='glabrous,NA,NA', 'glabrous', ifelse(hair=='NA,subglabrous,NA', 'subglabrous', 'hairs')))%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait345_other <- trait345%>%
+  #making two different traits: (1) hairs or glabrous and (2) other defenses
+  mutate(other=paste(scales, stinging, spines, thick_cuticle, glandular, prickles, thorns, viscid, sep=','))%>%
+  mutate(CleanTraitValue=ifelse(other=='NA,NA,NA,NA,glandular,NA,NA,NA', 'glandular', ifelse(other=='NA,NA,NA,NA,NA,NA,NA,viscid', 'viscid', ifelse(other=='NA,NA,NA,NA,NA,NA,thorns,NA', 'thorns', ifelse(other=='NA,NA,NA,NA,NA,prickles,NA,NA', 'prickles', ifelse(other=='NA,NA,NA,thick_cuticle,NA,NA,NA,NA', 'thick_cuticle', ifelse(other=='NA,NA,spines,NA,NA,NA,NA,NA', 'spines', ifelse(other=='NA,stinging,NA,NA,NA,NA,NA,NA', 'stinging', ifelse(other=='scales,NA,NA,NA,NA,NA,NA,NA', 'scales', 'drop')))))))))%>%
+  filter(CleanTraitValue!='drop')%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
+
+trait345_clean <- rbind(trait345_hair, trait345_other)
+  
+
+
+
+
+
+
     
 #combining traits
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean)
+traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean)
