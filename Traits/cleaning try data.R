@@ -620,65 +620,66 @@ trait1188_clean <- dat3%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
 
-###NEED CHECKING!
-
-#N-fixation capability  --  needs fixing
+#N-fixation capability
 trait8_clean <- dat3%>%
   filter(TraitID==8)%>%
-  mutate(CleanTraitName='N_fixation', CleanTraitUnit=NA)%>%
   mutate(remove=ifelse(DatasetID==444&OriglName=='Nitrogen fixation capacity', 1, ifelse(DatasetID==444&OriglName=='NFC', 1, 0)))%>% #for these categories, this study lists everything as a yes, which is not true. other categories in this study are more informative
   filter(!is.na(OrigValueStr), remove==0)%>%
   mutate(CleanTraitValue=ifelse(OrigValueStr %in% c('0', 'n', 'N', 'no', 'No', 'NO-N-fixer', 'not N2 fixing', 'no, not an N fixer', 'low'), 'no', ifelse(DatasetID==73&OrigValueStr==1, 'no', 'yes')))%>%
-  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
   group_by(species_matched, CleanTraitValue)%>%
-  summarise(count=length(CleanTraitName))%>%
+  summarise(count=length(CleanTraitValue))%>%
   spread(key=CleanTraitValue, value=count, fill=0)%>%
-  mutate(CleanTraitValue=ifelse(no>yes, 'no', 'yes'), check=ifelse(no>0&yes>0, 'check', '0'))
+  mutate(CleanTraitValue2=ifelse(no>yes, 'no', 'yes'), check=ifelse(no>0&yes>0, 'check', '0'))%>%
+  mutate(CleanTraitValue=ifelse(species_matched %in% c('Dryas integrifolia', 'Senna marilandica'), 'yes', CleanTraitValue2))%>%
+  mutate(CleanTraitName='N_fixation', CleanTraitUnit=NA)%>%
+  select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
 
-##leaf palatability  --  needs fixing
+##leaf palatability  --  figure out what categories mean
 trait152_clean <- dat3%>%
   filter(TraitID==152)%>%
-  mutate(CleanTraitName='leaf_palatability', CleanTraitUnit=NA)%>% #figure out what categories mean
+  mutate(CleanTraitName='leaf_palatability', CleanTraitUnit=NA)%>% 
   rename(CleanTraitValue=OrigValueStr)%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-#palatability  --  needs fixing
-trait679 <- dat3%>% #actually 5 traits: bloat, toxicity, palatable to graze animals, palatable to browse animals, palatable to humans (then one more study with just "palatable", which I'm adding to the toxicity category)
-  ###NOTE: need to figure out what this study did and which category it should actually go into
+
+#palatability
+trait679 <- dat3%>% #actually 5 traits: bloat, toxicity, palatable to graze animals, palatable to browse animals, palatable to humans (then one more study with just "palatable", which I'm adding to the graze animal category based on Leichman study)
   filter(TraitID==679)%>%
   filter(!is.na(OrigValueStr))%>%
-  mutate(CleanTraitName=ifelse(OriglName=='Bloat', 'palatability_bloat', ifelse(OriglName=='Palatable Browse Animal', 'palatability_browse', ifelse(OriglName=='Palatable Graze Animal', 'palatability_graze', ifelse(OriglName=='Palatable Human', 'palatability_human', ifelse(OriglName=='PA, palatability', 'check', 'toxicity'))))), CleanTraitUnit=NA)%>% 
+  mutate(CleanTraitName=ifelse(OriglName=='Bloat', 'palatability_bloat', ifelse(OriglName=='Palatable Browse Animal', 'palatability_browse', ifelse(OriglName %in% c('Palatable Graze Animal', 'PA, palatability'), 'palatability_graze', ifelse(OriglName=='Palatable Human', 'palatability_human', 'toxicity')))), CleanTraitUnit=NA)%>% 
   rename(CleanTraitValue=OrigValueStr)%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)%>%
   unique()
 
 #need to take out each variable and then make sure the terms are all fine, then bind them all back together in the end
-trait679_bloat <- trait679_clean%>%
+trait679_bloat <- trait679%>%
   filter(CleanTraitName=='palatability_bloat')%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
   mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium)&is.na(Low), 'None', ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High'))))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-trait679_browse <- trait679_clean%>%
+trait679_browse <- trait679%>%
   filter(CleanTraitName=='palatability_browse')%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
   mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High')))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-trait679_graze <- trait679_clean%>%
+trait679_graze <- trait679%>%
   filter(CleanTraitName=='palatability_graze')%>%
-  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue2=ifelse(CleanTraitValue %in% c('high', 'High'), 'High', ifelse(CleanTraitValue %in% c('Medium', 'moderate', 'variable (e.g. young plants palatable but adult plant not)'), 'Medium', 'Low')))%>%
+  select(-CleanTraitValue)%>%
+  spread(CleanTraitValue2, CleanTraitValue2)%>%
   mutate(CleanTraitValue=ifelse(is.na(High)&is.na(Medium), 'Low', ifelse(is.na(High), 'Medium', 'High')))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-trait679_human <- trait679_clean%>%
+trait679_human <- trait679%>%
   filter(CleanTraitName=='palatability_human')%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
   mutate(CleanTraitValue=ifelse(is.na(No), 'Yes', 'No'))%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-trait679_toxicity <- trait679_clean%>%
+trait679_toxicity <- trait679%>%
   filter(CleanTraitName=='toxicity')%>%
   mutate(CleanTraitValue2=ifelse(CleanTraitValue %in% c('high', 'Severe'), 'High', ifelse(CleanTraitValue %in% c('medium', 'Moderate'), 'Medium', ifelse(CleanTraitValue %in% c('low', 'Slight'), 'Low', 'None'))))%>%
   select(species_matched, CleanTraitName, CleanTraitValue2, CleanTraitUnit)%>%
