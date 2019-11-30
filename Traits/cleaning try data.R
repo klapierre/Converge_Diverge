@@ -3,7 +3,7 @@ library(data.table)
 
 #meghan's
 setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
-
+setwd("C://Users/megha/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
 #kim's desktop
 setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
@@ -11,6 +11,7 @@ setwd('C:\\Users\\komatsuk\\Dropbox (Smithsonian)\\working groups\\CoRRE\\conver
 setwd('C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\Traits\\Try Data Nov 2019')
 
 dat<-fread("7764.txt",sep = "\t",data.table = FALSE,stringsAsFactors = FALSE,strip.white = TRUE)
+
 
 #removing trait outliers
 dat2<-dat%>%
@@ -74,15 +75,18 @@ trait59_clean<-trait59%>%
 
 trait42<-dat3%>%
   filter(TraitID==42&OrigValueStr!=""&OrigValueStr!="?"&OriglName!="CONSENSUS")%>%
-  mutate(CleanTraitValue=ifelse(OriglName=="aquatic"|OriglName=="carnivory"|OriglName=="Crop"|OriglName=="Ecological type"|OriglName=="final growth form 4 categories"&OrigValueStr=="herb"|OrigValueStr=="amphibiousubmerged"|OrigValueStr=="angiosperm"|OrigValueStr=="annual"|OrigValueStr=="Annual"|OrigValueStr=="aquatic"|OrigValueStr=="Aquatic"|OrigValueStr=="aquatic fresh water"|OrigValueStr=="aquatic, fresh water, floating"|OrigValueStr=="Aquatic_Epiphyte_Shrub_Tree_Vine_Herb"|OrigValueStr=="Aquatic_Herb"|OrigValueStr=="Aquatic_Shrub_Herb"|OrigValueStr=="Aquatic_Tree_Herb"|OriglName=="GGF"&OrigValueStr=="H"|OriglName=="SGF"&OrigValueStr=="H"|OrigValueStr=="carnivore"|OrigValueStr=="CARNIVORE"|OrigValueStr=="carnivorous"|OrigValueStr=="chasmophyte"|OrigValueStr=="crop"|OrigValueStr=="crops"|OrigValueStr=="Colonizing"|OrigValueStr=="Columnar"|OrigValueStr=="Conical"|OrigValueStr=="Decumbent"|OrigValueStr=="Emergent attached to the substrate"|OrigValueStr=="Epiphyte"|OrigValueStr=="Erect"|OriglName=="shoot growth form"|OriglName=="Shape and Orientation"|OrigValueStr=="free"|OrigValueStr=="geophyte"|OrigValueStr=="gymnosperm"|OriglName=="parasite"|OriglName=="Parasitic"|OrigValueStr=="hydrohalophyte"|OrigValueStr=="Hydrophytes"|OrigValueStr=="Liana_Herb"|OrigValueStr=="HEMI-PARASITE"|OriglName=="Growth form"&OrigValueStr=="herb"|OriglName=="Growth Form (herb,shrub,tree,herbaceous vine,liana/woody vine)"&OrigValueStr=="herb"|OriglName=="Plant growth form"&OrigValueStr=="herb"|OriglName=="Plant growth form"&OrigValueStr=="herbaceous"|OriglName=="Plant growth form"&OrigValueStr=="herb/sub-shrub"|OriglName=="Plant growth form"&OrigValueStr=="herb/shrub"|OriglName=="GrowthForm"&OrigValueStr=="herb"|OriglName=="GROWTHFORM_STD"&OrigValueStr=="Herb"|OriglName=="GROWTHFORM_DIV"&OrigValueStr=="Herb"|OriglName=="GROWTHFORM_DIV"&OrigValueStr=="Shrub_Herb"|OriglName=="Life form"&OrigValueStr=="herbaceous"|OriglName=="Life form"&OrigValueStr=="Herbaceous perennial"|OrigValueStr=="herbaceous monocotyl"|OriglName=="plant growth form"&OrigValueStr=="herb"|OriglName=="GROWTHFORM_ORG"&OrigValueStr=="Herb"|OrigValueStr=="no"|OrigValueStr=="No"|OrigValueStr=="Nano-chamaephyte"|OrigValueStr=="non-woody"|OrigValueStr=="Nontree"|OrigValueStr=="Nonvascular"|OrigValueStr=="Parasite"|OrigValueStr=="Parasite_Herb"|OrigValueStr=="parasitic"|OrigValueStr=="perennial"|OrigValueStr=="Perennial"|OriglName=="Life form: geophyte"|OriglName=="Life form: epiphyte/parasite"|OriglName=="Plant form: Non-distinctive"|OriglName=="Plant form: prostrate"|OriglName=="Plant form: cushion"|OriglName=="Plant form: open"|OrigValueStr=="xerohalophyte"|OrigValueStr=="xerophyte"|OrigValueStr=="weed"|OrigValueStr=="weedy"|OrigValueStr=="Shrub_Vine_Herb"|OrigValueStr=="Tree_Vine_Shrub_Herb"|OrigValueStr=="Vine_Herb"|OrigValueStr=="Vine_Shrub_Tree_Herb"|OrigValueStr=="Vine_Shrub_Tree"|OrigValueStr=="Vine_Shrub_Herb"|OrigValueStr=="terrestrial"|OrigValueStr=="Terrestrial Herb"|OrigValueStr=="therophyte"|OrigValueStr=="Thicket Forming"|OrigValueStr=="moss"|OrigValueStr=="Multiple Stem"|OrigValueStr=="psammophile"|OrigValueStr=="pteridophyte"|OrigValueStr=="Single Crown"|OrigValueStr=="Single Stem"|OrigValueStr=="PS"|OrigValueStr=="rhiz"|OrigValueStr=="rhizomatous"|OrigValueStr=="Rhizomatous"|OrigValueStr=="SC"|OrigValueStr=="Scap"|OrigValueStr=="scrub"|OrigValueStr=="Rhiz"|OrigValueStr=="Herb/Aquatic"|OrigValueStr=="herb/non-woody"|OrigValueStr=="herb/palmoid/non-woody"|OrigValueStr=="Herb/Shrub"|OrigValueStr=="herb/shrub/climber/non-woody/woody"|OrigValueStr=="herb/shrub/non-woody/woody"|OrigValueStr=="herb/shrub/palmoid/non-woody/woody"|OrigValueStr=="Herb/Shrub/Subshrub"|OrigValueStr=="Herb/Shrub/Tree"|OrigValueStr=="Herb/Shrub/Vine"|OrigValueStr=="non-succulent", NA,
-    ifelse(OrigValueStr=="b H"|OrigValueStr=="a T"|OrigValueStr=="forb"|OrigValueStr=="herbaceous legume"|OrigValueStr=="annual forb"|OriglName=="GF"&OrigValueStr=="H"|OrigValueStr=="Forb"|OrigValueStr=="forb (herbaceous, with or without woody base)"|OrigValueStr=="h"|OrigValueStr=="D"|OrigValueStr=="HS"|OrigValueStr=="HSA"|OrigValueStr=="HSL"|OrigValueStr=="HSLT"|OrigValueStr=="HST"|OrigValueStr=="club moss"|OrigValueStr=="CLUBMOSS"|OrigValueStr=="Club moss"|OrigValueStr=="Epiphyte_Herb"|OrigValueStr=="Epiphyte_Liana_Tree_Shrub_Herb"|OrigValueStr=="Epiphyte_Tree_Vine_Shrub_Herb"|OrigValueStr=="Forb/herb"|OrigValueStr=="Forbs"|OrigValueStr=='Forb/herb, Subshrub'|OrigValueStr=="Forb/herb, Vine"|OrigValueStr=="Forb/herb, Shrub, Subshrub"|OrigValueStr=="Forb/herb, Shrub, Subshrub, Vine"|OrigValueStr=="H"|OrigValueStr=="herbs"|OrigValueStr=="perennial leguminous herb"|OriglName=="PlantGrowthFormConsolidated"&OrigValueStr=="herb"|OriglName=="PlantGrowthFormConsolidated"&OrigValueStr=="herb/shrub"|OriglName=="GrowthFormCleartext"&OrigValueStr=="herb"|OriglName=="GrowthformCleartext"&OrigValueStr=="herb"|OriglName=="Life form"&OrigValueStr=="herb"|OriglName=='Life Form'&OrigValueStr=="herb"|OrigValueStr=="herbaceous dicotyl"|OrigValueStr=="Herbaceous Dicot"|OriglName=="type"&OrigValueStr=="herb"|OriglName=="growth_form   TRY"&OrigValueStr=="herb"|OriglName=="Plant Growth Form"&OrigValueStr=="Herb"|OriglName=="Plant Growth Form"&OrigValueStr=="herbaceous"|OriglName=="Plant growth forb"&OrigValueStr=="Herbaceous"|OrigValueStr=="perennial forb"|OriglName=="Life form: forb"|OrigValueStr=="Tree_Vine_Aquatic_Shrub_Herb"|OrigValueStr=="Tree_Vine_Herb"|OrigValueStr=="variable forb"|OrigValueStr=="n hyd"|OrigValueStr=="n Hyd"|OrigValueStr=="m Hel"|OrigValueStr=="rept"|OrigValueStr=="Rept"|OrigValueStr=="herb/aquatic/non-woody"|OrigValueStr=="herb/hemiparasitic/non-woody", "Forb", 
+  mutate(CleanTraitValue=ifelse(OriglName=="aquatic"|OriglName=="carnivory"|OriglName=="Crop"|OriglName=="Ecological type"|OriglName=="final growth form 4 categories"&OrigValueStr=="herb"|OrigValueStr=="amphibiousubmerged"|OrigValueStr=="angiosperm"|OrigValueStr=="annual"|OrigValueStr=="Annual"|OrigValueStr=="aquatic"|OrigValueStr=="Aquatic"|OrigValueStr=="aquatic fresh water"|OrigValueStr=="aquatic, fresh water, floating"|OrigValueStr=="Aquatic_Epiphyte_Shrub_Tree_Vine_Herb"|OrigValueStr=="Aquatic_Herb"|OrigValueStr=="Aquatic_Shrub_Herb"|OrigValueStr=="Aquatic_Tree_Herb"|OriglName=="SGF"&OrigValueStr=="H"|OrigValueStr=="carnivore"|OrigValueStr=="CARNIVORE"|OrigValueStr=="carnivorous"|OrigValueStr=="chasmophyte"|OrigValueStr=="crop"|OrigValueStr=="crops"|OrigValueStr=="Colonizing"|OrigValueStr=="Columnar"|OrigValueStr=="Conical"|OrigValueStr=="Decumbent"|OrigValueStr=="Emergent attached to the substrate"|OrigValueStr=="Epiphyte"|OrigValueStr=="Erect"|OriglName=="shoot growth form"|OriglName=="Shape and Orientation"|OrigValueStr=="free"|OrigValueStr=="geophyte"|OrigValueStr=="gymnosperm"|OriglName=="parasite"|OriglName=="Parasitic"|OrigValueStr=="hydrohalophyte"|OrigValueStr=="Hydrophytes"|OrigValueStr=="Liana_Herb"|OrigValueStr=="HEMI-PARASITE"|OriglName=="Growth form"&OrigValueStr=="herb"|OriglName=="Growth Form (herb,shrub,tree,herbaceous vine,liana/woody vine)"&OrigValueStr=="herb"|OriglName=="Plant growth form"&OrigValueStr=="herb"|OriglName=="Plant growth form"&OrigValueStr=="herbaceous"|OriglName=="Plant growth form"&OrigValueStr=="herb/sub-shrub"|OriglName=="Plant growth form"&OrigValueStr=="herb/shrub"|OriglName=="GrowthForm"&OrigValueStr=="herb"|OriglName=="GROWTHFORM_STD"&OrigValueStr=="Herb"|OriglName=="GROWTHFORM_DIV"&OrigValueStr=="Herb"|OriglName=="GROWTHFORM_DIV"&OrigValueStr=="Shrub_Herb"|OriglName=="Life form"&OrigValueStr=="herbaceous"|OriglName=="Life form"&OrigValueStr=="Herbaceous perennial"|OrigValueStr=="herbaceous monocotyl"|OriglName=="plant growth form"&OrigValueStr=="herb"|OriglName=="GROWTHFORM_ORG"&OrigValueStr=="Herb"|OrigValueStr=="no"|OrigValueStr=="No"|OrigValueStr=="Nano-chamaephyte"|OrigValueStr=="non-woody"|OrigValueStr=="Nontree"|OrigValueStr=="Nonvascular"|OrigValueStr=="Parasite"|OrigValueStr=="Parasite_Herb"|OrigValueStr=="parasitic"|OrigValueStr=="perennial"|OrigValueStr=="Perennial"|OriglName=="Life form: geophyte"|OriglName=="Life form: epiphyte/parasite"|OriglName=="Plant form: Non-distinctive"|OriglName=="Plant form: prostrate"|OriglName=="Plant form: cushion"|OriglName=="Plant form: open"|OrigValueStr=="xerohalophyte"|OrigValueStr=="xerophyte"|OrigValueStr=="weed"|OrigValueStr=="weedy"|OrigValueStr=="Shrub_Vine_Herb"|OrigValueStr=="Tree_Vine_Shrub_Herb"|OrigValueStr=="Vine_Herb"|OrigValueStr=="Vine_Shrub_Tree_Herb"|OrigValueStr=="Vine_Shrub_Tree"|OrigValueStr=="Vine_Shrub_Herb"|OrigValueStr=="terrestrial"|OrigValueStr=="Terrestrial Herb"|OrigValueStr=="therophyte"|OrigValueStr=="Thicket Forming"|OrigValueStr=="moss"|OrigValueStr=="Multiple Stem"|OrigValueStr=="psammophile"|OrigValueStr=="pteridophyte"|OrigValueStr=="Single Crown"|OrigValueStr=="Single Stem"|OrigValueStr=="PS"|OrigValueStr=="rhiz"|OrigValueStr=="rhizomatous"|OrigValueStr=="Rhizomatous"|OrigValueStr=="SC"|OrigValueStr=="Scap"|OrigValueStr=="scrub"|OrigValueStr=="Rhiz"|OrigValueStr=="Herb/Aquatic"|OrigValueStr=="herb/non-woody"|OrigValueStr=="herb/palmoid/non-woody"|OrigValueStr=="Herb/Shrub"|OrigValueStr=="herb/shrub/climber/non-woody/woody"|OrigValueStr=="herb/shrub/non-woody/woody"|OrigValueStr=="herb/shrub/palmoid/non-woody/woody"|OrigValueStr=="Herb/Shrub/Subshrub"|OrigValueStr=="Herb/Shrub/Tree"|OrigValueStr=="Herb/Shrub/Vine"|OrigValueStr=="non-succulent"|DatasetID==79|DatasetID==412|DatasetID==380|OrigValueStr=="creeper"|DatasetID==57|DatasetID==92|DatasetID==50|DatasetID==322|DatasetID==436|DatasetID==422|DatasetID==218|DatasetID==37|DatasetID==236|DatasetID==443|OriglName=="Stem succulent"|DatasetID==200|DatasetID==339|DatasetID==1|DatasetID==460|DatasetID==110|DatasetID==251|DatasetID==4, NA,
+    ifelse(OrigValueStr=="b H"|OrigValueStr=="a T"|OrigValueStr=="forb"|OrigValueStr=="herbaceous legume"|OrigValueStr=="annual forb"|OriglName=="GF"&OrigValueStr=="H"|OrigValueStr=="Forb"|OrigValueStr=="forb (herbaceous, with or without woody base)"|OrigValueStr=="h"|OrigValueStr=="D"|OrigValueStr=="HS"|OrigValueStr=="HSA"|OrigValueStr=="HSL"|OrigValueStr=="HSLT"|OrigValueStr=="HST"|OrigValueStr=="Epiphyte_Herb"|OrigValueStr=="Epiphyte_Liana_Tree_Shrub_Herb"|OrigValueStr=="Epiphyte_Tree_Vine_Shrub_Herb"|OrigValueStr=="Forb/herb"|OrigValueStr=="Forbs"|OrigValueStr=='Forb/herb, Subshrub'|OrigValueStr=="Forb/herb, Vine"|OrigValueStr=="Forb/herb, Shrub, Subshrub"|OrigValueStr=="Forb/herb, Shrub, Subshrub, Vine"|OrigValueStr=="H"|OrigValueStr=="herbs"|OrigValueStr=="perennial leguminous herb"|OriglName=="GrowthFormCleartext"&OrigValueStr=="herb"|OriglName=="GrowthformCleartext"&OrigValueStr=="herb"|OriglName=="Life form"&OrigValueStr=="herb"|OriglName=='Life Form'&OrigValueStr=="herb"|OrigValueStr=="herbaceous dicotyl"|OrigValueStr=="Herbaceous Dicot"|OriglName=="type"&OrigValueStr=="herb"|OriglName=="growth_form   TRY"&OrigValueStr=="herb"|OriglName=="Plant Growth Form"&OrigValueStr=="Herb"|OriglName=="Plant Growth Form"&OrigValueStr=="herbaceous"|OriglName=="Plant growth forb"&OrigValueStr=="Herbaceous"|OrigValueStr=="perennial forb"|OriglName=="Life form: forb"|OrigValueStr=="Tree_Vine_Aquatic_Shrub_Herb"|OrigValueStr=="Tree_Vine_Herb"|OrigValueStr=="variable forb"|OrigValueStr=="n hyd"|OrigValueStr=="n Hyd"|OrigValueStr=="m Hel"|OrigValueStr=="rept"|OrigValueStr=="Rept"|OrigValueStr=="herb/aquatic/non-woody"|OrigValueStr=="herb/hemiparasitic/non-woody"|OriglName=="Succulence"|OriglName=="Succulence index"|OriglName=="Succulent"|OrigValueStr=="C"|OrigValueStr=="succulent"|OrigValueStr=="Succulent"|OrigValueStr=="succulent/non-woody"|OrigValueStr=="C"|OrigValueStr=="cactus"|OrigValueStr=="stem-succulent", "Forb", 
      ifelse(OrigValueStr=="Tree"|OrigValueStr=="tree"|OrigValueStr=="Absence"|OrigValueStr=="shrub"|OrigValueStr=="woody plant"|OrigValueStr=="f P"|OrigValueStr=="S"|OrigValueStr=="SH"|OrigValueStr=="ST"|OrigValueStr=="T"|OrigValueStr=="t"|OrigValueStr=="Woody"|OrigValueStr=="W"|OrigValueStr=="Shrub"|OrigValueStr=="subshrub (woody <1m)"|OrigValueStr=="sh"|OrigValueStr=="t"|OrigValueStr=="P"|OrigValueStr=="c C"|OrigValueStr=="Chaemaephyte"|OrigValueStr=="conifer"|OrigValueStr=="Conifers"|OrigValueStr=="d z"|OrigValueStr=="d Z"|OrigValueStr=="Deciduous shrub or tree"|OrigValueStr=="Dwarf shrub"|OrigValueStr=="e N"|OrigValueStr=="Epiphyte_Shrub_Herb"|OrigValueStr=="Epiphyte_Vine_Tree_Shrub_Herb"|OrigValueStr=="erect dwarf shrub"|OrigValueStr=="evergreen shrub or tree"|OrigValueStr=="large shrub"|OrigValueStr=="low to high shrub"|OrigValueStr=="palmoid"|OrigValueStr=="prostrate dwarf shrub"|OriglName=="Life form: erect dwarf shrub"|OriglName=="Life form: prostrate dwarf shrub"|OriglName=="Life form: shrub"|OriglName=="Life form: tree"|OrigValueStr=="Woody Liana"|OrigValueStr=="Woody"|OrigValueStr=="Woody evergreen"|OrigValueStr=="Woody deciduous"|OrigValueStr=="woody at base"|OrigValueStr=="woody"|OrigValueStr=="TREE"|OrigValueStr=="Tree (deciduous)"|OrigValueStr=="Tree (evergreen)"|OrigValueStr=="tree / shrub"|OrigValueStr=="Tree shrub intermediate"|OrigValueStr=="Tree, Shrub"|OrigValueStr=="Tree, Subshrub, Shrub"|OrigValueStr=="tree/palmoid/woody"|OrigValueStr=="Tree/Treelet"|OrigValueStr=="tree/woody"|OrigValueStr=="Tree_Shrub"|OrigValueStr=="trees"|OrigValueStr=="trees/tree"|OrigValueStr=="trees/tree"|OrigValueStr=="Shrub, Subshrub"|OrigValueStr=="Shrub, Subshrub, Tree"|OrigValueStr=="Shrub, Tree"|OrigValueStr=="Shrub,Subshrub"|OrigValueStr=="shrub/palmoid/woody"|OrigValueStr=="Shrub/Subshrub"|OrigValueStr=="shrub/tree"|OrigValueStr=="Shrub/Tree"|OrigValueStr=="Shrub/Tree intermediate"|OrigValueStr=="shrub/tree/palmoid/woody"|OrigValueStr=="Shrub/Tree/Subshrub"|OrigValueStr=="	Shrub/Tree/Treelet"|OrigValueStr=="shrub/tree/woody"|OrigValueStr=="shrub/woody"|OrigValueStr=="Shrub_Tree"|OrigValueStr=="shrub|tree"|OrigValueStr=="shrubs"|OrigValueStr=="small tree"|OrigValueStr=="Small_Tree"|OrigValueStr=="sub-shrub"|OrigValueStr=="Sub-Shrub (Chamaephyte)"|OrigValueStr=="subshrub"|OrigValueStr=="Subshrub"|OrigValueStr=="Subshrub, Shrub"|OrigValueStr=="Subshrub, Shrub, Tree", "Woody", 
-     ifelse(OriglName=="Succulence"|OriglName=="Succulence index"|OriglName=="Succulent"|OrigValueStr=="C"|OrigValueStr=="succulent"|OrigValueStr=="Succulent"|OrigValueStr=="succulent/non-woody"|OrigValueStr=="C"|OrigValueStr=="cactus"|OriglName=="Stem succulent"|OriglName=="Leaf succulence"|OrigValueStr=="stem-succulent", "Succulent", 
      ifelse(OrigValueStr=="grass"|OrigValueStr=="sedge"|OrigValueStr=="G"|OrigValueStr=="annual grass"|OrigValueStr=="Bunch"|OrigValueStr=="grass (Poaceae only)"|OrigValueStr=="g"|OrigValueStr=="se"|OrigValueStr=="rus"|OrigValueStr=="C3 grass"|OrigValueStr=="C4 grass"|OrigValueStr=="Caesp"|OrigValueStr=="caesp"|OrigValueStr=="cereal"|OrigValueStr=="forage grass"|OrigValueStr=="graminoid"|OrigValueStr=="GRAMINOID"|OrigValueStr=="graminoid/aquatic"|OrigValueStr=="graminoid/aquatic/non-woody"|OrigValueStr=="graminoid/non-woody"|OrigValueStr=="Graminoids"|OrigValueStr=="Graminoids Tussock"|OrigValueStr=="Graminoid"|OrigValueStr=="Grass"|OrigValueStr=="grass (clonal)"|OrigValueStr=="grasslike"|OrigValueStr=="Herbaceous Monocot"|OrigValueStr=="pasture grass"|OrigValueStr=="perennial graminoid"|OrigValueStr=="perennial grass"|OrigValueStr=="Perennial grass"|OrigValueStr=="prairie grass"|OriglName=="Life form: graminoid"|OriglName=="Low Growing Grass"|OrigValueStr=="Sedge"|OrigValueStr=="SEDGE","Graminoid",
      ifelse(OriglName=="climber"|OriglName=="ClimbingMode"|OrigValueStr=="climber"|OrigValueStr=="Vine"|OrigValueStr=="V"|OrigValueStr=="twiner/climber."|OrigValueStr=="L"|OrigValueStr=="C+Sc"|OrigValueStr=="climber"|OrigValueStr=="climber or creeper"|OrigValueStr=="climber/non-woody"|OrigValueStr=="climber/parasitic"|OrigValueStr=="climber/vine"|OrigValueStr=="climber/woody"|OrigValueStr=="Climbing"|OrigValueStr=="Climber"|OrigValueStr=="Lianas and climbers"|OrigValueStr=="g L"|OrigValueStr=="liana"|OrigValueStr=="Liana"|OrigValueStr=="lianas"|OrigValueStr=="Lianas (wody climbers)"|OrigValueStr=="lianas/Woody Liana"|OrigValueStr=="Lianna"|OrigValueStr=="Liana_Shrub"|OrigValueStr=="Liana_Vine"|OrigValueStr=="Liana_Vine_Herb"|OrigValueStr=="vine"|OriglName=="Life form: climber"|OriglName=="Life form: liana"|OriglName=="Plant form: climbing"|OrigValueStr=="Vines (non-woody climbers)"|OrigValueStr=="Herb_Liana_Vine"|OrigValueStr=="Shrub_Liana_Vine"|OrigValueStr=="Shrub_Vine"|OrigValueStr=="Tree_Shrub_Liana_Herb_Vine"|OrigValueStr=="Vine"|OrigValueStr=="herb/climber/non-woody"|OrigValueStr=="herb/climber/parasitic/non-woody"|OrigValueStr=="herb/climber/woody"|OrigValueStr=="Herb/Liana", "Vine",
-     ifelse(OrigValueStr=="F"|OrigValueStr=="fern"|OrigValueStr=="Fern"|OrigValueStr=="FERN"|OrigValueStr=="FERN ALLY"|OrigValueStr=="Fern or fern ally"|OrigValueStr=="fern/non-woody"|OrigValueStr=="FERNALLY"|OrigValueStr=="Ferns"|OrigValueStr=="Ferns and allies (Lycophytes)"|OrigValueStr=="M"|OriglName=="Life form: fern/fern ally", "Fern",
-            NA))))))))%>%
+     ifelse(OrigValueStr=="F"|OrigValueStr=="fern"|OrigValueStr=="Fern"|OrigValueStr=="FERN"|OrigValueStr=="FERN ALLY"|OrigValueStr=="Fern or fern ally"|OrigValueStr=="fern/non-woody"|OrigValueStr=="FERNALLY"|OrigValueStr=="Ferns"|OrigValueStr=="Ferns and allies (Lycophytes)"|OrigValueStr=="M"|OriglName=="Life form: fern/fern ally"|OrigValueStr=="club moss"|OrigValueStr=="CLUBMOSS"|OrigValueStr=="Club moss", "Fern",
+            NA)))))))%>%
   filter(!is.na(CleanTraitValue))
+
+#can't get these to drop correctly.
+#|OriglName=="PlantGrowthFormConsolidated"&OrigValueStr=="shrub/herb"
+
 
 table(trait42$CleanTraitValue)
 
@@ -90,18 +94,192 @@ trait42_test<-trait42%>%
   select(CleanTraitValue)%>%
   unique()
 
-trait42_clean<-trait42%>%
+trait42_fern<-trait42%>%
   select(species_matched, CleanTraitValue)%>%
   unique()%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
-  mutate(CleanTraitValue=ifelse(Fern=="Fern", "Fern", ifelse(Forb=="Forb"&is.na(Graminoid)&is.na(Succulent)&is.na(Vine)&is.na(Woody), 'Forb', 999)))
+  mutate(CleanTraitValue=ifelse(Fern=="Fern", "Fern", 999))%>%
+  filter(CleanTraitValue!=999)%>%
+  select(species_matched, CleanTraitValue)
 
-ifelse(Graminoid=="Graminoid"&is.na(Forb)&is.na(Succulent)&is.na(Woody)&is.na(Vine),"Graminiod", ifelse(Woody=="Woody"&is.na(Forb)&is.na(Vine)&is.na(Graminoid)&is.na(Succulent),"Woody", ifelse(Vine=="Vine"&is.na(Forb)&is.na(Graminoid)&is.na(Woody)&is.na(Succulent),"Vine", ifelse(Succulent=="Succulent"&is.na(Forb)&is.na(Graminoid)&is.na(Vine)&is.na(Woody),"Succulent", "Help")))))))
+trait42_forb<-trait42%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Forb=="Forb"&is.na(Graminoid)&is.na(Fern)&is.na(Woody)&is.na(Vine), "Forb", 999))%>%
+  filter(CleanTraitValue!=999)%>%
+  select(species_matched, CleanTraitValue)
 
+trait42_gram<-trait42%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Graminoid=="Graminoid"&is.na(Forb)&is.na(Woody)&is.na(Vine)&is.na(Fern),"Graminiod", 999))%>%
+  filter(CleanTraitValue!=999)%>%
+  select(species_matched, CleanTraitValue)
+
+trait42_vine<-trait42%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Vine=="Vine"&is.na(Forb)&is.na(Woody)&is.na(Graminoid)&is.na(Fern),"Vine", 999))%>%
+  filter(CleanTraitValue!=999)%>%
+  select(species_matched, CleanTraitValue)
+
+trait42_woody<-trait42%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Woody=="Woody"&is.na(Forb)&is.na(Vine)&is.na(Graminoid)&is.na(Fern),"Woody", 999))%>%
+  filter(CleanTraitValue!=999)%>%
+  select(species_matched, CleanTraitValue)
+
+trait42_problem<-trait42%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  group_by(species_matched)%>%
+  summarise(n=length(CleanTraitValue))%>%
+  filter(n!=1)%>%
+  select(-n)
+
+trait42_probelm3<-trait42_problem[c(1:40),]%>%
+  mutate(CleanTraitValue=ifelse(species_matched=="Amorpha canescens", "Woody",
+                          ifelse(species_matched=="Artemisia annua", "Forb",
+                          ifelse(species_matched=="Artemisia frigida", "Forb",
+                          ifelse(species_matched=="Artemisia gmelinii", "Forb",
+                          ifelse(species_matched=="Asparagus officinalis", "Forb",
+                          ifelse(species_matched=="Atriplex canescens", "Woody",
+                          ifelse(species_matched=="Atriplex patula", "Forb",
+                          ifelse(species_matched=="Chenopodium glaucum", "Forb",
+                          ifelse(species_matched=="Chrysocephalum apiculatum", "Forb",
+                          ifelse(species_matched=="Comandra umbellata", "Forb",
+                          ifelse(species_matched=="Convolvulus arvensis", "Vine",
+                          ifelse(species_matched=="Convolvulus erubescens", "Vine",
+                          ifelse(species_matched=="Coreopsis lanceolata", "Forb",
+                          ifelse(species_matched=="Crataegus monogyna", "Woody",
+                          ifelse(species_matched=="Cuscuta glomerata", "Vine",
+                          ifelse(species_matched=="Cyrilla racemiflora","Woody",
+                          ifelse(species_matched=="Dalea purpurea", "Forb",
+                          ifelse(species_matched=="Dryas integrifolia", "Woody",
+                          ifelse(species_matched=="Dryas octopetala", "Woody",
+                          ifelse(species_matched=="Dryopteris carthusiana", "Fern",
+                          ifelse(species_matched=="Elymus repens", "Graminiod",
+                          ifelse(species_matched=="Equisetum arvense", "Fern",
+                          ifelse(species_matched=="Erigeron canadensis", "Forb",
+                          ifelse(species_matched=="Euphorbia corollata", "Forb",
+                          ifelse(species_matched=="Euphorbia dentata", "Forb",
+                          ifelse(species_matched=="Fallopia convolvulus", "Vine",
+                          ifelse(species_matched=="Fallopia scandens", "Vine",
+                          ifelse(species_matched=="Galium aparine", "Forb",
+                          ifelse(species_matched=="Galium verum", "Forb",
+                          ifelse(species_matched=="Gutierrezia sarothrae", "Woody",
+                          ifelse(species_matched=="Harrimanella hypnoides", "Forb",
+                          ifelse(species_matched=="Helianthemum nummularium", "Woody",
+                          ifelse(species_matched=="Hypochaeris radicata", "Forb",
+                          ifelse(species_matched=="Krascheninnikovia ceratoides", "Woody",
+                          ifelse(species_matched=="Lathyrus pratensis", "Forb",
+                          ifelse(species_matched=="Lespedeza capitata", "Forb",
+                          ifelse(species_matched=="Lespedeza juncea", "Woody",
+                          ifelse(species_matched=="Linnaea borealis","Woody",
+                          ifelse(species_matched=="Lonicera japonica", "Vine",
+                          ifelse(species_matched=="Lonicera periclymenum", "Vine", 999)))))))))))))))))))))))))))))))))))))))))
+
+trait42_probelm4<-trait42_problem[c(41:72),]%>%
+  mutate(CleanTraitValue=ifelse(species_matched=="Mollugo verticillata", "Vine",
+                          ifelse(species_matched=="Moneses uniflora", "Woody",
+                          ifelse(species_matched=="Oenothera biennis", "Forb",
+                          ifelse(species_matched=="Orthilia secunda", "Woody",
+                          ifelse(species_matched=="Parthenocissus inserta", "Vine",
+                          ifelse(species_matched=="Parthenocissus quinquefolia", "Vine",
+                          ifelse(species_matched=="Phryma leptostachya", "Forb",
+                          ifelse(species_matched=="Phytolacca americana", "Forb",
+                          ifelse(species_matched=="Pimelea trichostachya", "Woody",
+                          ifelse(species_matched=="Plantago coronopus", "Forb",
+                          ifelse(species_matched=="Portulaca oleracea", "Forb",
+                          ifelse(species_matched=="Pyrola elliptica", "Forb",
+                          ifelse(species_matched=="Rosa multiflora", "Woody",
+                          ifelse(species_matched=="Rubus idaeus", "Woody",
+                          ifelse(species_matched=="Rubus vestitus", "Woody",
+                          ifelse(species_matched=="Salix repens", "Woody",
+                          ifelse(species_matched=="Salsola kali", 'Woody',
+                          ifelse(species_matched=="Solanum americanum", "Forb",
+                          ifelse(species_matched=="Solanum dulcamara", "Vine",
+                          ifelse(species_matched=="Stellaria media", "Forb",
+                          ifelse(species_matched=="Talinum polygaloides", "Forb",
+                          ifelse(species_matched=="Thymus praecox", "Woody",
+                          ifelse(species_matched=="Tofieldia pusilla", "Forb",
+                          ifelse(species_matched=="Toxicodendron diversilobum", "Vine",
+                          ifelse(species_matched=="Tribulus terrestris","Forb",
+                          ifelse(species_matched=="Typha angustifolia", "Forb",
+                          ifelse(species_matched=="Typha latifolia", "Forb",
+                          ifelse(species_matched=="Vicia americana", "Vine",
+                          ifelse(species_matched=="Vicia cracca", "Vine",
+                          ifelse(species_matched=="Vicia tetrasperma", "Vine",
+                          ifelse(species_matched=="Vicia villosa", "Vine", NA))))))))))))))))))))))))))))))))
+              
+trait42_probelm2<-trait42%>%
+  right_join(trait42_problem)%>%
+  select(species_matched, CleanTraitValue, DatasetID)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)
+
+  
 trait42_test_messy<-trait42%>%
   filter(TraitID==42&OrigValueStr!=""&OrigValueStr!="?"&OriglName!="CONSENSUS")%>%
   select(OriglName, OrigValueStr, species_matched, CleanTraitValue)%>%
   unique()
+
+trait42_clean<-rbind(trait42_fern, trait42_forb, trait42_gram, trait42_vine, trait42_woody, trait42_probelm3, trait42_probelm4)%>%
+  mutate(CleanTraitName="Life_form", CleanTraitUnit=NA)
+
+##c3/c4 photosynthesis
+
+trait22<-dat3%>%
+  filter(TraitID==22)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="3"|OrigValueStr=="c3"|OrigValueStr=="C3", "C3",
+                         ifelse(OrigValueStr=="C4", "C4",
+                         ifelse(OrigValueStr=="CAM", "CAM", NA))))%>%
+  filter(!is.na(CleanTraitValue))
+
+table(trait22$OrigValueStr)  
+
+trait22_clean<-trait22%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(is.na(C3)&is.na(C4), "CAM", ifelse(is.na(CAM)&is.na(C3), "C4", ifelse(is.na(C4)&is.na(CAM), "C3", NA))))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="Photo_pathway", CleanTraitUnit=NA)
+
+##mycorrhizal traits
+trait_1433_1030_clean<-dat3%>%
+  filter(TraitID==1433|TraitID==1030)%>%
+  group_by(species_matched)%>%
+  summarise(CleanTriatValue=mean(StdValue))%>%
+  mutate(CleanTriatName="Mycorrhizal_percent_colonization", CleanTraitUnit="%")
+
+#all these species are in trait7
+# trait_1433_1030_sp<-trait_1433_1030%>%
+#   filter(CleanTriatValue!=0)%>%
+#   select(species_matched)
+
+trait7<-dat3%>%
+  filter(TraitID==7)%>%
+  mutate(CleanTraitValue=ifelse(OriglName=="Stable_AM_loss_likelihood"|OriglName=="AM_Stable_likelihood"|OriglName=="AM_retained_likelihood"|OriglName=="Labile_likelihood"|OriglName=="AM_lost_likelihood"|OrigValueStr=="non-ectomycorrhizal"|OrigValueStr=="?va", NA, 
+        ifelse(OrigValueStr=="absent"|OrigValueStr=="0"|OrigValueStr=="Absent"|OrigValueStr=="Non"|OrigValueStr=="no"|OrigValueStr=="No"|OrigValueStr=="Non Mycorr"|OrigValueStr=="N", "Non Mycorr", "Mycorr")))%>%
+  filter(!is.na(CleanTraitValue))
+                        
+table(trait7$CleanTraitValue)
+
+trait7_clean<-trait7%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Mycorr=="Mycorr", "Mycorr", NA))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="Mycorrhizal", CleanTraitUnit=NA)
 
 
 ##leaf area - merging different traits that all correspond to leaf area
@@ -545,4 +723,5 @@ trait345_clean <- rbind(trait345_hair, trait345_other)
 
     
 #combining traits
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean)
+
+traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean, trait42_clean, trait22_clean, trait_1433_1030_clean, trait7_clean)
