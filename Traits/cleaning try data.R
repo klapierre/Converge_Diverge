@@ -289,7 +289,6 @@ trait7_clean<-trait7%>%
 # 
 # table(trait197$OrigValueStr)
 
-
 ##leaf area - merging different traits that all correspond to leaf area
 #do everything with the StdValue, which is converted to mm2
 #DECISION: combine all leaf area data into one clean variable (see below); some of the regressions are very poor, however most are good (>0.7)
@@ -723,14 +722,71 @@ trait345_other <- trait345%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
 trait345_clean <- rbind(trait345_hair, trait345_other)
-  
+
+#clonal growth
+#341 has to be clonal is it it how it is clonal
+trait341<-dat3%>%
+  filter(TraitID==341)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="no", "NotClonal", "Clonal"))%>%
+  select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait341$OrigValueStr)
+
+#329 is very similar to 341, but the low categories too
+trait329<-dat3%>%
+  filter(TraitID==329)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="Absence", "NotClonal",
+                                       ifelse(OrigValueStr=="Little or no vegetative spread", "LowClonality", "Clonal")))%>%
+  select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait329$CleanTraitValue)
+
+#344 is very similar to 329/341, but the low categories too
+trait344<-dat3%>%
+  filter(TraitID==344)%>%
+  mutate(CleanTraitValue=ifelse(DatasetID==92|OrigValueStr=="no particuliar mating system", NA,
+                         ifelse(OrigValueStr=="none"|OrigValueStr=="NotClonal", "NotClonal",
+                         ifelse(OrigValueStr=="Little or no vegetative spread", "LowClonality", "Clonal"))))%>%
+select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait344$OriglName)
 
 
+allclonal<-trait341%>%
+  full_join(trait329)%>%
+  full_join(trait344)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)
 
+#609 is what I want, how can they reproduce, use 344/341/329 to check i have all clonals
+trait609<-dat3%>%
+  filter(TraitID==609)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="No"|OrigValueStr=="Yes", NA, ifelse(OrigValueStr=="seed and vegetative", "seed&vegetative", OrigValueStr)))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  filter(species_matched!="Persicaria amphibia"&species_matched!="Dryas octopetala")
+
+table(trait609$CleanTraitValue)
+table(trait609$OriglName)
+
+species_matched<-c("Persicaria amphibia","Dryas octopetala")
+CleanTraitValue<-c("seed&vegetative", "seed&vegetative")
+fix<-data.frame(species_matched, CleanTraitValue)
+
+trait609_clean<-trait609%>%
+  bind_rows(fix)%>%
+  mutate(CleanTraitName="Reproduction_SeedVeg", CleanTraitUnit=NA)
 
 
 
     
 #combining traits
 
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean, trait42_clean, trait22_clean, trait_1433_1030_clean, trait7_clean)
+traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean, trait42_clean, trait22_clean, trait_1433_1030_clean, trait7_clean,trait609_clean)
