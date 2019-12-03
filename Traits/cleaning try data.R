@@ -281,15 +281,14 @@ trait7_clean<-trait7%>%
   select(species_matched, CleanTraitValue)%>%
   mutate(CleanTraitName="Mycorrhizal", CleanTraitUnit=NA)
 
-<<<<<<< HEAD
+
 ##plant functional type
 ##this is not immediately usable. there are a lot of acronyms I dont' know.
 # trait197<-dat3%>%
 #   filter(TraitID==197)
 # 
 # table(trait197$OrigValueStr)
-=======
->>>>>>> d17663c64762d08afafc4a1a12c9bc0da1a5225a
+
 
 ##leaf area - merging different traits that all correspond to leaf area
 #do everything with the StdValue, which is converted to mm2
