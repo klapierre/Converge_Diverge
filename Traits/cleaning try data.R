@@ -894,6 +894,8 @@ traits_cont <- trait3115_3116_3117_clean%>%
                        ifelse(CleanTraitName=="root_diameter"|CleanTraitName=="root_density", "RES", "LES"))))))))%>%
   mutate(TraitType="Continuous")
 
+write.csv(traits_cont, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_continuous.csv", row.names = F)
+
 
 #removed b/c not enough representation trait345_clean,
 traits_cat<-trait28_clean%>%
@@ -902,8 +904,10 @@ traits_cat<-trait28_clean%>%
                        ifelse(CleanTraitName=="lifeform"|CleanTraitName=="lifespan"|CleanTraitName=="heterotrophy"|CleanTraitName=="allelopathic"|CleanTraitName=="stem_support", "Life_History",
                        ifelse(CleanTraitName=="mycorrhizal"|CleanTraitName=="N_fixation", "Mutualism",
                        ifelse(CleanTraitName=="photo_pathway", "Physiology", "Reproduction")))))%>%
-  mutate(TraitType="Continuous")
+  mutate(TraitType="Categorical")
 
+
+write.csv(traits_cat, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_categorical.csv", row.names = F)
 
 summary_cat<-traits_cat%>%
   group_by(CleanTraitName, TraitCategory, TraitType)%>%
