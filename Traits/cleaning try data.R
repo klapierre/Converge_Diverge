@@ -1,6 +1,8 @@
 library(tidyverse)
 library(data.table)
 
+theme_set(theme_bw(12))
+
 #meghan's
 setwd("C://Users/mavolio2/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
 setwd("C://Users/megha/Dropbox/converge_diverge/datasets/Traits/Try Data Nov 2019")
@@ -70,7 +72,7 @@ trait59_clean<-trait59%>%
   spread(CleanTraitValue, CleanTraitValue)%>%
   mutate(CleanTraitValue=ifelse(is.na(Biennial)&is.na(Perennial), "Annual", ifelse(is.na(Annual)&is.na(Perennial)|Annual=="Annual"&Biennial=="Biennial"&is.na(Perennial), "Biennial", "Perennial")))%>%
   select(species_matched, CleanTraitValue)%>%
-  mutate(CleanTraitName="Lifespan", CleanTraitUnit=NA)
+  mutate(CleanTraitName="lifespan", CleanTraitUnit=NA)
 
 
 trait42<-dat3%>%
@@ -230,7 +232,7 @@ trait42_test_messy<-trait42%>%
   unique()
 
 trait42_clean<-rbind(trait42_fern, trait42_forb, trait42_gram, trait42_vine, trait42_woody, trait42_probelm3, trait42_probelm4)%>%
-  mutate(CleanTraitName="Life_form", CleanTraitUnit=NA)
+  mutate(CleanTraitName="lifeform", CleanTraitUnit=NA)
 
 ##c3/c4 photosynthesis
 
@@ -250,14 +252,14 @@ trait22_clean<-trait22%>%
   mutate(CleanTraitValue=ifelse(is.na(C3)&is.na(C4), "CAM", ifelse(is.na(CAM)&is.na(C3), "C4", ifelse(is.na(C4)&is.na(CAM), "C3", NA))))%>%
   filter(!is.na(CleanTraitValue))%>%
   select(species_matched, CleanTraitValue)%>%
-  mutate(CleanTraitName="Photo_pathway", CleanTraitUnit=NA)
+  mutate(CleanTraitName="photo_pathway", CleanTraitUnit=NA)
 
 ##mycorrhizal traits
 trait_1433_1030_clean<-dat3%>%
   filter(TraitID==1433|TraitID==1030)%>%
   group_by(species_matched)%>%
-  summarise(CleanTriatValue=mean(StdValue))%>%
-  mutate(CleanTriatName="Mycorrhizal_percent_colonization", CleanTraitUnit="%")
+  summarise(CleanTraitValue=mean(StdValue))%>%
+  mutate(CleanTraitName="mycorrhizal_percent_colonization", CleanTraitUnit="%")
 
 #all these species are in trait7
 # trait_1433_1030_sp<-trait_1433_1030%>%
@@ -279,8 +281,15 @@ trait7_clean<-trait7%>%
   mutate(CleanTraitValue=ifelse(Mycorr=="Mycorr", "Mycorr", NA))%>%
   filter(!is.na(CleanTraitValue))%>%
   select(species_matched, CleanTraitValue)%>%
-  mutate(CleanTraitName="Mycorrhizal", CleanTraitUnit=NA)
+  mutate(CleanTraitName="mycorrhizal", CleanTraitUnit=NA)
 
+
+##plant functional type
+##this is not immediately usable. there are a lot of acronyms I dont' know.
+# trait197<-dat3%>%
+#   filter(TraitID==197)
+# 
+# table(trait197$OrigValueStr)
 
 ##leaf area - merging different traits that all correspond to leaf area
 #do everything with the StdValue, which is converted to mm2
@@ -538,7 +547,8 @@ traitStandardContinuous_clean <- dat3%>%
   mutate(CleanTraitName=ifelse(TraitID==6, 'rooting_depth', ifelse(TraitID==9, 'root:shoot', ifelse(TraitID==12, 'leaf_longevity', ifelse(TraitID==26, 'seed_dry_mass', ifelse(TraitID==45, 'stomata_conductance', ifelse(TraitID==46, 'leaf_thickness', ifelse(TraitID==47, 'LDMC', ifelse(TraitID==48, 'leaf_density', ifelse(TraitID==55, 'leaf_dry_mass', ifelse(TraitID==56, 'leaf_N:P', ifelse(TraitID==77, 'RGR', ifelse(TraitID==80, 'root_N', ifelse(TraitID==82, 'root_density', ifelse(TraitID==83, 'root_diameter', ifelse(TraitID==84, 'root_C', ifelse(TraitID==95, 'germination_efficiency', ifelse(TraitID==131, 'seed_number', ifelse(TraitID==145, 'leaf_width', ifelse(TraitID==146, 'leaf_C:N', ifelse(TraitID==200, 'number_floristic_zones', ifelse(TraitID==363, 'root_dry_mass', ifelse(TraitID==403, 'shoot_dry_mass', ifelse(TraitID==683, 'root_P', ifelse(TraitID==1111, 'seedbank_density', ifelse(TraitID==2809, 'seedbank_duration', ifelse(TraitID==3106, 'plant_height_vegetative', ifelse(TraitID==3107, 'plant_height_regenerative', TraitID))))))))))))))))))))))))))))%>%
   rename(CleanTraitUnit=UnitName)%>%
   #dropping some traits
-  filter(CleanTraitName!='germination_efficiency')
+  filter(CleanTraitName!='germination_efficiency')%>%
+  select(-TraitID)
 
 # ggplot(data=traitStandardContinuous_clean, aes(x=CleanTraitValue)) + geom_histogram() + facet_wrap(~CleanTraitName, scales='free')
 # #some traits have very skewed distributions, but looking at the data they seem ok (leaf_C:N, leaf_dry_mass, root_dry_mass, seed_dry_mass, seed_number, seedbank_density, seedbank_duration)
@@ -555,10 +565,22 @@ trait201_clean <- dat3%>%
   unique()
 
 ##chemical plant defense
-trait346_clean <- dat3%>%
+trait346 <- dat3%>%
   filter(TraitID==346)%>%
   filter(!is.na(OrigValueStr))%>%
+  mutate(CleanTraitValue=OrigValueStr)%>%
+  select(species_matched, CleanTraitValue)%>%
   unique()
+
+trait346_clean<-trait346%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Yes=="Yes"&is.na(No), "Yes", 
+                         ifelse(No=="No"&is.na(Yes), "No", NA)))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="allelopathic", CleanTraitUnit=NA)
+
+table(trait346_clean$OrigValueStr)
   
 ##role of the clonal organ in growth (these are all from one study and categories are not mutually exclusive)
 trait357_clean <- dat3%>%
@@ -714,15 +736,205 @@ trait345_other <- trait345%>%
   filter(CleanTraitValue!='drop')%>%
   select(species_matched, CleanTraitName, CleanTraitValue, CleanTraitUnit)
 
-trait345_clean <- rbind(trait345_hair, trait345_other)
+
+
+#clonal growth
+#341 has to be clonal is it it how it is clonal
+trait341<-dat3%>%
+  filter(TraitID==341)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="no", "NotClonal", "Clonal"))%>%
+  select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait341$OrigValueStr)
+
+#329 is very similar to 341, but the low categories too
+trait329<-dat3%>%
+  filter(TraitID==329)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="Absence", "NotClonal",
+                                       ifelse(OrigValueStr=="Little or no vegetative spread", "LowClonality", "Clonal")))%>%
+  select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait329$CleanTraitValue)
+
+#344 is very similar to 329/341, but the low categories too
+trait334<-dat3%>%
+  filter(TraitID==334)%>%
+  mutate(CleanTraitValue=ifelse(OrigUnitStr=="cm"|OrigUnitStr==""|OrigValueStr=="dispersable"|OrigValueStr=="", NA, 
+                         ifelse(OrigValueStr=="<0.01", "low", 
+                         ifelse(OrigValueStr==">0.25", "high", "mid"))))%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()%>%
+  filter(!is.na(CleanTraitValue))
+
+trait334_clean<-trait334%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(low=="low"&is.na(high)&is.na(mid), "<0.01",
+                         ifelse(mid=="mid"&is.na(high)&is.na(low)|mid=="mid"&is.na(high)&low=="low","	0.01-0.25", ">0.25" )))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="rate_veg_spread", CleanTraitUnit="m/yr")
   
+  
+  
+table(trait334$CleanTraitValue)
+
+trait344<-dat3%>%
+  filter(TraitID==344)%>%
+  mutate(CleanTraitValue=ifelse(DatasetID==92|OrigValueStr=="no particuliar mating system", NA,
+         ifelse(OrigValueStr=="none"|OrigValueStr=="NotClonal", "NotClonal",
+        ifelse(OrigValueStr=="Little or no vegetative spread", "LowClonality", "Clonal"))))%>%
+select(species_matched, CleanTraitValue)%>%
+  filter(!is.na(CleanTraitValue))%>%
+  unique()
+
+table(trait344$OriglName)
+
+
+trait_341_329_344_clonal<-trait341%>%
+  full_join(trait329)%>%
+  full_join(trait344)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue) %>% 
+  mutate(CleanTraitValue=ifelse(LowClonality=="LowClonality"&is.na(NotClonal)&is.na(Clonal)|LowClonality=="LowClonality"&NotClonal=="NotClonal"&is.na(Clonal), "LowClonality", ifelse(Clonal=="Clonal"&NotClonal=="NotClonal"&is.na(LowClonality)|Clonal=="Clonal"&LowClonality=="LowClonality"&is.na(NotClonal)|Clonal=="Clonal"&is.na(LowClonality)&is.na(NotClonal)|Clonal=="Clonal"&NotClonal=="NotClonal"&LowClonality=="LowClonality", "Clonal", NA)))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)
+
+trait_341_329_344_notclonal<-trait341%>%
+  full_join(trait329)%>%
+  full_join(trait344)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue) %>%
+  mutate(CleanTraitValue=ifelse(NotClonal=="NotClonal"&is.na(LowClonality)&is.na(Clonal),"NotClonal", NA))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)
+
+trait_341_329_344_clean<-trait_341_329_344_clonal%>%
+  bind_rows(trait_341_329_344_notclonal)%>%
+  mutate(CleanTraitName="clonality", CleanTraitUnit=NA)
+
+
+#609 is what I want, how can they reproduce, use 344/341/329 to check i have all clonals 609 and 208 are the same and need to be combined.
+trait609<-dat3%>%
+  filter(TraitID==609)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="No"|OrigValueStr=="Yes", NA, ifelse(OrigValueStr=="seed and vegetative", "seed_and_vegetative", OrigValueStr)))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()
+
+trait208<-dat3%>%
+  filter(TraitID==208)%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr=="generative"|OrigValueStr=="vegetative & generative", NA, 
+                                ifelse(OrigValueStr=="vegetative"|OrigValueStr=="vegetatively ", "vegetative",
+                                       ifelse(OrigValueStr=="by seed/by spore", "seed", "seed_and_vegetative"))))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()
+
+trait609_208_clean<-trait609%>%
+  bind_rows(trait208)%>%
+  unique()%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(seed=="seed"&is.na(vegetative)&is.na(seed_and_vegetative), "seed", ifelse(vegetative=="vegetative"&is.na(seed)&is.na(seed_and_vegetative),"vegetative", "seed_and_vegetative")))%>%
+  select(species_matched, CleanTraitValue) %>% 
+  mutate(CleanTraitName="reproduction_seed_veg", CleanTraitUnit=NA)
+
+##dispersal
+trait28<-dat3%>%
+  filter(TraitID==28)%>%
+  mutate(problem=substr(OrigValueStr,35, 40))%>%
+  mutate(CleanTraitValue=ifelse(OrigValueStr==0|OrigValueStr==0.8|OrigValueStr==0.5|OrigValueStr==0.2|OrigValueStr==0.6|OrigValueStr=="Water?"|OrigValueStr=="vegetative dispersule"|OrigValueStr=="unknown"|OrigValueStr=="seed contamination"|OrigValueStr=="other"|OrigValueStr=="one-seeded generative dispersule"|OrigValueStr=="speirochor"|OrigValueStr=="multi-seeded generative dispersule"|OrigValueStr=="hay making machinery"|OrigValueStr=="hay transport"|OrigValueStr=="hemerochor"|OrigValueStr=='germinule'|OrigValueStr=="generative dispersule"|OrigValueStr=="external"|OrigValueStr=="erosion material"|OrigValueStr=="Dispersal prevented"|OrigValueStr=="Dispersal no"|OrigValueStr=="Disp"|OrigValueStr=="car or other vehicle"|OrigValueStr==2|OrigValueStr==3|OrigValueStr=="harvesting"|OrigValueStr=="Combination: animal+unassisted"|OrigValueStr=="Combination: methods originating from parent plant+animal"|OrigValueStr=="Combination: water+wind+animal"|OrigValueStr=="Combination: wind+animal+unassisted"|OrigValueStr=="Combination: wind+unassisted"|OrigValueStr=="Combination: wind+water"|OrigValueStr=="clothes and footwear"|ObsDataID==27123749|ObsDataID==27123751|OrigValueStr=="Wind Animals"|OrigValueStr=="Seeds are produced below ground level"|OrigValueStr=="commerce"|OrigValueStr=="Combination: wind+animal"|problem==", plan", NA,
+                         ifelse(OriglName=="wind.disp"&OrigValueStr==1|OrigValueStr=="wind"|OrigValueStr=="Wind"|OriglName=="disp.mode.wind"&OrigValueStr==1|OrigValueStr=="wind/long-distance"|OrigValueStr=="wind-dispersed (with wing, hairs or bristles to provide air-resistance)"|OrigValueStr=="Dispersal wind"|OrigValueStr=="Diaspore is rolled along ground surface by wind"|OrigValueStr=="Diaspore is propelled by action of wind on the plant structure"|OrigValueStr=="Diaspore is blown by wind"|OrigValueStr=="chamaechor"|OrigValueStr=="boleochor"|OrigValueStr=="a-wind"|OrigValueStr=="Anemo"|OrigValueStr=="anemochory"|OrigValueStr=="Anemochory"|OrigValueStr=="Anemochory: Big and round seeds rolling on the ground, pushed by the wind"|OrigValueStr=="Anemochory: Small seeds with pappus or very light seeds (ex,  Crepis sp. or Orchis sp.)"|OrigValueStr=="Anemochory: Stems move with the wind, helping for seed dispersion (ex,  Papaver sp.)"|OrigValueStr=="meteorochor", "Wind",
+                      ifelse(OriglName=="disp.mode.animal"&OrigValueStr==1, "Animal",
+                         ifelse(OrigValueStr=="water"|OrigValueStr=="Water"|OriglName=="disp.mode.water"&OrigValueStr==1|OrigValueStr=="Wetting by rain or dew"|OrigValueStr=="standing fresh water"|OrigValueStr=="shaken fresh water"|OrigValueStr=="rainwash"|OrigValueStr=="ombrochor"|OrigValueStr=="nautochor "|OrigValueStr=="hydrochory"|OrigValueStr=="Floating in freshwater currents"|OrigValueStr=="nautochor", "Water", 
+                         ifelse(OriglName=="disp.mode.gravity"&OrigValueStr==1|OrigValueStr=="unassisted/short-distance"|OrigValueStr=="Unassisted and/or methods originating from parent plant"|OrigValueStr=="unassisted (no morphological structures aiding dispersal)"|OrigValueStr=="unassisted"|OrigValueStr=="Unassisted"|OrigValueStr=="tumbling"|OrigValueStr=="Seeds drop to the ground close to or beneath the parent plant"|OrigValueStr=="non specialized"|OrigValueStr==" Methods originating from parent plant or diaspore"|OrigValueStr=="Gravity"|OrigValueStr=="Explosive mechanism"|OrigValueStr=="explosive mechanism"|OrigValueStr=="explosive"|OrigValueStr=="blastochor"|OrigValueStr=="Barochory"|OrigValueStr=="ballochor "|OrigValueStr=="Autochory"|OrigValueStr=="autochory"|OrigValueStr=="autochor"|OrigValueStr=="unspecialised"|OrigValueStr=="Methods originating from parent plant or diaspore", "Unassisted", "Animal"))))))%>%
+  filter(!is.na(CleanTraitValue))%>%
+  select(species_matched, CleanTraitValue)%>%
+  unique()
+
+trait28_clean<-trait28%>%
+  spread(CleanTraitValue, CleanTraitValue)%>%
+  mutate(CleanTraitValue=ifelse(Animal=="Animal"&is.na(Wind)&is.na(Unassisted)&is.na(Water), "Animal",
+                         ifelse(Wind=="Wind"&is.na(Animal)&is.na(Unassisted)&is.na(Water),"Wind",
+                         ifelse(Unassisted=="Unassisted"&is.na(Animal)&is.na(Wind)&is.na(Water), "Unassisted",
+                         ifelse(Water=="Water"&is.na(Animal)&is.na(Wind)&is.na(Unassisted), "Water", "Combination")))))%>%
+  select(species_matched, CleanTraitValue)%>%
+  mutate(CleanTraitName="dispersal_mode", CleanTraitUnit="NA")
+
+
+table(trait28_clean$CleanTraitValue)
+
+# #woodiness - not very usable. Already have with plant growth form
+# trait38<-dat3%>%
+#   filter(TraitID==38)
+# 
+# table(trait38$OrigValueStr)
 
 
 
+#Grime triats - not very usable. Already have with plant growth form - will take more thinking.
+# trait196<-dat3%>%
+#   filter(TraitID==196)
+# 
+# table(trait196$OrigValueStr)
 
 
-
-    
 #combining traits
 
-traits <- rbind(trait59_clean, trait3115_3116_3117_clean, trait3108_3109_3110_3111_3112_3113_3114_clean, traitStandardContinuous_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait345_clean, trait679_clean, trait8_clean, trait152_clean, trait42_clean, trait22_clean, trait_1433_1030_clean, trait7_clean)
+traits_cont <- trait3115_3116_3117_clean%>%
+  bind_rows(trait3108_3109_3110_3111_3112_3113_3114_clean, trait3120_3121_3122_clean, traitStandardContinuous_clean, trait_1433_1030_clean)%>%
+  mutate(TraitCategory=ifelse(CleanTraitName=="rooting_depth"|CleanTraitName=="root:shoot"|CleanTraitName=="root_dry_mass"|CleanTraitName=="plant_height_vegetative"|CleanTraitName=="plant_height_regenerative"|CleanTraitName=="RGR"|CleanTraitName=="shoot_dry_mass", "Growth",
+                       ifelse(CleanTraitName=="number_floristic_zones", "Habitat",
+                       ifelse(CleanTraitName=="mycorrhizal_percent_colonization", "Mutualism",
+                       ifelse(CleanTraitName=="leaf_N:P"|CleanTraitName=="leaf_C:N"|CleanTraitName=="root_N"|CleanTraitName=="root_P"|CleanTraitName=="root_C", "Nutrients",
+                       ifelse(CleanTraitName=="stomata_conductance", "Physiology", 
+                       ifelse(CleanTraitName=="seed_number"|CleanTraitName=="seed_dry_mass"|CleanTraitName=="seedbank_density"|CleanTraitName=="seedbank_duration", "Reproduciton",
+                       ifelse(CleanTraitName=="root_diameter"|CleanTraitName=="root_density", "RES", "LES"))))))))%>%
+  mutate(TraitType="Continuous")
+
+write.csv(traits_cont, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_continuous.csv", row.names = F)
+
+
+#removed b/c not enough representation trait345_clean,
+traits_cat<-trait28_clean%>%
+  bind_rows(trait28_clean, trait_341_329_344_clean, trait609_208_clean, trait59_clean, trait201_clean, trait346_clean, trait357_clean, trait597_clean, trait613_clean, trait1187_clean, trait1188_clean, trait679_clean, trait8_clean, trait152_clean, trait42_clean, trait22_clean,  trait7_clean, trait334_clean)%>%
+  mutate(TraitCategory=ifelse(CleanTraitName=="palatability_bloat"|CleanTraitName=="palatability_browse"|CleanTraitName=="palatability_graze"|CleanTraitName=="palatability_human"|CleanTraitName=="toxicity"|CleanTraitName=="leaf_palatability"|CleanTraitName=="stem_longevity", "Herbivory",
+                       ifelse(CleanTraitName=="lifeform"|CleanTraitName=="lifespan"|CleanTraitName=="heterotrophy"|CleanTraitName=="allelopathic"|CleanTraitName=="stem_support", "Life_History",
+                       ifelse(CleanTraitName=="mycorrhizal"|CleanTraitName=="N_fixation", "Mutualism",
+                       ifelse(CleanTraitName=="photo_pathway", "Physiology", "Reproduction")))))%>%
+  mutate(TraitType="Categorical")
+
+
+write.csv(traits_cat, "C://Users/mavolio2/Dropbox/SDiv_sCoRRE_shared/CoRRE - community and anpp data/TRY_trait_data_categorical.csv", row.names = F)
+
+summary_cat<-traits_cat%>%
+  group_by(CleanTraitName, TraitCategory, TraitType)%>%
+  summarize(n=length(CleanTraitValue))%>%
+  mutate(per.sp=(n/1954)*100)
+
+summary_cont<-traits_cont%>%
+  group_by(CleanTraitName, TraitCategory, TraitType)%>%
+  summarize(n=length(CleanTraitValue))%>%
+  mutate(per.sp=(n/1954)*100)
+
+summary_all<-summary_cat%>%
+  bind_rows(summary_cont)
+
+ggplot(data=summary_all, aes(x=reorder(CleanTraitName, -per.sp), y=per.sp))+
+  geom_point()+
+  ylab("percent of species")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_blank())+
+  xlab("")+
+  scale_y_continuous(limits=c(0,100))
+
+#barplots by trait type
+ggplot(data=subset(summary_all, TraitCategory=="Reproduction"), aes(x=1, y=per.sp))+
+  geom_bar(stat = "identity")+
+ facet_wrap(~CleanTraitName)+
+  scale_y_continuous(limits=c(0,100))+
+  ylab("Percent of Species")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_blank())+
+  xlab("")
+
