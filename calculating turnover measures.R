@@ -1,29 +1,53 @@
 library(vegan)
-library(reshape2)
 library(gtools)
-library(plyr)
 library(grid)
-library(tidyr)
-library(dplyr)
 library(codyn)
+library(tidyverse)
 
 #kim
-setwd("C:\\Users\\Kim\\Dropbox\\working groups\\converge diverge working group\\converge_diverge\\datasets\\LongForm")
+setwd("C:\\Users\\lapie\\Dropbox (Smithsonian)\\working groups\\CoRRE\\converge_diverge\\datasets\\LongForm")
 
 # #meghan
 setwd("~/Dropbox/converge_diverge/datasets/LongForm")
 
-#read in the merged dataset
-alldata<-read.csv("SpeciesRelativeAbundance_Dec2016.csv")%>%
-  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
-  mutate(exp_code=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
-  # #get rid of duplicate species within a plot and year for IMGERS_Yu 2006 plot 107 and 2008 plot 401 duplicate species is salsola collina pall.
-  tbl_df()%>%
-  group_by(exp_code, site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species)%>%
-  summarise(relcov=mean(relcov))%>%
-  tbl_df()
 
-expinfo<-read.csv("ExperimentInformation_Dec2016.csv")%>%
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=40, vjust=-0.35, margin=margin(t=15)), axis.text.x=element_text(size=34),
+             axis.title.y=element_text(size=40, angle=90, vjust=0.5, margin=margin(r=15)), axis.text.y=element_text(size=34),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_blank(), legend.text=element_text(size=20))
+
+
+###bar graph summary statistics function
+#barGraphStats(data=, variable="", byFactorNames=c(""))
+
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}  
+
+
+
+
+#read in the merged dataset
+alldata<-read.csv("SpeciesRelativeAbundance_March2019.csv")%>%
+  select(site_code, project_name, community_type, calendar_year, treatment, block, plot_id, genus_species, relcov)%>%
+  mutate(exp_code=paste(site_code, project_name, community_type, treatment, sep="::"))
+
+expinfo<-read.csv("ExperimentInformation_March2019.csv")%>%
   mutate(exp_code=paste(site_code, project_name, community_type, treatment, sep="::"))%>%
   select(exp_code, plot_mani, calendar_year, treatment_year)
 
@@ -151,6 +175,24 @@ for(i in 1:length(exp_code$exp_code)) {
   for.analysis=rbind(turnoverLabel, for.analysis)  
 }
 
+# write.csv(for.analysis, 'appear_disappear_Mar2019.csv')
 
-#write csv
-write.csv(for.analysis, 'appear_disappear_Mar2017.csv')
+turnoverData <- for.analysis%>%
+  mutate(turnover=appearance+disappearance)%>%
+  filter(!is.na(turnover))%>%
+  #relativize by species richness
+  mutate(turnover_relative=turnover/total)%>%
+  #filter down to just final year of data for each treatment
+  group_by(exp_code)%>%
+  filter(calendar_year==max(calendar_year))%>%
+  separate(exp_code, c('site_code','project_name','community_type','treatment'), sep='::')%>%
+  left_join(read.csv('stdtimebytrt_shape_classification_04072019.csv'))%>%
+  mutate(variable=ifelse(is.na(variable), 'control', as.character(variable)))%>%
+  filter(variable!='richness')%>%
+  mutate(effect=ifelse(variable=='control', 'control', ifelse(N01_shape==0, 'non_sig', 'sig')))
+  
+  
+
+ggplot(barGraphStats(data=turnoverData, variable="turnover_relative", byFactorNames=c("effect")), aes(x=effect, y=mean)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2)
