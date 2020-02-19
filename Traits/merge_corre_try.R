@@ -8,7 +8,7 @@ library(utf8)
 setwd("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 setwd("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 
-checkcorre<-read.csv("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_March2019.csv")
+checkcorre<-read.csv("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2019.csv")
 
 #load clean taxonomy for try
 taxdat <- read_csv("taxon_updates.csv")
