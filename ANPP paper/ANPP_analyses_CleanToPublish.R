@@ -29,7 +29,7 @@ trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
   select(site_project_comm, treatment, trt_type7, trt_type5, trt_type6, trt_type)
 #linking plots to treatments
-anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Oct2017.csv")%>%
+anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Dec2017.csv")%>%
   select(-X)
 
 Nlevels<-anpp_expInfo%>%
@@ -179,7 +179,7 @@ anpp_spc<-all_anpp_dat%>%
   unique()
 
 #read in community data
-community<-read.csv("SpeciesRelativeAbundance_Oct2017.csv")%>%
+community<-read.csv("SpeciesRelativeAbundance_Nov2019.csv")%>%
   select(-X)%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))%>%
   right_join(anpp_spc)
@@ -221,7 +221,7 @@ site_char<-site_info%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
-# Analysis 1. is a good year in the controls a good year in treate --------
+# Analysis 1. is a good year in the controls a good year in treated plots --------
 
 rvalues.ct <- PD_anpp_yr %>% 
   group_by(site_project_comm, treatment) %>%
@@ -261,7 +261,7 @@ sum(rvalues.ct$sig)
 66/95
 
 
-# Analysis 1. PD diff from zero for each treatment? -----------------------
+# Analysis 2 PD diff from zero for each treatment? -----------------------
 
 anpp_temp_cv2<-anpp_temp_cv%>%
   mutate(site_project_comm=paste(site_code, project_name, community_type, sep="_"))
@@ -344,45 +344,6 @@ cv.trt<-ttest_summary%>%
   mutate(response="B) CV ANPP")%>%
   rename(effect=resp_cv)
 
-# Making figure 1 ---------------------------------------------------------
-vote.fig<-mean.trt%>%
-  bind_rows(cv.trt)%>%
-  bind_rows(cv.overall)%>%
-  bind_rows(mean.overall)%>%
-  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
-
-vot_mean<-ggplot(data=subset(vote.fig, response=="A) Mean ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  xlab("Treatment")+
-  ylab("")+
-  scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "lightblue", "darkblue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  geom_vline(xintercept = 4.5)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("A) Mean ANPP")
-
-vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  xlab("Treatment")+
-  ylab("Proportion of Treatments Different from Control")+
-  scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  geom_vline(xintercept = 4.5)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  ggtitle("B) CV ANPP")
-
-legend=gtable_filter(ggplot_gtable(ggplot_build(vot_mean)), "guide-box") 
-grid.draw(legend)
-
-fig1<-
-  grid.arrange(arrangeGrob(vot_mean+theme(legend.position="none"),
-                           vot_cv+theme(legend.position="none"),
-                           ncol=1), legend, 
-               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
-
-
 ###is the correlation analysis redundnat
 notsigr<-rvalues.ct%>%
   filter(sig==0)
@@ -391,8 +352,6 @@ sigt<-ttest_summary%>%
   select(site_project_comm, treatment, resp_cv)%>%
   left_join(notsigr)
 
-
-# Analysis 2. is PD different from 0 for each treatment overall -----------
 
 ##first overall for PD_CV
 t.test(CT_comp$PD_CV, mu=0) # overall No, and not for the difference GCDs
@@ -438,7 +397,45 @@ nquest<-CT_comp%>%
 summary(lm(PD_CV~n, data=nquest))
 
 
-# Making figure 2 ---------------------------------------------------------
+# Making figure 1 ---------------------------------------------------------
+vote.fig<-mean.trt%>%
+  bind_rows(cv.trt)%>%
+  bind_rows(cv.overall)%>%
+  bind_rows(mean.overall)%>%
+  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+
+vot_mean<-ggplot(data=subset(vote.fig, response=="A) Mean ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  xlab("Treatment")+
+  ylab("")+
+  scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "lightblue", "darkblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 4.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("A) Mean ANPP")
+
+vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+  geom_bar(stat="identity")+
+  coord_flip()+
+  xlab("Treatment")+
+  ylab("Proportion of Treatments Different from Control")+
+  scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
+  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 4.5)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  ggtitle("B) CV ANPP")
+
+legend=gtable_filter(ggplot_gtable(ggplot_build(vot_mean)), "guide-box") 
+grid.draw(legend)
+
+fig1<-
+  grid.arrange(arrangeGrob(vot_mean+theme(legend.position="none"),
+                           vot_cv+theme(legend.position="none"),
+                           ncol=1), legend, 
+               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
+
+
 
 ##making a bar graph of this
 PD_bargraph_trt<-CT_comp%>%
@@ -537,72 +534,72 @@ ggplot(data=boxfig, aes(x=measure, y=value))+
   geom_hline(yintercept = 0, size = 1)
 
 
-# Analysis 3, appendix Site-level responses ----------------------------------------------------
+# #  appendix Site-level responses ----------------------------------------------------
+# 
+# ####bar graph of difference across ecosystems
+# PD_ecosystems_test<-CT_comp%>%
+#   left_join(site_char)%>%
+#   group_by(site_code, MAP)
+# 
+# cor.test(PD_ecosystems_test$cont_temp_cv, PD_ecosystems_test$manpp)
+# 
+# with(subset(PD_ecosystems_test, site_code!="SERC"), plot(manpp, cont_temp_cv))
+# 
+# ggplot(data=PD_ecosystems_test, aes())
+# 
+# PD_ecosystems<-CT_comp%>%
+#   left_join(site_char)%>%
+#   group_by(site_code, MAP)%>%
+#   summarize(cv=mean(PD_CV),
+#             sd_cv=sd(PD_CV),
+#             sd=mean(PD_sd),
+#             sd_sd=sd(PD_sd),
+#             mn=mean(PD_mean),
+#             sd_mn=sd(PD_mean),
+#             num=length(PD_CV))%>%
+#   mutate(se_cv=sd_cv/sqrt(num),
+#          se_sd=sd_sd/sqrt(num),
+#          se_mn=sd_mn/sqrt(num))%>%
+#   ungroup%>%
+#   mutate(site_code2=ifelse(site_code=="maerc","MAERC", as.character(site_code)))
+# 
+# eco_cv<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=cv, fill=MAP))+
+#   geom_bar(position=position_dodge(), stat="identity")+
+#   geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
+#   ylab("")+
+#   ylab("Percent Difference\nCV of ANPP")+
+#   xlab("Site Code")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# 
+# eco_sd<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=sd, fill=MAP))+
+#   geom_bar(position=position_dodge(), stat="identity")+
+#   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
+#   ylab("")+
+#   ylab("Percent Difference\nSD of ANPP")+
+#   xlab("Site Code")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# 
+# eco_mn<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=mn, fill=MAP))+
+#   geom_bar(position=position_dodge(), stat="identity")+
+#   geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
+#   ylab("")+
+#   ylab("Percent Difference\nANPP")+
+#   xlab("Site Code")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# 
+# legend=gtable_filter(ggplot_gtable(ggplot_build(eco_mn)), "guide-box") 
+# grid.draw(legend)
+# 
+# fig1<-
+#   grid.arrange(arrangeGrob(eco_mn+theme(legend.position="none"),
+#                            eco_cv+theme(legend.position="none"),
+#                            ncol=1), legend, 
+#                widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
+# 
+# 
+# 
 
-####bar graph of difference across ecosystems
-PD_ecosystems_test<-CT_comp%>%
-  left_join(site_char)%>%
-  group_by(site_code, MAP)
-
-cor.test(PD_ecosystems_test$cont_temp_cv, PD_ecosystems_test$manpp)
-
-with(subset(PD_ecosystems_test, site_code!="SERC"), plot(manpp, cont_temp_cv))
-
-ggplot(data=PD_ecosystems_test, aes())
-
-PD_ecosystems<-CT_comp%>%
-  left_join(site_char)%>%
-  group_by(site_code, MAP)%>%
-  summarize(cv=mean(PD_CV),
-            sd_cv=sd(PD_CV),
-            sd=mean(PD_sd),
-            sd_sd=sd(PD_sd),
-            mn=mean(PD_mean),
-            sd_mn=sd(PD_mean),
-            num=length(PD_CV))%>%
-  mutate(se_cv=sd_cv/sqrt(num),
-         se_sd=sd_sd/sqrt(num),
-         se_mn=sd_mn/sqrt(num))%>%
-  ungroup%>%
-  mutate(site_code2=ifelse(site_code=="maerc","MAERC", as.character(site_code)))
-
-eco_cv<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=cv, fill=MAP))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
-  ylab("Percent Difference\nCV of ANPP")+
-  xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-eco_sd<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=sd, fill=MAP))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
-  ylab("Percent Difference\nSD of ANPP")+
-  xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-eco_mn<-ggplot(data=PD_ecosystems, aes(x=reorder(site_code2, MAP), y=mn, fill=MAP))+
-  geom_bar(position=position_dodge(), stat="identity")+
-  geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
-  ylab("Percent Difference\nANPP")+
-  xlab("Site Code")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-legend=gtable_filter(ggplot_gtable(ggplot_build(eco_mn)), "guide-box") 
-grid.draw(legend)
-
-fig1<-
-  grid.arrange(arrangeGrob(eco_mn+theme(legend.position="none"),
-                           eco_cv+theme(legend.position="none"),
-                           ncol=1), legend, 
-               widths=unit.c(unit(1, "npc") - legend$width, legend$width),nrow=1)
-
-
-
-
-# Analysis 4 abiotic and biotic drivers of PD ANPP and CV of ANPP --------------------
+# Analysis 3 abiotic and biotic drivers of PD ANPP and CV of ANPP --------------------
 
 
 ###what correlates with PD_CV?
@@ -693,100 +690,100 @@ ggplot(data=subset(tograph_cor2, vari_metric=="PD_CV"), aes(x = value, y = vari_
   geom_smooth(data=subset(tograph_cor, vari_group=="PD_CV"&parm_group=="Evar"), method="lm", se=F, color = "black")+
   facet_wrap(~parm_group, scales="free", labeller=labeller(parm_group = parameter), ncol=4)+
   xlab("Value")+
-  ylab("Percent Difference")+
+  ylab("Percent Difference in Temporal Variability")+
   geom_text(data=filter(rvalues2, vari_group=="PD_CV"), mapping=aes(x=Inf, y = Inf, label = r.value), hjust=1.05, vjust=1.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_hline(yintercept = 0, linetype="dashed", color="black")
 
 
-# Analysis 5 appendix are sites more responsvie to GCDs in low anpp years? ---------
+# # Analysis appendix are sites more responsvie to GCDs in low anpp years? ---------
+# 
+# ###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
+# 
+# pvalues <- PD_anpp_yr %>% 
+#   group_by(site_project_comm) %>%
+#   summarize(p.value = round(summary(lm(PD~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
+#             slope = summary(lm(PD~contanpp))$coef["contanpp", c("Estimate")])%>%
+#   mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
+#   left_join(site_info)
+# 
+# summary(lm(slope~MAP, data=pvalues))
+# with(pvalues, plot(MAP, slope))
+# 
+# PD_anpp_yr2<-PD_anpp_yr%>%
+#   mutate(spc_order = factor(site_project_comm, levels = c("SEV_Nfert_0",       "SEV_WENNDEx_0","IMGERS_Yu_0","KLU_KGFert_0","DL_NSFC_0","NWT_snow_0","CDR_BioCON_0" ,"CDR_e001_A","CDR_e001_B","CDR_e001_C", "CDR_e001_D", "CDR_e002_A","CDR_e002_B","CDR_e002_C","KNZ_BGP_0","KNZ_IRG_l","KNZ_IRG_u","KNZ_pplots_0","KNZ_RaMPs_0","KNZ_RHPs_0", "KBS_T7_0","SERC_CXN_0", "SERC_TMECE_MX","SERC_TMECE_SC","SERC_TMECE_SP", "maerc_fireplots_0","ANG_watering_0")))
+# 
+# ggplot(data=PD_anpp_yr2, aes(x = contanpp, y = PD))+
+#   geom_point()+
+#   theme(legend.position = "none")+
+#   facet_wrap(~spc_order, scales = "free")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_A"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_B"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="ANG_watering_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KBS_T7_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_D"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_l"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
+#   xlab("Control ANPP")+
+#   ylab("PD of ANPP")
+# 
+# ##do by diff and group by CV
+# pvalues_df <- PD_anpp_yr %>% 
+#   group_by(site_project_comm) %>%
+#   summarize(p.value = round(summary(lm(Diff~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
+#             slope = summary(lm(Diff~contanpp))$coef["contanpp", c("Estimate")])%>%
+#   mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
+#   left_join(site_info)
+# 
+# PD_anpp_yr3<-PD_anpp_yr%>%
+#   mutate(spc_order = factor(site_project_comm, levels = c("KNZ_RaMPs_0", "KNZ_IRG_l", "KNZ_IRG_u", "KLU_KGFert_0", "SERC_TMECE_MX", "KNZ_pplots_0", "DL_NSFC_0", "ANG_watering_0", "SERC_CXN_0", "SERC_TMECE_SC", "CDR_e002_C", "NWT_snow_0", "CDR_e002_A","SERC_TMECE_SP", "CDR_BioCON_0", "IMGERS_Yu_0", "CDR_e001_A", "KBS_T7_0", "CDR_e001_C", "CDR_e001_D", "CDR_e001_B","CDR_e002_B","SEV_Nfert_0", "SEV_WENNDEx_0", "KNZ_BGP_0", "KNZ_RHPs_0","maerc_fireplots_0")))
+# 
+# ggplot(data=PD_anpp_yr3, aes(x = contanpp, y = Diff))+
+#   geom_point()+
+#   theme(legend.position = "none")+
+#   facet_wrap(~spc_order, scales = "free")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SERC_TMECE_SP"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="IMGERS_Yu_0"), method="lm", se=F, color = "black")+
+#   geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SEV_WENNDEx_0"), method="lm", se=F, color = "black")+
+#   xlab("Control ANPP")+
+#   ylab("Diff in ANPP (C-T")
+# 
+# #do this for experiments that are 10 years or longer
+# PD_anpp_yr_10<-PD_anpp_yr%>%
+#   filter(treatment_year>10)
+# 
+# summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr_10)))#sig negative slope
+# 
+# ggplot(data=PD_anpp_yr_10, aes(x = treatment_year, y =PD))+
+#   geom_point()+
+#   theme(legend.position = "none")+
+#   geom_smooth(method = "lm")+
+#   facet_wrap(~site_project_comm, scales = "free")
+# 
+# summary(aov(lm(Diff~contanpp*site_project_comm, data=PD_anpp_yr)))# sig negative slope. Say yes overall negative slope. But differs by sites, X% of studies had a negative slope and there was an interaction between sites. Make fig with p.value in box.
+# 
+# summary(test<-(lm(Diff~contanpp, data=subset(PD_anpp_yr, site_project_comm=="ANG_watering_0"))))
+# 
+# summary(aov(lm(PD~contanpp*site_project_comm, data=PD_anpp_yr)))#sig negative slope
+# 
+# summary(aov(lm(Diff~treatment_year*site_project_comm, data=PD_anpp_yr)))# sig p = 0.048 negative slope
+# 
+# summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr)))#sig negative slope
 
-###ARE sites more resopnsive in low ANPP years compared with high ANPP years.
-
-pvalues <- PD_anpp_yr %>% 
-  group_by(site_project_comm) %>%
-  summarize(p.value = round(summary(lm(PD~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
-            slope = summary(lm(PD~contanpp))$coef["contanpp", c("Estimate")])%>%
-  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
-  left_join(site_info)
-
-summary(lm(slope~MAP, data=pvalues))
-with(pvalues, plot(MAP, slope))
-
-PD_anpp_yr2<-PD_anpp_yr%>%
-  mutate(spc_order = factor(site_project_comm, levels = c("SEV_Nfert_0",       "SEV_WENNDEx_0","IMGERS_Yu_0","KLU_KGFert_0","DL_NSFC_0","NWT_snow_0","CDR_BioCON_0" ,"CDR_e001_A","CDR_e001_B","CDR_e001_C", "CDR_e001_D", "CDR_e002_A","CDR_e002_B","CDR_e002_C","KNZ_BGP_0","KNZ_IRG_l","KNZ_IRG_u","KNZ_pplots_0","KNZ_RaMPs_0","KNZ_RHPs_0", "KBS_T7_0","SERC_CXN_0", "SERC_TMECE_MX","SERC_TMECE_SC","SERC_TMECE_SP", "maerc_fireplots_0","ANG_watering_0")))
-
-ggplot(data=PD_anpp_yr2, aes(x = contanpp, y = PD))+
-  geom_point()+
-  theme(legend.position = "none")+
-  facet_wrap(~spc_order, scales = "free")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_A"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_B"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="ANG_watering_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KBS_T7_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_D"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_l"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
-  xlab("Control ANPP")+
-  ylab("PD of ANPP")
-
-##do by diff and group by CV
-pvalues_df <- PD_anpp_yr %>% 
-  group_by(site_project_comm) %>%
-  summarize(p.value = round(summary(lm(Diff~contanpp))$coef["contanpp","Pr(>|t|)"], digits=3),
-            slope = summary(lm(Diff~contanpp))$coef["contanpp", c("Estimate")])%>%
-  mutate(pval=ifelse(p.value==0, "<0.001", as.numeric(round(p.value, digits=3))))%>%
-  left_join(site_info)
-
-PD_anpp_yr3<-PD_anpp_yr%>%
-  mutate(spc_order = factor(site_project_comm, levels = c("KNZ_RaMPs_0", "KNZ_IRG_l", "KNZ_IRG_u", "KLU_KGFert_0", "SERC_TMECE_MX", "KNZ_pplots_0", "DL_NSFC_0", "ANG_watering_0", "SERC_CXN_0", "SERC_TMECE_SC", "CDR_e002_C", "NWT_snow_0", "CDR_e002_A","SERC_TMECE_SP", "CDR_BioCON_0", "IMGERS_Yu_0", "CDR_e001_A", "KBS_T7_0", "CDR_e001_C", "CDR_e001_D", "CDR_e001_B","CDR_e002_B","SEV_Nfert_0", "SEV_WENNDEx_0", "KNZ_BGP_0", "KNZ_RHPs_0","maerc_fireplots_0")))
-
-ggplot(data=PD_anpp_yr3, aes(x = contanpp, y = Diff))+
-  geom_point()+
-  theme(legend.position = "none")+
-  facet_wrap(~spc_order, scales = "free")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_BioCON_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e002_B"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_BGP_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_IRG_u"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="maerc_fireplots_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="CDR_e001_C"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="KNZ_RaMPs_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SERC_TMECE_SP"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="IMGERS_Yu_0"), method="lm", se=F, color = "black")+
-  geom_smooth(data=subset(PD_anpp_yr2, spc_order=="SEV_WENNDEx_0"), method="lm", se=F, color = "black")+
-  xlab("Control ANPP")+
-  ylab("Diff in ANPP (C-T")
-
-#do this for experiments that are 10 years or longer
-PD_anpp_yr_10<-PD_anpp_yr%>%
-  filter(treatment_year>10)
-
-summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr_10)))#sig negative slope
-
-ggplot(data=PD_anpp_yr_10, aes(x = treatment_year, y =PD))+
-  geom_point()+
-  theme(legend.position = "none")+
-  geom_smooth(method = "lm")+
-  facet_wrap(~site_project_comm, scales = "free")
-
-summary(aov(lm(Diff~contanpp*site_project_comm, data=PD_anpp_yr)))# sig negative slope. Say yes overall negative slope. But differs by sites, X% of studies had a negative slope and there was an interaction between sites. Make fig with p.value in box.
-
-summary(test<-(lm(Diff~contanpp, data=subset(PD_anpp_yr, site_project_comm=="ANG_watering_0"))))
-
-summary(aov(lm(PD~contanpp*site_project_comm, data=PD_anpp_yr)))#sig negative slope
-
-summary(aov(lm(Diff~treatment_year*site_project_comm, data=PD_anpp_yr)))# sig p = 0.048 negative slope
-
-summary(aov(lm(PD~treatment_year*site_project_comm, data=PD_anpp_yr)))#sig negative slope
-
-# Analysis 6, sensitivity of anpp to precip --------------------------------------------------
+# Analysis 4, sensitivity of anpp to precip --------------------------------------------------
 
 #precip analysis #1986 in CDR has no precip data, this one year is being dropped.
 
@@ -1017,4 +1014,79 @@ ggplot(data=fig, aes(x=treatment_year, y=PD))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   facet_wrap(~trt_type5, ncol=5, scales="free")
 
+# appendix 3 correlating trt amount with reponses ------------------------------------
+trtdetails<-all_anpp_dat%>%
+  select(-anpp, -plot_id, -calendar_year, -numyear, -treatment_year)%>%
+  filter(plot_mani!=0)%>%
+  unique()
+
+CT_comp2<-CT_comp%>%
+  left_join(trtdetails)%>%
+  group_by(site_project_comm, treatment)%>%
+  mutate(multnuts=sum(n, p, k))
+
+#nitrogen - not sig for mean
+with(subset(CT_comp2, trt_type6=="Nitrogen"), cor.test(n, PD_mean))# p 0.66
+with(subset(CT_comp2, trt_type6=="Nitrogen"), plot(n, PD_mean))
+#not sig for CV
+with(subset(CT_comp2, trt_type6=="Nitrogen"), cor.test(n, PD_CV))# p 0.32
+with(subset(CT_comp2, trt_type6=="Nitrogen"), plot(n, PD_CV))
+
+#precip - not sig for mean
+with(subset(CT_comp2, trt_type6=="Water"), cor.test(precip, PD_mean))# p 0.09
+with(subset(CT_comp2, trt_type6=="Water"), plot(precip, PD_mean))
+#not sig for CV
+with(subset(CT_comp2, trt_type6=="Water"), cor.test(precip, PD_CV))# p 0.60
+with(subset(CT_comp2, trt_type6=="Water"), plot(precip, PD_CV))
+
+#temp - all only 1 C increase, but lots of vari
+with(subset(CT_comp2, trt_type6=="Heat"), cor.test(temp, PD_mean))
+with(subset(CT_comp2, trt_type6=="Heat"), plot(temp, PD_mean))
+
+#mult nuts - very sig for mean
+with(subset(CT_comp2, trt_type6=="Multiple Nutrients"), cor.test(multnuts, PD_mean))#SIG
+with(subset(CT_comp2, trt_type6=="Multiple Nutrients"), plot(multnuts, PD_mean))
+## not sig for CV
+with(subset(CT_comp2, trt_type6=="Multiple Nutrients"), cor.test(multnuts, PD_CV))#0.15
+with(subset(CT_comp2, trt_type6=="Multiple Nutrients"), plot(multnuts, PD_CV))
+
+Nit_mean<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Nitrogen'), aes(x=n, y=PD_mean))+
+  geom_point(size = 2)+
+  xlab("N added (g m-2)")+
+  ylab("Difference (%) Mean ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+Nit_cv<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Nitrogen'), aes(x=n, y=PD_CV))+
+  geom_point(size = 2)+
+  xlab("N added (g m-2)")+
+  ylab("Difference (%) CV ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+Wat_mean<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Water'), aes(x=precip, y=PD_mean))+
+  geom_point(size = 2)+
+  xlab("% Increase in Precipitation")+
+  ylab("Difference (%) Mean ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+Wat_cv<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Water'), aes(x=precip, y=PD_CV))+
+  geom_point(size = 2)+
+  xlab("% Increase in Precipitation")+
+  ylab("Difference (%) CV ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+mult_mean<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Multiple Nutrients'), aes(x=multnuts, y=PD_mean))+
+  geom_point(size = 2)+
+  xlab("Summed NPK added (g m-2)")+
+  ylab("Difference (%) Mean ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  geom_smooth(method="lm", se=F, color="black")
+mult_cv<-
+  ggplot(data=subset(CT_comp2, trt_type6=='Multiple Nutrients'), aes(x=multnuts, y=PD_CV))+
+  geom_point(size = 2)+
+  xlab("Summed NPK added (g m-2)")+
+  ylab("Difference (%) CV ANPP")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+grid.arrange(Nit_mean, Nit_cv,Wat_mean, Wat_cv,mult_mean,   mult_cv)
 
