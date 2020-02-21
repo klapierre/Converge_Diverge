@@ -27,7 +27,7 @@ anpp<-read.csv("ANPP_Oct2017_2.csv")%>%
 #binning the treatments into categories
 trtint<-read.csv('treatment interactions_ANPP_datasets_using.csv')%>%
   mutate(site_project_comm=paste(site_code, project_name,community_type, sep="_"))%>%
-  select(site_project_comm, treatment, trt_type7, trt_type5, trt_type6, trt_type)
+  select(site_project_comm, treatment, trt_type7, trt_type5, trt_type6, trt_type, trt_type8)
 #linking plots to treatments
 anpp_expInfo<-read.csv("ExperimentInformation_ANPP_Dec2017.csv")%>%
   select(-X)
@@ -221,44 +221,44 @@ site_char<-site_info%>%
   left_join(ave_prod)%>%
   left_join(precip_vari)
 
-# Analysis 1. is a good year in the controls a good year in treated plots --------
-
-rvalues.ct <- PD_anpp_yr %>% 
-  group_by(site_project_comm, treatment) %>%
-  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
-            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
-  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
-  left_join(trtint)%>%
-  group_by(sig, trt_type7)%>%
-  summarize(n=length(sig))%>%
-  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
-
-
-rvalues.overall <- PD_anpp_yr %>% 
-  group_by(site_project_comm, treatment) %>%
-  summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
-            p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
-  mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
-  left_join(trtint)%>%
-  group_by(sig)%>%
-  summarize(n=length(sig))%>%
-  mutate(prop=n/95, 
-         trt_type7 ="All Trts")%>%
-  bind_rows(rvalues.ct)
-
-ggplot(data=rvalues.overall, aes(y=prop, x=trt_type7, fill=as.factor(sig)))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  xlab("Treatment")+
-  ylab("Proportion of Treatments")+
-  scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "blue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        strip.background = element_rect(fill="white"))+
-  geom_vline(xintercept = 4.5)
-
-sum(rvalues.ct$sig)            
-66/95
+# # Analysis 1. is a good year in the controls a good year in treated plots --------
+# 
+# rvalues.ct <- PD_anpp_yr %>% 
+#   group_by(site_project_comm, treatment) %>%
+#   summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+#             p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+#   mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+#   left_join(trtint)%>%
+#   group_by(sig, trt_type8)%>%
+#   summarize(n=length(sig))%>%
+#   mutate(prop=ifelse(trt_type8=="Multiple Nutrients", n/33, ifelse(trt_type8=="Nitrogen", n/11, ifelse(trt_type8=="Water", n/7, ifelse(trt_type8=="Other GCD", n/33, ifelse(trt_type8=="Interacting Drivers", n/11, 999))))))
+# 
+# 
+# rvalues.overall <- PD_anpp_yr %>% 
+#   group_by(site_project_comm, treatment) %>%
+#   summarize(r.value = round((cor.test(contanpp, manpp)$estimate), digits=3),
+#             p.value = round((cor.test(contanpp, manpp)$p.value), digits=3))%>%
+#   mutate(sig=ifelse(p.value<0.05, 1, 0))%>%
+#   left_join(trtint)%>%
+#   group_by(sig)%>%
+#   summarize(n=length(sig))%>%
+#   mutate(prop=n/95, 
+#          trt_type8 ="All Trts")%>%
+#   bind_rows(rvalues.ct)
+# 
+# ggplot(data=rvalues.overall, aes(y=prop, x=trt_type8, fill=as.factor(sig)))+
+#   geom_bar(stat="identity")+
+#   coord_flip()+
+#   xlab("Treatment")+
+#   ylab("Proportion of Treatments")+
+#   scale_fill_manual(name="", label=c("Not Sig.", "Sig."), values = c("Gray", "blue"))+
+#   scale_x_discrete(limits=c("Other GCD", "Interacting Drivers", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         strip.background = element_rect(fill="white"))+
+#   geom_vline(xintercept = 5.5)
+# 
+# sum(rvalues.ct$sig)            
+# 66/95
 
 
 # Analysis 2 PD diff from zero for each treatment? -----------------------
@@ -323,10 +323,10 @@ mean.overall<-ttest_summary%>%
   summarize(n=length(resp_mean))%>%
   mutate(response="A) Mean ANPP")%>%
   rename(effect=resp_mean)%>%
-  mutate(trt_type7="All Trts")
+  mutate(trt_type8="All Trts")
 
 mean.trt<-ttest_summary%>%
-  group_by(trt_type7, resp_mean)%>%
+  group_by(trt_type8, resp_mean)%>%
   summarize(n=length(resp_mean))%>%
   mutate(response="A) Mean ANPP")%>%
   rename(effect=resp_mean)
@@ -336,10 +336,10 @@ cv.overall<-ttest_summary%>%
   summarize(n=length(resp_cv))%>%
   mutate(response="B) CV ANPP")%>%
   rename(effect=resp_cv)%>%
-  mutate(trt_type7="All Trts")
+  mutate(trt_type8="All Trts")
 
 cv.trt<-ttest_summary%>%
-  group_by(trt_type7, resp_cv)%>%
+  group_by(trt_type8, resp_cv)%>%
   summarize(n=length(resp_cv))%>%
   mutate(response="B) CV ANPP")%>%
   rename(effect=resp_cv)
@@ -368,12 +368,15 @@ sum(sign$pos)
 45/95 #47% are postive and 53% are negative
 50/95
 ##for not sig for all
-irr<-subset(CT_comp, trt_type6=="Water")
+irr<-subset(CT_comp, trt_type8=="Water")
 t.test(irr$PD_CV, mu=0)
-nit<-subset(CT_comp, trt_type6=="Nitrogen")
+nit<-subset(CT_comp, trt_type8=="Nitrogen")
 t.test(nit$PD_CV, mu=0)
-nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
+nuts<-subset(CT_comp, trt_type8=="Multiple Nutrients")
 t.test(nuts$PD_CV, mu=0)
+int<-subset(CT_comp, trt_type8=="Interacting Drivers")
+t.test(int$PD_CV, mu=0)
+
 ## for SD sig for all
 # irr<-subset(CT_comp, trt_type6=="Water")
 # t.test(irr$PD_sd, mu=0)
@@ -381,6 +384,11 @@ t.test(nuts$PD_CV, mu=0)
 # t.test(nit$PD_sd, mu=0)
 # nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 # t.test(nuts$PD_sd, mu=0)
+int<-subset(CT_comp, trt_type8=="Interacting Drivers")
+t.test(int$PD_sd, mu=0)
+
+
+
 ##for mean sig for all
 irr<-subset(CT_comp, trt_type6=="Water")
 t.test(irr$PD_mean, mu=0)
@@ -388,6 +396,9 @@ nit<-subset(CT_comp, trt_type6=="Nitrogen")
 t.test(nit$PD_mean, mu=0)
 nuts<-subset(CT_comp, trt_type6=="Multiple Nutrients")
 t.test(nuts$PD_mean, mu=0)
+int<-subset(CT_comp, trt_type8=="Interacting Drivers")
+t.test(int$PD_mean, mu=0)
+
 
 ###is there a relationship with N level?
 nquest<-CT_comp%>%
@@ -402,27 +413,27 @@ vote.fig<-mean.trt%>%
   bind_rows(cv.trt)%>%
   bind_rows(cv.overall)%>%
   bind_rows(mean.overall)%>%
-  mutate(prop=ifelse(trt_type7=="Multiple Nutrients", n/33, ifelse(trt_type7=="Nitrogen", n/11, ifelse(trt_type7=="Water", n/7, ifelse(trt_type7=="Other GCD", n/44, ifelse(trt_type7=="All Trts", n/95, 999))))))
+  mutate(prop=ifelse(trt_type8=="Multiple Nutrients", n/33, ifelse(trt_type8=="Nitrogen", n/11, ifelse(trt_type8=="Water", n/7, ifelse(trt_type8=="Interacting Drivers", n/11, ifelse(trt_type8=="Other GCD", n/33, ifelse(trt_type8=="All Trts", n/95, 999)))))))
 
-vot_mean<-ggplot(data=subset(vote.fig, response=="A) Mean ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+vot_mean<-ggplot(data=subset(vote.fig, response=="A) Mean ANPP"), aes(y=prop, x=trt_type8, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
   xlab("Treatment")+
   ylab("")+
   scale_fill_manual(name="Treatement\n Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "lightblue", "darkblue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  geom_vline(xintercept = 4.5)+
+  scale_x_discrete(limits=c("Other GCD", "Interacting Drivers", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 5.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("A) Mean ANPP")
 
-vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV ANPP"), aes(y=prop, x=trt_type7, fill=effect))+
+vot_cv<-ggplot(data=subset(vote.fig, response=="B) CV ANPP"), aes(y=prop, x=trt_type8, fill=effect))+
   geom_bar(stat="identity")+
   coord_flip()+
   xlab("Treatment")+
   ylab("Proportion of Treatments Different from Control")+
   scale_fill_manual(name="Treatement Response", label=c("Not Sig.", "Increase", "Decrease"), limits=c("not sig", "inc", "dec"), values = c("Gray", "skyblue", "darkblue"))+
-  scale_x_discrete(limits=c("Other GCD", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
-  geom_vline(xintercept = 4.5)+
+  scale_x_discrete(limits=c("Other GCD", "Interacting Drivers", "Water", "Nitrogen", "Multiple Nutrients", "All Trts"))+
+  geom_vline(xintercept = 5.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   ggtitle("B) CV ANPP")
 
@@ -439,7 +450,7 @@ fig1<-
 
 ##making a bar graph of this
 PD_bargraph_trt<-CT_comp%>%
-  group_by(trt_type6)%>%
+  group_by(trt_type8)%>%
   summarize(cv=mean(PD_CV),
             sd_cv=sd(PD_CV),
             sd=mean(PD_sd),
@@ -450,7 +461,7 @@ PD_bargraph_trt<-CT_comp%>%
   mutate(se_cv=sd_cv/sqrt(num),
          se_sd=sd_sd/sqrt(num),
          se_mn=sd_mn/sqrt(num))%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+  filter(trt_type8=="Nitrogen"|trt_type8=="Multiple Nutrients"|trt_type8=="Water"| trt_type8=="Interacting Drivers")
 
 PD_bargraph_all<-CT_comp%>%
   summarize(cv=mean(PD_CV),
@@ -463,51 +474,53 @@ PD_bargraph_all<-CT_comp%>%
   mutate(se_cv=sd_cv/sqrt(num),
          se_sd=sd_sd/sqrt(num),
          se_mn=sd_mn/sqrt(num))%>%
-  mutate(trt_type6="All Treatments")
+  mutate(trt_type8="All Treatments")
 
 PD_bargraph<-rbind(PD_bargraph_trt, PD_bargraph_all)
 
 
-cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=cv, fill=trt_type6))+
+cv_fig<-ggplot(data=PD_bargraph, aes(x=trt_type8, y=cv, fill=trt_type8))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=cv-se_cv, ymax=cv+se_cv),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Difference (%) CV ANPP")+
-  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water', "Interacting Drivers"),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water", "Interacting"))+
   xlab("")+
-  scale_fill_manual(values=c("orange","green3","blue","black"))+
+  scale_fill_manual(values=c("darkred","orange","green3","blue", "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=0.6, y=12, label="D", size=4)
 
-sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=sd, fill=trt_type6))+
+sd_fig<-ggplot(data=PD_bargraph, aes(x=trt_type8, y=sd, fill=trt_type8))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=sd-se_sd, ymax=sd+se_sd),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Percent Difference\nSD of ANPP")+
-  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water', "Interacting Drivers"),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water", "Interacting"))+
   xlab("")+
-  scale_fill_manual(values=c("orange","green3","blue","black"))+
+  scale_fill_manual(values=c("darkred","orange","green3","blue", "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=35, label="*", size=8)+
   geom_text(x=2, y=75, label="*", size=8)+
+  geom_text(x=5, y=50, label="*", size=8)+
   scale_y_continuous(limits=c(0, 80))
 
-mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type6, y=mn, fill=trt_type6))+
+mn_fig<-ggplot(data=PD_bargraph, aes(x=trt_type8, y=mn, fill=trt_type8))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mn-se_mn, ymax=mn+se_mn),position= position_dodge(0.9), width=0.2)+
   ylab("")+
   ylab("Difference (%) Mean ANPP")+
-  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water'),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water', "Interacting Drivers"),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water", "Interacting"))+
   xlab("")+
-  scale_fill_manual(name = "GCD Treatment", values=c("orange","green3","blue","black"))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_fill_manual(values=c("darkred","orange","green3","blue", "black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=35, label="*", size=8)+
   geom_text(x=2, y=55, label="*", size=8)+
   geom_text(x=3, y=35, label="*", size=8)+
   geom_text(x=4, y=48, label="*", size=8)+
+  geom_text(x=5, y=35, label="*", size=8)+
   scale_y_continuous(limits=c(0, 60))+
   geom_text(x=0.6, y=55, label="C", size=4)
 
@@ -835,7 +848,8 @@ slopes_tograph<-c.slope%>%
   left_join(t.slope)%>%
   left_join(site_char)%>%
   mutate(diff=est-c_est)%>%
-  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)
+  separate(site_project_comm, into=c("site_code","project_name","community_type"), sep="_", remove=F)%>%
+  left_join(trtint)
 
 # slopes_tograph2<-slopes_tograph%>%
 #   gather(parm, value, MAP:sdppt)%>%
@@ -902,32 +916,35 @@ slopes_tograph<-c.slope%>%
 t.test(slopes_tograph$diff, mu=0)
 
 #do t-test do the slopes differ from zero?
-irr<-subset(slopes_tograph, trt_type5=="Water (W)")
+irr<-subset(slopes_tograph, trt_type8=="Water")
 t.test(irr$diff, mu=0)
 
-nit<-subset(slopes_tograph, trt_type5=="Nitrogen (N)")
+nit<-subset(slopes_tograph, trt_type8=="Nitrogen")
 t.test(nit$diff, mu=0)
 
-nuts<-subset(slopes_tograph, trt_type5=="Multiple Nutrients")
+nuts<-subset(slopes_tograph, trt_type8=="Multiple Nutrients")
 t.test(nuts$diff, mu=0)
+
+int<-subset(slopes_tograph, trt_type8=="Interacting Drivers")
+t.test(int$diff, mu=0)
 
 
 # Making figure 3 ---------------------------------------------------------
 slopes_bar_trt<-slopes_tograph%>%
   left_join(trtint)%>%
-  group_by(trt_type6)%>%
+  group_by(trt_type8)%>%
   summarise(mdiff=mean(diff),
             ndiff=length(diff),
             sddiff=sd(diff))%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
-  filter(trt_type6=="Nitrogen"|trt_type6=="Multiple Nutrients"|trt_type6=="Water")
+  filter(trt_type8=="Nitrogen"|trt_type8=="Multiple Nutrients"|trt_type8=="Water"|trt_type8=="Interacting Drivers")
 
 slopes_bar_overall<-slopes_tograph%>%
   summarise(mdiff=mean(diff),
             ndiff=length(diff),
             sddiff=sd(diff))%>%
   mutate(sediff=sddiff/sqrt(ndiff))%>%
-  mutate(trt_type6="All Treatments")
+  mutate(trt_type8="All Treatments")
 
 
 slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
@@ -962,15 +979,14 @@ slopes_bar<-rbind(slopes_bar_overall, slopes_bar_trt)
 #   xlab("Site MAP")+
 #   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-ggplot(data=slopes_bar, aes(x=trt_type6, y=mdiff, fill=trt_type6))+
+ggplot(data=slopes_bar, aes(x=trt_type8, y=mdiff, fill=trt_type8))+
   geom_bar(position=position_dodge(), stat="identity")+
   geom_errorbar(aes(ymin=mdiff-sediff, ymax=mdiff+sediff),position= position_dodge(0.9), width=0.2)+
-  ylab("")+
+  xlab("")+
   ylab("Difference in Slopes")+
   #theme(axis.text.x=element_text(angle=45, hjust=1))+
-  scale_fill_manual(values=c("black", "orange","green3","blue"))+
-  scale_x_discrete(labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water"))+
-  xlab("GCD Treatment")+
+  scale_x_discrete(limits = c("All Treatments",'Multiple Nutrients','Nitrogen','Water', "Interacting Drivers"),labels = c("All Trts", "Multiple\n Nutrients", "Nitrogen","Water", "Interacting"))+
+  scale_fill_manual(values=c("black","darkred","orange","green3", "blue"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "none")+
   geom_vline(xintercept = 1.5, size = 1)+
   geom_text(x=1, y=0.255, label="*", size=8)+
