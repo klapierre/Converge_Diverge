@@ -8,7 +8,7 @@ library(utf8)
 setwd("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 setwd("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/fixing species names")
 
-checkcorre<-read.csv("C:/Users/megha/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2019.csv")
+checkcorre<-read.csv("C:/Users/mavolio2/Dropbox/converge_diverge/datasets/LongForm/SpeciesRelativeAbundance_Nov2019.csv")
 
 #load clean taxonomy for try
 taxdat <- read_csv("taxon_updates.csv")
@@ -37,6 +37,7 @@ taxcorre <- read_csv("Species_to_check_cleaned_2.csv")%>%
 # ii <- is.na(taxcorre$species_Taxonstand) & !is.na(taxcorre$species_taxize)
 # 
 # taxcorre$species_matched[ii] <- taxcorre$species[ii]
+
 #select submitted name and matched name
 taxcorre %>%
   select(species, species_matched) -> taxcorre
